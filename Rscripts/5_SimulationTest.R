@@ -1,23 +1,24 @@
 library(medfateland)
 library(medfate)
+library(IFNallometry)
 
 
 # Parameters --------------------------------------------------------------
 
 climate_base = "emf/datasets/Climate/"
 
-ntest <- 200
-chunk_size <- 10
+ntest <- 300
+chunk_size <- 15
 num_cores <- 20
 
-subset_initial = FALSE
-common_2001_2010 = FALSE
-common_2011_2020 = FALSE
-BAU_2021_2100 = FALSE
+subset_initial = TRUE
+common_2001_2010 = TRUE
+common_2011_2020 = TRUE
+BAU_2021_2100 = TRUE
 AMF_2021_2100 = TRUE
-RSB_2021_2100 = FALSE
-ASEA_2021_2100 = FALSE
-ACG_2021_2100 = FALSE
+RSB_2021_2100 = TRUE
+ASEA_2021_2100 = TRUE
+ACG_2021_2100 = TRUE
 
 local_control <- defaultControl()
 local_control$fireHazardResults <- TRUE
@@ -102,8 +103,51 @@ summary_scenario <- function(object, ...) {
                                           output = "FireHazard", 
                                           freq = "years", 
                                           FUN = max, na.rm = TRUE)
-  return(cbind(summary_std, summary_fire[,c(13,14), drop = FALSE]))
+  summary_stand_min <- medfate::summary.fordyn(object, 
+                                               output="Stand", 
+                                               freq="years", 
+                                               FUN = min, months=6:9, na.rm=TRUE)
+  colnames(summary_stand_min)[4] <- "LAI_min"
+  summary_stand_max <- medfate::summary.fordyn(object, 
+                                               output="Stand", 
+                                               freq="years", 
+                                               FUN = max, months=6:9, na.rm=TRUE)
+  colnames(summary_stand_max)[4] <- "LAI_max"
+  return(cbind(summary_std, 
+               summary_fire[,c(13,14), drop = FALSE],
+               summary_stand_min[,4, drop = FALSE],
+               summary_stand_max[,4, drop = FALSE]))
 }
+
+cli::cli_li(paste0("Defining volume function"))
+
+volume_scenario<-function(x, SpParams, province){
+  if(inherits(x, "forest")) x <- x$treeData
+  ntree <- nrow(x)
+  if(ntree>0) {
+    IFN_codes <- species_characterParameter(x$Species, SpParams, "IFNcodes")
+    IFN_codes_split <- strsplit(IFN_codes, "/")
+    IFN_codes <- sapply(IFN_codes_split, function(x) return(x[[1]]))
+    y <- data.frame(ID = rep("XX", ntree), 
+                    Province = rep(province, ntree),
+                    Species = IFN_codes,
+                    DBH = x$DBH,
+                    H = x$Height/100,
+                    N = x$N
+    )
+    vol <- IFNallometry::IFNvolume(y)
+    vcc <- pmax(0,vol$VCC)
+    vcc[x$DBH < 7.5] <- 0
+    return(vcc) #m3/ha
+  }
+  return(numeric(0))
+}
+volume_scenario(exampleforestMED, SpParamsMED, province = 8)
+volume_scenario(emptyforest(), SpParamsMED, province = 8)
+sum(volume_scenario(nfiplot$forest[[1]], SpParamsMED, province = 8))
+sum(default_volume_function(nfiplot$forest[[1]]))
+sum(default_volume_function(nfiplot$forest[[2]]))
+sum(volume_scenario(nfiplot$forest[[2]], SpParamsMED, province = 8))
 
 if(subset_initial) {
   cli::cli_li(paste0("Subsetting ", ntest, " random test plots"))
@@ -141,7 +185,8 @@ if(common_2001_2010) {
     file.remove(interpolator_file)
   }
   res_01_10 <- fordyn_scenario(nfiplot_test, SpParamsMED, meteo = interpolators,
-                               volume_function = NULL, local_control = local_control,
+                               volume_function = volume_scenario, volume_arguments = list(province = 8),
+                               local_control = local_control,
                                management_scenario = scen_2001_2010_test, summary_function = summary_scenario,
                                parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
   
@@ -176,7 +221,8 @@ if(common_2011_2020) {
   }
   
   res_11_20 <- fordyn_scenario(res_01_10, SpParamsMED, meteo = interpolators,
-                               volume_function = NULL, local_control = local_control,
+                               volume_function = volume_scenario,  volume_arguments = list(province = 8),
+                               local_control = local_control,
                                management_scenario = scen_2011_2020_test, summary_function = summary_scenario,
                                parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
   
@@ -224,7 +270,7 @@ if(BAU_2021_2100) {
                                                     extraction_rate_by_year = rates) 
         
         res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                               volume_function = NULL, local_control = local_control,
+                               volume_function = volume_scenario, local_control = local_control,
                                management_scenario = scen_BAU_test, summary_function = summary_scenario,
                                parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
         
@@ -275,7 +321,7 @@ if(AMF_2021_2100) {
                                                   extraction_rate_by_year = rates) 
 
       res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                             volume_function = NULL, local_control = local_control,
+                             volume_function = volume_scenario, local_control = local_control,
                              management_scenario = scen_AMF_test, summary_function = summary_scenario,
                              parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
       saveRDS(res, paste0("Rdata/test_AMF_",climate_model,"_",climate_scen,"_2021_2030.rds"))
@@ -301,7 +347,7 @@ if(AMF_2021_2100) {
                                                     extraction_rate_by_year = rates) 
         
         res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                               volume_function = NULL, local_control = local_control,
+                               volume_function = volume_scenario, local_control = local_control,
                                management_scenario = scen_AMF_test, summary_function = summary_scenario,
                                parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
         
@@ -336,20 +382,11 @@ if(RSB_2021_2100) {
       cli::cli_li(paste0("Applying land-use changes (2021-2030)"))
       sel_to_agri <- next_sf$prior_agri %in% 1:10
       sel_to_pasture <- next_sf$prior_pasture %in% 1:10
-      next_sf$forest[sel_to_agri] <- list(NULL)
-      next_sf$state[sel_to_agri] <- list(NULL)
-      next_sf$management_unit[sel_to_agri] <- NA
-      for(ip in  which(sel_to_pasture)) {
-        f <- emptyforest()
-        f$herbCover <- 80
-        f$herbHeight <- 20
-        next_sf$forest[[ip]] <- f
-        next_sf$state[[ip]] <- forest2growthInput(f, next_sf$soil[[ip]], SpParamsMED, local_control)
-        next_sf$management_unit[[ip]] <- NA
-      }
+      sel_to_remove <- sel_to_agri | sel_to_pasture
+      next_sf <- next_sf[!sel_to_remove, , drop = FALSE]
       res$next_sf <- next_sf
       
-      cli::cli_li(paste0("Loading interpolator for years ", 2021," to ", 2030))
+      cli::cli_li(paste0("Loading interpolator for years 2021 to 2030"))
       interpolator_file <- EMFdatautils::download_emfdata(climate_base,
                                                           paste0("Products/InterpolationData/Catalunya/Projections/", 
                                                                  climate_model, "_", climate_scen,"_daily_interpolator_", 
@@ -366,7 +403,7 @@ if(RSB_2021_2100) {
                                                   extraction_rate_by_year = rates) 
       
       res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                             volume_function = NULL, local_control = local_control,
+                             volume_function = volume_scenario, local_control = local_control,
                              management_scenario = scen_RSB_test, summary_function = summary_scenario,
                              parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
       saveRDS(res, paste0("Rdata/test_RSB_",climate_model,"_",climate_scen,"_2021_2030.rds"))
@@ -375,20 +412,11 @@ if(RSB_2021_2100) {
       cli::cli_li(paste0("Applying land-use changes (2031-2040)"))
       sel_to_agri <- next_sf$prior_agri %in% 11:20
       sel_to_pasture <- next_sf$prior_pasture %in% 11:20
-      next_sf$forest[sel_to_agri] <- list(NULL)
-      next_sf$state[sel_to_agri] <- list(NULL)
-      next_sf$management_unit[sel_to_agri] <- NA
-      for(ip in  which(sel_to_pasture)) {
-        f <- emptyforest()
-        f$herbCover <- 80
-        f$herbHeight <- 20
-        next_sf$forest[[ip]] <- f
-        next_sf$state[[ip]] <- forest2growthInput(f, next_sf$soil[[ip]], SpParamsMED, local_control)
-        next_sf$management_unit[[ip]] <- NA
-      }
+      sel_to_remove <- sel_to_agri | sel_to_pasture
+      next_sf <- next_sf[!sel_to_remove, , drop = FALSE]
       res$next_sf <- next_sf
       
-      cli::cli_li(paste0("Loading interpolator for years ", 2031," to ", 2040))
+      cli::cli_li(paste0("Loading interpolator for years 2031 to 2040"))
       interpolator_file <- EMFdatautils::download_emfdata(climate_base,
                                                           paste0("Products/InterpolationData/Catalunya/Projections/", 
                                                                  climate_model, "_", climate_scen,"_daily_interpolator_", 
@@ -405,7 +433,7 @@ if(RSB_2021_2100) {
                                                   extraction_rate_by_year = rates) 
       
       res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                             volume_function = NULL, local_control = local_control,
+                             volume_function = volume_scenario, local_control = local_control,
                              management_scenario = scen_RSB_test, summary_function = summary_scenario,
                              parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
       saveRDS(res, paste0("Rdata/test_RSB_",climate_model,"_",climate_scen,"_2031_2040.rds"))
@@ -431,7 +459,7 @@ if(RSB_2021_2100) {
                                                     extraction_rate_by_year = rates) 
         
         res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                               volume_function = NULL, local_control = local_control,
+                               volume_function = volume_scenario, local_control = local_control,
                                management_scenario = scen_RSB_test, summary_function = summary_scenario,
                                parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
         
@@ -482,7 +510,7 @@ if(ASEA_2021_2100) {
                                                      extraction_rate_by_year = rates) 
         
         res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                               volume_function = NULL, local_control = local_control,
+                               volume_function = volume_scenario, local_control = local_control,
                                management_scenario = volumes_ASEA_test, summary_function = summary_scenario,
                                parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
         
@@ -528,7 +556,7 @@ if(ACG_2021_2100) {
         scen_ACG_test <- create_management_scenario(units = defaultPrescriptionsBySpecies) 
         
         res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                               volume_function = NULL, local_control = local_control,
+                               volume_function = volume_scenario, local_control = local_control,
                                management_scenario = scen_ACG_test, summary_function = summary_scenario,
                                parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
         
