@@ -5,8 +5,7 @@ Decade	Provincia	Especie	Volum
 2001-2010	Barcelona	Altres planifolis	8390.49552307692
 2001-2010	Barcelona	B.alba	84.875
 2001-2010	Barcelona	C.sativa	2704.57870827778
-2001-2010	Barcelona	Eucaliptus sp	789.428571428571
-2001-2010	Barcelona	Eucaliptus sp.	54.6
+2001-2010	Barcelona	Eucaliptus sp	697.575
 2001-2010	Barcelona	F.sylvatica	5476.014675
 2001-2010	Barcelona	Fraxinus sp	113.986625
 2001-2010	Barcelona	P.canadiensis	7389.57040625
@@ -31,8 +30,7 @@ Decade	Provincia	Especie	Volum
 2001-2010	Girona	Altres planifolis	35237.4649807692
 2001-2010	Girona	B.alba	45.345
 2001-2010	Girona	C.sativa	10532.9559495833
-2001-2010	Girona	Eucaliptus sp	18521.2804142857
-2001-2010	Girona	Eucaliptus sp.	13203.633
+2001-2010	Girona	Eucaliptus sp	17856.5744875
 2001-2010	Girona	F.sylvatica	5952.0787275
 2001-2010	Girona	Fraxinus sp	689.8213375
 2001-2010	Girona	P.canadiensis	33900.01390625
@@ -58,7 +56,6 @@ Decade	Provincia	Especie	Volum
 2001-2010	Lleida	B.alba	0.22975
 2001-2010	Lleida	C.sativa	0
 2001-2010	Lleida	Eucaliptus sp	0
-2001-2010	Lleida	Eucaliptus sp.	0
 2001-2010	Lleida	F.sylvatica	139.911875
 2001-2010	Lleida	Fraxinus sp	25.147375
 2001-2010	Lleida	P.canadiensis	6908.721125
@@ -84,7 +81,6 @@ Decade	Provincia	Especie	Volum
 2001-2010	Tarragona	B.alba	5.625
 2001-2010	Tarragona	C.sativa	0
 2001-2010	Tarragona	Eucaliptus sp	0
-2001-2010	Tarragona	Eucaliptus sp.	0
 2001-2010	Tarragona	F.sylvatica	0
 2001-2010	Tarragona	Fraxinus sp	0
 2001-2010	Tarragona	P.canadiensis	84.625
@@ -109,7 +105,7 @@ Decade	Provincia	Especie	Volum
 2011-2020	Barcelona	Altres planifolis	14834.3242546154
 2011-2020	Barcelona	B.alba	13.7293333328
 2011-2020	Barcelona	C.sativa	3379.028544
-2011-2020	Barcelona	Eucaliptus sp.	294.96842
+2011-2020	Barcelona	Eucaliptus sp	294.96842
 2011-2020	Barcelona	F.sylvatica	5115.8665
 2011-2020	Barcelona	Fraxinus sp	236.70094
 2011-2020	Barcelona	P.canadiensis	4705.3335075
@@ -134,7 +130,7 @@ Decade	Provincia	Especie	Volum
 2011-2020	Girona	Altres planifolis	49239.3177030769
 2011-2020	Girona	B.alba	56.621422222
 2011-2020	Girona	C.sativa	6946.602036347
-2011-2020	Girona	Eucaliptus sp.	5983.19021
+2011-2020	Girona	Eucaliptus sp	5983.19021
 2011-2020	Girona	F.sylvatica	5781.973234
 2011-2020	Girona	Fraxinus sp	1376.932434
 2011-2020	Girona	P.canadiensis	31731.118429
@@ -159,7 +155,7 @@ Decade	Provincia	Especie	Volum
 2011-2020	Lleida	Altres planifolis	5058.50671538462
 2011-2020	Lleida	B.alba	0
 2011-2020	Lleida	C.sativa	0
-2011-2020	Lleida	Eucaliptus sp.	0
+2011-2020	Lleida	Eucaliptus sp	0
 2011-2020	Lleida	F.sylvatica	36.5
 2011-2020	Lleida	Fraxinus sp	128.5884
 2011-2020	Lleida	P.canadiensis	4320.25355
@@ -184,7 +180,7 @@ Decade	Provincia	Especie	Volum
 2011-2020	Tarragona	Altres planifolis	330.156615384615
 2011-2020	Tarragona	B.alba	0
 2011-2020	Tarragona	C.sativa	0.3
-2011-2020	Tarragona	Eucaliptus sp.	0
+2011-2020	Tarragona	Eucaliptus sp	0
 2011-2020	Tarragona	F.sylvatica	0
 2011-2020	Tarragona	Fraxinus sp	0
 2011-2020	Tarragona	P.canadiensis	257.9812
