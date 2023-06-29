@@ -11,7 +11,7 @@ ntest <- 300
 chunk_size <- 15
 num_cores <- 20
 
-subset_initial = TRUE
+subset_initial = FALSE
 common_2001_2010 = TRUE
 common_2011_2020 = TRUE
 BAU_2021_2100 = TRUE
@@ -270,7 +270,8 @@ if(BAU_2021_2100) {
                                                     extraction_rate_by_year = rates) 
         
         res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                               volume_function = volume_scenario, local_control = local_control,
+                               volume_function = volume_scenario, volume_arguments = list(province = 8),
+                               local_control = local_control,
                                management_scenario = scen_BAU_test, summary_function = summary_scenario,
                                parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
         
@@ -321,7 +322,8 @@ if(AMF_2021_2100) {
                                                   extraction_rate_by_year = rates) 
 
       res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                             volume_function = volume_scenario, local_control = local_control,
+                             volume_function = volume_scenario, volume_arguments = list(province = 8),
+                             local_control = local_control,
                              management_scenario = scen_AMF_test, summary_function = summary_scenario,
                              parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
       saveRDS(res, paste0("Rdata/test_AMF_",climate_model,"_",climate_scen,"_2021_2030.rds"))
@@ -347,7 +349,8 @@ if(AMF_2021_2100) {
                                                     extraction_rate_by_year = rates) 
         
         res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                               volume_function = volume_scenario, local_control = local_control,
+                               volume_function = volume_scenario, volume_arguments = list(province = 8),
+                               local_control = local_control,
                                management_scenario = scen_AMF_test, summary_function = summary_scenario,
                                parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
         
@@ -403,7 +406,8 @@ if(RSB_2021_2100) {
                                                   extraction_rate_by_year = rates) 
       
       res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                             volume_function = volume_scenario, local_control = local_control,
+                             volume_function = volume_scenario, volume_arguments = list(province = 8),
+                             local_control = local_control,
                              management_scenario = scen_RSB_test, summary_function = summary_scenario,
                              parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
       saveRDS(res, paste0("Rdata/test_RSB_",climate_model,"_",climate_scen,"_2021_2030.rds"))
@@ -433,7 +437,8 @@ if(RSB_2021_2100) {
                                                   extraction_rate_by_year = rates) 
       
       res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                             volume_function = volume_scenario, local_control = local_control,
+                             volume_function = volume_scenario, volume_arguments = list(province = 8),
+                             local_control = local_control,
                              management_scenario = scen_RSB_test, summary_function = summary_scenario,
                              parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
       saveRDS(res, paste0("Rdata/test_RSB_",climate_model,"_",climate_scen,"_2031_2040.rds"))
@@ -459,7 +464,8 @@ if(RSB_2021_2100) {
                                                     extraction_rate_by_year = rates) 
         
         res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                               volume_function = volume_scenario, local_control = local_control,
+                               volume_function = volume_scenario, volume_arguments = list(province = 8),
+                               local_control = local_control,
                                management_scenario = scen_RSB_test, summary_function = summary_scenario,
                                parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
         
@@ -510,7 +516,8 @@ if(ASEA_2021_2100) {
                                                      extraction_rate_by_year = rates) 
         
         res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                               volume_function = volume_scenario, local_control = local_control,
+                               volume_function = volume_scenario, volume_arguments = list(province = 8),
+                               local_control = local_control,
                                management_scenario = volumes_ASEA_test, summary_function = summary_scenario,
                                parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
         
@@ -556,7 +563,8 @@ if(ACG_2021_2100) {
         scen_ACG_test <- create_management_scenario(units = defaultPrescriptionsBySpecies) 
         
         res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                               volume_function = volume_scenario, local_control = local_control,
+                               volume_function = volume_scenario, volume_arguments = list(province = 8),
+                               local_control = local_control,
                                management_scenario = scen_ACG_test, summary_function = summary_scenario,
                                parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
         
