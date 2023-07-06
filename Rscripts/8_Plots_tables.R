@@ -2,120 +2,146 @@ library(ggplot2)
 library(tidyverse)
 
 
-cli::cli_progress_step("Coordinates and area represented")
-nfiplot <- dplyr::bind_rows(readRDS(paste0("Rdata/nfiplot.rds")))
-initial <- dplyr::bind_rows(readRDS(paste0("Rdata/test_initial.rds")))
-n <- nrow(nfiplot)
-n_test<-nrow(initial)
-initial$represented_area <- initial$represented_area*(n/n_test)
+load_result_table <- function() {
+  
+  cli::cli_progress_step("Coordinates and area represented")
+  nfiplot <- dplyr::bind_rows(readRDS(paste0("Rdata/nfiplot.rds")))
+  initial <- dplyr::bind_rows(readRDS(paste0("Rdata/test_initial.rds")))
+  n <- nrow(nfiplot)
+  n_test<-nrow(initial)
+  initial$represented_area <- initial$represented_area*(n/n_test)
+  
+  cli::cli_progress_step("Loading annual indicators")
+  BAU_rcp45 <- readRDS("Rdata/annual_indicators/BAU_mpiesm_rca4_rcp45.rds")
+  BAU_rcp85 <- readRDS("Rdata/annual_indicators/BAU_mpiesm_rca4_rcp85.rds")
+  
+  AMF_rcp45 <- readRDS("Rdata/annual_indicators/AMF_mpiesm_rca4_rcp45.rds")
+  AMF_rcp85 <- readRDS("Rdata/annual_indicators/AMF_mpiesm_rca4_rcp85.rds")
+  
+  RSB_rcp45 <- readRDS("Rdata/annual_indicators/RSB_mpiesm_rca4_rcp45.rds")
+  RSB_rcp85 <- readRDS("Rdata/annual_indicators/RSB_mpiesm_rca4_rcp85.rds")
+  
+  ASEA_rcp45 <- readRDS("Rdata/annual_indicators/ASEA_mpiesm_rca4_rcp45.rds")
+  ASEA_rcp85 <- readRDS("Rdata/annual_indicators/ASEA_mpiesm_rca4_rcp85.rds")
+  
+  ACG_rcp45 <- readRDS("Rdata/annual_indicators/ACG_mpiesm_rca4_rcp45.rds")
+  ACG_rcp85 <- readRDS("Rdata/annual_indicators/ACG_mpiesm_rca4_rcp85.rds")
+  
+  NOG_rcp45 <- readRDS("Rdata/annual_indicators/NOG_mpiesm_rca4_rcp45.rds")
+  NOG_rcp85 <- readRDS("Rdata/annual_indicators/NOG_mpiesm_rca4_rcp85.rds")
+  
+  cli::cli_progress_step("Calculating extensive variables")
+  ALL <- bind_rows(BAU_rcp45, BAU_rcp85,
+                   AMF_rcp45, AMF_rcp85,
+                   RSB_rcp45, RSB_rcp85,
+                   ASEA_rcp45, ASEA_rcp85,
+                   ACG_rcp45, ACG_rcp85,
+                   NOG_rcp45, NOG_rcp85) |>
+    dplyr::left_join(sf::st_drop_geometry(initial)[,c("id", "represented_area"), drop = FALSE], by = "id") |>
+    dplyr::mutate(AllVolumeExt = AllVolume*represented_area,
+                  VolumeStructureExt = VolumeStructure*represented_area,
+                  CutStructureExt = CutStructure*represented_area,
+                  CutAllExt = CutAll*represented_area) |>
+    dplyr::mutate(Climate = toupper(Climate))
+  return(ALL)
+}
+plot_var <- function(x, var, ylab, stand_agg_fun = "mean", common = 2000:2020) {
+  if(stand_agg_fun == "mean") {
+    x_agg <- x |>
+      dplyr::group_by(Climate, Management, Year) |>
+      dplyr::summarise(y = mean(.data[[var]], na.rm = TRUE), .groups="drop")
+  } else if(stand_agg_fun == "sum") {
+    x_agg <- x |>
+      dplyr::group_by(Climate, Management, Year) |>
+      dplyr::summarise(y = sum(.data[[var]], na.rm = TRUE), .groups="drop")
+  }
+  ggplot(x_agg)+
+    geom_line(aes(x = Year, y=y, col=Management), size = 1.1)+
+    geom_line(data = x_agg[x_agg$Year %in% common,], 
+              aes(x = Year, y=y), col = "black", size = 1.1)+
+    geom_vline(xintercept = 2020, linetype="dashed")+
+    facet_wrap(vars(Climate), nrow = 1)+xlab("")+ylab(ylab)+theme_bw()
+}
 
-BAU_rcp45 <- readRDS("Rdata/annual_indicators/BAU_mpiesm_rca4_rcp45.rds")
-BAU_rcp85 <- readRDS("Rdata/annual_indicators/BAU_mpiesm_rca4_rcp85.rds")
-AMF_rcp45 <- readRDS("Rdata/annual_indicators/AMF_mpiesm_rca4_rcp45.rds")
-ALL <- bind_rows(BAU_rcp45, BAU_rcp85,
-                 AMF_rcp45) |>
-  dplyr::left_join(sf::st_drop_geometry(initial)[,c("id", "represented_area"), drop = FALSE], by = "id") |>
-  dplyr::mutate(AllVolumeExt = AllVolume*represented_area,
-                VolumeStructureExt = VolumeStructure*represented_area,
-                CutStructureExt = CutStructure*represented_area,
-                BlueWater = Runoff+DeepDrainage)
+ALL <- load_result_table()
 
-ALL |>
-  dplyr::filter(Province == "Barcelona") |>
-  dplyr::group_by(Climate, Management, Year) |>
-  dplyr::summarise(AllVolume = mean(AllVolume, na.rm=TRUE), 
-                   AllVolumeExt = sum(AllVolumeExt, na.rm=TRUE)/1000, 
-                   VolumeStructure = mean(VolumeStructure, na.rm=TRUE), 
-                   VolumeStructureExt = sum(VolumeStructureExt, na.rm=TRUE)/1000, 
-                   VolumeFirewood = mean(VolumeFirewood, na.rm=TRUE),
-                   CutStructure = mean(CutStructure, na.rm=TRUE), 
-                   CutStructureExt = sum(CutStructureExt, na.rm=TRUE)/1000, 
-                   CutFirewood = mean(CutFirewood, na.rm=TRUE),
-                   TreeBiomass = mean(TreeBiomass, na.rm=TRUE),
-                   TreeDeadBiomass = mean(TreeDeadBiomass, na.rm=TRUE),
-                   CumulativeTreeDeadBiomass = mean(CumulativeTreeDeadBiomass, na.rm=TRUE),
-                   ShrubBiomass = mean(ShrubBiomass, na.rm=TRUE),
-                   ShrubDeadBiomass = mean(ShrubDeadBiomass, na.rm=TRUE),
-                   CumulativeShrubDeadBiomass = mean(CumulativeShrubDeadBiomass, na.rm=TRUE),
-                   TreeDensity = mean(TreeDensity, na.rm=TRUE),
-                   BasalArea = mean(BasalArea, na.rm=TRUE),
-                   BlueWater = mean(BlueWater, na.rm=TRUE),
-                   RunoffCoefficient = mean(BlueWater/Precipitation, na.rm=TRUE),
-                   LAI_max = mean(LAI_max, na.rm=TRUE),
-                   # Shrub_lai = mean(Shrub_lai, na.rm=TRUE),
-                   # Tree_fuel = mean(Tree_fuel, na.rm=TRUE),
-                   # Shrub_fuel = mean(Shrub_fuel, na.rm=TRUE),
-                   # SFP = mean(SFP, na.rm=TRUE),
-                   # CFP = mean(CFP, na.rm=TRUE),
-                   .groups = "drop") -> a
+# Climate
+plot_var(ALL, "Precipitation", "Annual precipitation (mm/yr)")
+plot_var(ALL, "Pdaymax", "Maximum daily precipitation (mm/day)")
+plot_var(ALL, "PET", "Annual PET (mm/yr)")
+plot_var(ALL, "PPET", "Moisture index")
+plot_var(ALL, "CumulativePPET", "Cumulative moisture index")
+
+# Structure
+plot_var(ALL, "BasalArea", "Stand basal area (m2/ha)")
+plot_var(ALL, "TreeDensity", "Tree density (ind/ha)")
+plot_var(ALL, "QMD", "Quadratic mean diameter (cm)")
+
+# LAI
+plot_var(ALL, "LAI_max", "Woody LAI (m2/m2)")
+plot_var(ALL, "Shrub_lai", "Shrub LAI (m2/m2)")
+plot_var(ALL, "Tree_lai", "Tree LAI (m2/m2)")
+plot_var(ALL, "Total_lai", "Total LAI (m2/m2)")
 
 
-ggplot(a)+
-  geom_line(aes(x = Year, y=BasalArea, col=Management, linetype = Climate))
+# Timber stock
+plot_var(ALL, "AllVolume", "Tree volume stock (m3/ha)")
+plot_var(ALL, "AllVolumeExt", "Tree volume stock (m3)", stand_agg_fun = "sum")
+plot_var(ALL, "VolumeStructure", "Structural wood volume stock (m3/ha)")
+plot_var(ALL, "VolumeFirewood", "Fire wood volume stock (m3/ha)")
 
-ggplot(a)+
-  geom_line(aes(x = Year, y=TreeDensity, col=Management, linetype = Climate))
+# Biomass stock
+plot_var(ALL, "TreeBiomass", "Tree biomass (Mg CO2/ha)")
+plot_var(ALL, "ShrubBiomass", "Shrub biomass (Mg CO2/ha)")
 
-ggplot(a)+
-  geom_line(aes(x = Year, y=AllVolume, col=Management, linetype = Climate))
+# Dead biomass
+plot_var(ALL, "DeadBiomass", "Dead biomass (Mg CO2/ha)")
+plot_var(ALL, "CumulativeDeadBiomass", "Cumulative dead biomass (Mg CO2/ha)")
+plot_var(ALL, "CumulativeTreeDeadBiomass", "Cumulative tree dead biomass (Mg CO2/ha)")
+plot_var(ALL, "CumulativeShrubDeadBiomass", "Cumulative shrub dead biomass (Mg CO2/ha)")
 
-ggplot(a)+
-  geom_line(aes(x = Year, y=AllVolumeExt, col=Management, linetype = Climate))
+# Productivity
+plot_var(ALL, "GrossPrimaryProduction", "Gross Primary Production (gC/m2/yr)")
+plot_var(ALL, "NetPrimaryProduction", "Net Primary Production (gC/m2/yr)")
 
 
-ggplot(a)+
-  geom_line(aes(x = Year, y=VolumeStructure, col=Management, linetype = Climate))
+# Wood extraction
+plot_var(ALL, "CutAll", "Annual tree volume extraction (m3/ha/yr)")
+plot_var(ALL, "CumulativeCutAll", "Cumulative tree volume extraction (m3/ha)")
+plot_var(ALL, "CumulativeCutFirewood", "Cumulative firewood volume extraction (m3/ha)")
+plot_var(ALL, "CumulativeCutStructure", "Cumulative structure volume extraction (m3/ha)")
 
-ggplot(a)+
-  geom_line(aes(x = Year, y=VolumeStructureExt, col=Management, linetype = Climate))
+# Water supply/regulation
+plot_var(ALL, "BlueWater", "Blue water (mm)")
+plot_var(ALL, "CumulativeBlueWater", "Cumulative Blue water (mm)")
+plot_var(ALL, "RunoffCoefficient", "Runoff Coef. [0-1]")
+plot_var(ALL, "CumulativeRunoffCoefficient", "Cumulative Runoff Coef. [0-1]")
+plot_var(ALL, "RegulationCoefficient", "Regulation Coef. [0-1]")
+plot_var(ALL, "CumulativeRegulation", "Cumulative Regulation Coef. [0-1]")
 
-ggplot(a)+
-  geom_line(aes(x = Year, y=CutStructureExt, col=Management, linetype = Climate))
+# Fire hazard
+plot_var(ALL, "Shrub_fuel", "Shrub fine fuel")
+plot_var(ALL, "Tree_fuel", "Tree fine fuel")
+plot_var(ALL, "SFP", "Surface fire potential [0-9]")
+plot_var(ALL, "CFP", "Crown fire potential [0-9]")
 
-ggplot(a)+
-  geom_line(aes(x = Year, y=CutStructure, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=VolumeFirewood, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=CutFirewood, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=TreeBiomass, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=CumulativeTreeDeadBiomass, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=ShrubBiomass, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=ShrubDeadBiomass, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=CumulativeShrubDeadBiomass, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=LAI_max, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=Shrub_lai, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=BlueWater, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=RunoffCoefficient, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=Tree_fuel, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=Shrub_fuel, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=SFP, col=Management, linetype = Climate))
-
-ggplot(a)+
-  geom_line(aes(x = Year, y=CFP, col=Management, linetype = Climate))
+# volstruct_plot <- ALL |>  select(Climate, Management, id, Year, VolumeStructure) |>
+#   pivot_wider(names_from = Year, values_from = VolumeStructure) |>
+#   mutate("2000-2020" = (`2020` - `2000`)/20,
+#          "2020-2040" = (`2040` - `2020`)/20,
+#          "2040-2060" = (`2060` - `2040`)/20,
+#          "2060-2080" = (`2080` - `2060`)/20,
+#          "2080-2100" = (`2100` - `2080`)/20)|>
+#   select(Climate, Management, id, "2000-2020", "2020-2040", "2040-2060", "2060-2080", "2080-2100")|>
+#   pivot_longer(c("2000-2020", "2020-2040", "2040-2060", "2060-2080", "2080-2100"), names_to = "Period", values_to = "AnnualVolumeIncrement") |>
+#   group_by(Climate, Management, Period) |>
+#   summarise(AnnualVolumeIncrement = mean(AnnualVolumeIncrement, na.rm=TRUE), .groups = "drop")
+# 
+# ggplot(volstruct_plot, aes(x=Period, y=AnnualVolumeIncrement, 
+#                                          fill =Management))+
+#   geom_bar(stat="identity", position=position_dodge())+
+#   facet_wrap(vars(Climate))+
+#   ylab("Annual volume increment (m3/ha/yr.)")+
+#   xlab("")+
+#   scale_fill_discrete("Management", guide = guide_legend(reverse = TRUE))+
+#   theme_bw()
