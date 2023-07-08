@@ -11,9 +11,8 @@ ntest <- 100
 chunk_size <- 5
 num_cores <- 20
 
-provinces <- 1
-overwrite = FALSE
-mergeTreesBetweenDecades = TRUE
+iprovinces <- 1:4
+overwrite = TRUE
 subset_initial = FALSE
 common_2001_2010 = FALSE
 common_2011_2020 = FALSE
@@ -26,6 +25,7 @@ NOG_2021_2100 = TRUE
 
 local_control <- defaultControl()
 local_control$fireHazardResults <- TRUE
+local_control$dynamicallyMergeCohorts <- TRUE
 
 # Preliminaries -----------------------------------------------------------
 cli::cli_h1(paste0("PRELIMINARIES"))
@@ -35,6 +35,10 @@ cli::cli_li(paste0("Loading plot data and splitting into provinces"))
 nfiplot <- readRDS("Rdata/nfiplot.rds")
 nfiplot$represented_area <- nfiplot$area
 nfiplot_provs<-split(nfiplot, nfiplot$Provincia)
+
+cli::cli_li(paste0("Atmospheric CO2 data"))
+CO2_ppm <- readxl::read_excel("Data/CO2_escenarios.xlsx", 
+                                              sheet = "CO2_ppm")
 
 cli::cli_li(paste0("Reference wood demand"))
 aprofit_decade_prov_spp <- readxl::read_excel("Data/aprofit_decade_prov_spp.xlsx", 
@@ -64,6 +68,7 @@ assign_management_unit <- function(dominant_tree_species, prescription_by_specie
 source("Rscripts/A2_utils.R")
 
 cli::cli_li(paste0("Defining summary function"))
+
 summary_scenario <- function(object, SpParams, ...) {
   summary_wb <- medfate::summary.fordyn(object, 
                                          output = "WaterBalance", 
@@ -75,27 +80,39 @@ summary_scenario <- function(object, SpParams, ...) {
                                           output = "FireHazard", 
                                           freq = "years", 
                                           FUN = max, na.rm = TRUE)
+  summary_stand_mean <- medfate::summary.fordyn(object, 
+                                                output="Stand", 
+                                                freq="years", 
+                                                FUN = mean, na.rm=TRUE)
+  colnames(summary_stand_mean)[c(4,6)] <- c("LAI_mean", "Cm_mean")
   summary_stand_min <- medfate::summary.fordyn(object, 
                                                output="Stand", 
                                                freq="years", 
                                                FUN = min, months=6:9, na.rm=TRUE)
-  colnames(summary_stand_min)[4] <- "LAI_min"
+  colnames(summary_stand_min)[c(4,6)] <- c("LAI_min", "Cm_min")
   summary_stand_max <- medfate::summary.fordyn(object, 
                                                output="Stand", 
                                                freq="years", 
                                                FUN = max, months=6:9, na.rm=TRUE)
-  colnames(summary_stand_max)[4] <- "LAI_max"
+  colnames(summary_stand_max)[c(4,6)] <- c("LAI_max", "Cm_max")
   f_sum <- t(sapply(object$ForestStructures, function(x) {unlist(summary(x, SpParams))}))
   summary_meteo <- t(sapply(object$GrowthResults, function(x) {
     c(Pdaymax = max(x$weather$Precipitation, na.rm = TRUE), 
       MAT = mean(x$weather$MeanTemperature, na.rm=TRUE))
     }))
+  lai_coh_year <- summary(object, output="Plants$LAI", FUN = max)
+  plc_coh_year <- summary(object, output="Plants$StemPLC", FUN = max)
+  stress_coh_year <- summary(object, output="Plants$PlantStress", FUN = max)
+  summary_stress <- data.frame(PlantStress = rowSums(stress_coh_year*lai_coh_year)/rowSums(lai_coh_year),
+                               StemPLC = rowSums(plc_coh_year*lai_coh_year)/rowSums(lai_coh_year))
   return(cbind(summary_wb,
                summary_cb,
                f_sum[-1, , drop = FALSE], 
                summary_fire[,c(13,14), drop = FALSE],
-               summary_stand_min[,c(4), drop = FALSE],
-               summary_stand_max[,c(4), drop = FALSE],
+               summary_stand_mean[,c(4,6), drop = FALSE], # LAI, Cm average (for regulation)
+               summary_stand_min[,c(4,6), drop = FALSE], # LAI, Cm min in summer
+               summary_stand_max[,c(4,6), drop = FALSE], # LAI, Cm max in summer
+               summary_stress,
                summary_meteo))
 }
 
@@ -104,7 +121,7 @@ summary_scenario <- function(object, SpParams, ...) {
 if(subset_initial) {
   cli::cli_li(paste0("Subsetting ", ntest, " random test plots per province"))
   nfiplot_prov_test <- nfiplot_provs
-  for(i in provinces) {
+  for(i in 1:4) {
     df_i <- nfiplot_prov_test[[i]]
     df_i <- df_i[sample(nrow(df_i), ntest), ]
     nfiplot_prov_test[[i]] <- df_i
@@ -121,6 +138,12 @@ if(common_2001_2010) {
   nfiplot_prov_test <- readRDS("Rdata/test_initial.rds")
   
   years <- 2001:2010
+  
+  cli::cli_li(paste0("CO2 levels for years 2001 to 2010"))
+  CO2ByYear <- CO2_ppm |> 
+    dplyr::filter(Year %in% years) 
+  CO2ByYear <- CO2ByYear$RCP45
+  names(CO2ByYear) <- years
   cli::cli_li(paste0("Loading interpolators for years ", years[1]," to ", years[length(years)]))
   interpolators <- vector("list", length(years))
   for(iy in 1:length(years)) {
@@ -130,7 +153,7 @@ if(common_2001_2010) {
     file.remove(interpolator_file)
   }
   
-  for(iprov in provinces) {
+  for(iprov in iprovinces) {
     cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
     
     nfiplot_test <- nfiplot_prov_test[[iprov]]
@@ -149,6 +172,7 @@ if(common_2001_2010) {
                                                       volumes_2001_2010_test) 
     
     res_01_10 <- fordyn_scenario(nfiplot_test, SpParamsMED, meteo = interpolators,
+                                 CO2ByYear = CO2ByYear,
                                  volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                  local_control = local_control,
                                  management_scenario = scen_2001_2010_test, 
@@ -167,6 +191,13 @@ if(common_2011_2020) {
   cli::cli_h1(paste0("SIMULATION 2011-2020 (all scenarios)"))
   
   years <- 2011:2020
+  
+  cli::cli_li(paste0("CO2 levels for years 2001 to 2010"))
+  CO2ByYear <- CO2_ppm |> 
+    dplyr::filter(Year %in% years) 
+  CO2ByYear <- CO2ByYear$RCP45
+  names(CO2ByYear) <- years
+  
   cli::cli_li(paste0("Loading interpolators for years ", years[1]," to ", years[length(years)]))
   interpolators <- vector("list", length(years))
   for(iy in 1:length(years)) {
@@ -177,7 +208,7 @@ if(common_2011_2020) {
   }
   
   
-  for(iprov in provinces) {
+  for(iprov in iprovinces) {
     cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
     
     cli::cli_li(paste0("Recovering previous run"))
@@ -195,6 +226,7 @@ if(common_2011_2020) {
     
     
     res_11_20 <- fordyn_scenario(res_01_10, SpParamsMED, meteo = interpolators,
+                                 CO2ByYear = CO2ByYear,
                                  volume_function = volume_scenario,  volume_arguments = list(province = provinces[iprov]),
                                  local_control = local_control,
                                  management_scenario = scen_2011_2020_test, 
@@ -216,7 +248,7 @@ if(BAU_2021_2100) {
     for(climate_scen in climate_scens) {
       cli::cli_h1(paste0("SIMULATION 2021-2100 / BAU / ", climate_model, " / ", climate_scen))
       
-      for(iprov in provinces) {
+      for(iprov in iprovinces) {
         cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
         
         cli::cli_li(paste0("Recovering end of historical run"))
@@ -242,15 +274,12 @@ if(BAU_2021_2100) {
             interpolator <- meteoland::read_interpolator(interpolator_file)
             file.remove(interpolator_file)
             
-            if(mergeTreesBetweenDecades) {
-              cli::cli_li(paste0("Merging tree cohorts"))
-              next_sf <- res$next_sf
-              for(i in 1:nrow(next_sf)) {
-                next_sf$forest[[i]] <- medfate::forest_mergeTrees(next_sf$forest[[i]])
-                next_sf$state[i] <- list(NULL)
-              }
-              res$next_sf <- next_sf
-            }
+            
+            cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+            CO2ByYear <- CO2_ppm |> 
+              dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
+            CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
+            names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
             
             cli::cli_li(paste0("Defining management scenario (30% extraction rates)"))
             volumes <- aprofit_decade_prov_spp[,1:4] |>
@@ -268,6 +297,7 @@ if(BAU_2021_2100) {
                                                         extraction_rate_by_year = rates) 
             
             res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
+                                   CO2ByYear = CO2ByYear,
                                    volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                    local_control = local_control,
                                    management_scenario = scen_BAU_test, 
@@ -296,7 +326,7 @@ if(AMF_2021_2100) {
     for(climate_scen in climate_scens) {
       cli::cli_h1(paste0("SIMULATION 2021-2100 / AMF / ", climate_model, " / ", climate_scen))
       
-      for(iprov in provinces) {
+      for(iprov in iprovinces) {
         cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
         
         res_file <- paste0("Rdata/AMF/test_AMF_",provinceStrings[iprov], "_", climate_model,"_",climate_scen,"_2021_2030.rds")
@@ -312,6 +342,11 @@ if(AMF_2021_2100) {
           res$next_sf <- next_sf
           
           # 2021-2030
+          cli::cli_li(paste0("CO2 levels for years 2021 to 2030"))
+          CO2ByYear <- CO2_ppm |> 
+            dplyr::filter(Year %in% 2021:2030) 
+          CO2ByYear <- CO2ByYear$RCP45
+          names(CO2ByYear) <- 2021:2030
           
           cli::cli_li(paste0("Loading interpolator for years ", 2021," to ", 2030))
           interpolator_file <- EMFdatautils::download_emfdata(climate_base,
@@ -320,16 +355,6 @@ if(AMF_2021_2100) {
                                                                      2021, "_", 2030,".nc"))
           interpolator <- meteoland::read_interpolator(interpolator_file)
           file.remove(interpolator_file)
-          
-          if(mergeTreesBetweenDecades) {
-            cli::cli_li(paste0("Merging tree cohorts"))
-            next_sf <- res$next_sf
-            for(i in 1:nrow(next_sf)) {
-              next_sf$forest[[i]] <- medfate::forest_mergeTrees(next_sf$forest[[i]])
-              next_sf$state[i] <- list(NULL)
-            }
-            res$next_sf <- next_sf
-          }
           
           
           cli::cli_li(paste0("Defining management scenario (40% extraction rates)"))
@@ -348,6 +373,7 @@ if(AMF_2021_2100) {
                                                       extraction_rate_by_year = rates) 
           
           res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
+                                 CO2ByYear = CO2ByYear,
                                  volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                  local_control = local_control,
                                  management_scenario = scen_AMF_test, 
@@ -373,16 +399,11 @@ if(AMF_2021_2100) {
             interpolator <- meteoland::read_interpolator(interpolator_file)
             file.remove(interpolator_file)
             
-            if(mergeTreesBetweenDecades) {
-              cli::cli_li(paste0("Merging tree cohorts"))
-              next_sf <- res$next_sf
-              for(i in 1:nrow(next_sf)) {
-                next_sf$forest[[i]] <- medfate::forest_mergeTrees(next_sf$forest[[i]])
-                next_sf$state[i] <- list(NULL)
-              }
-              res$next_sf <- next_sf
-            }
-            
+            cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+            CO2ByYear <- CO2_ppm |> 
+              dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
+            CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
+            names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
             
             cli::cli_li(paste0("Defining management scenario (70% extraction rates)"))
             volumes <- aprofit_decade_prov_spp[,1:4] |>
@@ -400,6 +421,7 @@ if(AMF_2021_2100) {
                                                         extraction_rate_by_year = rates) 
             
             res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
+                                   CO2ByYear = CO2ByYear,
                                    volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                    local_control = local_control,
                                    management_scenario = scen_AMF_test, 
@@ -427,7 +449,7 @@ if(RSB_2021_2100) {
     for(climate_scen in climate_scens) {
       cli::cli_h1(paste0("SIMULATION 2021-2100 / RSB / ", climate_model, " / ", climate_scen))
       
-      for(iprov in provinces) {
+      for(iprov in iprovinces) {
         cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
         
         cli::cli_li(paste0("Recovering end of historical run"))
@@ -466,16 +488,11 @@ if(RSB_2021_2100) {
           interpolator <- meteoland::read_interpolator(interpolator_file)
           file.remove(interpolator_file)
           
-          if(mergeTreesBetweenDecades) {
-            cli::cli_li(paste0("Merging tree cohorts"))
-            next_sf <- res$next_sf
-            for(i in 1:nrow(next_sf)) {
-              next_sf$forest[[i]] <- medfate::forest_mergeTrees(next_sf$forest[[i]])
-              next_sf$state[i] <- list(NULL)
-            }
-            res$next_sf <- next_sf
-          }
-          
+          cli::cli_li(paste0("CO2 levels for years 2021 to 2030"))
+          CO2ByYear <- CO2_ppm |> 
+            dplyr::filter(Year %in% 2021:2030) 
+          CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
+          names(CO2ByYear) <- 2021:2030
           
           cli::cli_li(paste0("Defining management scenario (30% extraction rates)"))
           volumes <- aprofit_decade_prov_spp[,1:4] |>
@@ -492,6 +509,7 @@ if(RSB_2021_2100) {
                                                       extraction_rate_by_year = rates) 
           
           res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
+                                 CO2ByYear = CO2ByYear,
                                  volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                  local_control = local_control,
                                  management_scenario = scen_RSB_test, 
@@ -529,15 +547,11 @@ if(RSB_2021_2100) {
           interpolator <- meteoland::read_interpolator(interpolator_file)
           file.remove(interpolator_file)
           
-          if(mergeTreesBetweenDecades) {
-            cli::cli_li(paste0("Merging tree cohorts"))
-            next_sf <- res$next_sf
-            for(i in 1:nrow(next_sf)) {
-              next_sf$forest[[i]] <- medfate::forest_mergeTrees(next_sf$forest[[i]])
-              next_sf$state[i] <- list(NULL)
-            }
-            res$next_sf <- next_sf
-          }
+          cli::cli_li(paste0("CO2 levels for years 2031 to 2040"))
+          CO2ByYear <- CO2_ppm |> 
+            dplyr::filter(Year %in% 2031:2040) 
+          CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
+          names(CO2ByYear) <- 2031:2040
           
           cli::cli_li(paste0("Defining management scenario (30% extraction rates)"))
           volumes <- aprofit_decade_prov_spp[,1:4] |>
@@ -554,6 +568,7 @@ if(RSB_2021_2100) {
                                                       extraction_rate_by_year = rates) 
           
           res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
+                                 CO2ByYear = CO2_by_year,
                                  volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                  local_control = local_control,
                                  management_scenario = scen_RSB_test, 
@@ -578,16 +593,13 @@ if(RSB_2021_2100) {
                                                                        yearsIni[iy], "_", yearsFin[iy],".nc"))
             interpolator <- meteoland::read_interpolator(interpolator_file)
             file.remove(interpolator_file)
+
+            cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+            CO2ByYear <- CO2_ppm |> 
+              dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
+            CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
+            names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
             
-            if(mergeTreesBetweenDecades) {
-              cli::cli_li(paste0("Merging tree cohorts"))
-              next_sf <- res$next_sf
-              for(i in 1:nrow(next_sf)) {
-                next_sf$forest[[i]] <- medfate::forest_mergeTrees(next_sf$forest[[i]])
-                next_sf$state[i] <- list(NULL)
-              }
-              res$next_sf <- next_sf
-            }
             
             cli::cli_li(paste0("Defining management scenario (30% extraction rates)"))
             volumes <- aprofit_decade_prov_spp[,1:4] |>
@@ -604,6 +616,7 @@ if(RSB_2021_2100) {
                                                         extraction_rate_by_year = rates) 
             
             res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
+                                   CO2ByYear = CO2ByYear,
                                    volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                    local_control = local_control,
                                    management_scenario = scen_RSB_test, 
@@ -632,7 +645,7 @@ if(ASEA_2021_2100) {
       cli::cli_h1(paste0("SIMULATION 2021-2100 / ASEA / ", climate_model, " / ", climate_scen))
       
       
-      for(iprov in provinces) {
+      for(iprov in iprovinces) {
         cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
         
         cli::cli_li(paste0("Recovering end of historical run"))
@@ -656,15 +669,12 @@ if(ASEA_2021_2100) {
           interpolator <- meteoland::read_interpolator(interpolator_file)
           file.remove(interpolator_file)
           
-          if(mergeTreesBetweenDecades) {
-            cli::cli_li(paste0("Merging tree cohorts"))
-            next_sf <- res$next_sf
-            for(i in 1:nrow(next_sf)) {
-              next_sf$forest[[i]] <- medfate::forest_mergeTrees(next_sf$forest[[i]])
-              next_sf$state[i] <- list(NULL)
-            }
-            res$next_sf <- next_sf
-          }
+          cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+          CO2ByYear <- CO2_ppm |> 
+            dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
+          CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
+          names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+          
           
           cli::cli_li(paste0("Defining management scenario (30% extraction rates)"))
           volumes <- aprofit_decade_prov_spp[,1:4] |>
@@ -681,6 +691,7 @@ if(ASEA_2021_2100) {
                                                        extraction_rate_by_year = rates) 
           
           res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
+                                 CO2ByYear = CO2ByYear,
                                  volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                  local_control = local_control,
                                  management_scenario = scen_ASEA_test, 
@@ -705,7 +716,7 @@ if(ACG_2021_2100) {
     for(climate_scen in climate_scens) {
       cli::cli_h1(paste0("SIMULATION 2021-2100 / ACG / ", climate_model, " / ", climate_scen))
       
-      for(iprov in provinces) {
+      for(iprov in iprovinces) {
         cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
         
         cli::cli_li(paste0("Recovering end of historical run"))
@@ -732,20 +743,18 @@ if(ACG_2021_2100) {
             interpolator <- meteoland::read_interpolator(interpolator_file)
             file.remove(interpolator_file)
             
-            if(mergeTreesBetweenDecades) {
-              cli::cli_li(paste0("Merging tree cohorts"))
-              next_sf <- res$next_sf
-              for(i in 1:nrow(next_sf)) {
-                next_sf$forest[[i]] <- medfate::forest_mergeTrees(next_sf$forest[[i]])
-                next_sf$state[i] <- list(NULL)
-              }
-              res$next_sf <- next_sf
-            }
+            cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+            CO2ByYear <- CO2_ppm |> 
+              dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
+            CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
+            names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+            
             
             cli::cli_li(paste0("Defining management scenario (no demand and adaptation prescriptions)"))
             scen_ACG_test <- create_management_scenario(units = adaptation_prescriptions) 
             
             res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
+                                   CO2ByYear = CO2ByYear,
                                    volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                    local_control = local_control,
                                    management_scenario = scen_ACG_test, 
@@ -773,7 +782,7 @@ if(NOG_2021_2100) {
     for(climate_scen in climate_scens) {
       cli::cli_h1(paste0("SIMULATION 2021-2100 / NOG / ", climate_model, " / ", climate_scen))
       
-      for(iprov in provinces) {
+      for(iprov in iprovinces) {
         cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
         
         cli::cli_li(paste0("Recovering end of historical run"))
@@ -799,20 +808,17 @@ if(NOG_2021_2100) {
             interpolator <- meteoland::read_interpolator(interpolator_file)
             file.remove(interpolator_file)
             
-            if(mergeTreesBetweenDecades) {
-              cli::cli_li(paste0("Merging tree cohorts"))
-              next_sf <- res$next_sf
-              for(i in 1:nrow(next_sf)) {
-                next_sf$forest[[i]] <- medfate::forest_mergeTrees(next_sf$forest[[i]])
-                next_sf$state[i] <- list(NULL)
-              }
-              res$next_sf <- next_sf
-            }
+            cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+            CO2ByYear <- CO2_ppm |> 
+              dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
+            CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
+            names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
             
             cli::cli_li(paste0("Defining management scenario (no management)"))
             scen_NOG_test <- create_management_scenario(units = 1) 
             
             res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
+                                   CO2ByYear = CO2ByYear,
                                    volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                    local_control = local_control,
                                    management_scenario = scen_NOG_test, 

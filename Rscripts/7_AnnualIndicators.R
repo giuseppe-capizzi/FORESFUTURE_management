@@ -93,6 +93,8 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
   
   summary_table <- scen_list$summary_table |>
     dplyr::mutate(PPET = Precipitation/PET,
+                  WaterUseEfficiency = NetPrimaryProduction/Transpiration,
+                  CarbonUseEfficiency = SynthesisRespiration/NetPrimaryProduction,
                   BlueWater = Runoff+DeepDrainage,
                   RunoffCoefficient = BlueWater/Precipitation,
                   RegulationCoefficient = DeepDrainage/BlueWater) |>
@@ -157,3 +159,4 @@ scenario_annual_indicators(climate_model, "rcp85", "ACG")
 # (6) NOG
 scenario_annual_indicators(climate_model, "rcp45", "NOG")
 scenario_annual_indicators(climate_model, "rcp85", "NOG")
+
