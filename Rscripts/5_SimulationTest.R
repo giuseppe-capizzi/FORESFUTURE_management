@@ -11,6 +11,7 @@ ntest <- 100
 chunk_size <- 5
 num_cores <- 20
 
+progress = FALSE
 iprovinces <- 1:4
 overwrite = TRUE
 subset_initial = FALSE
@@ -171,7 +172,7 @@ if(common_2001_2010) {
     scen_2001_2010_test <- create_management_scenario(default_prescriptions,  
                                                       volumes_2001_2010_test) 
     
-    res_01_10 <- fordyn_scenario(nfiplot_test, SpParamsMED, meteo = interpolators,
+    res_01_10 <- fordyn_scenario(nfiplot_test, SpParamsMED, meteo = interpolators, progress = progress,
                                  CO2ByYear = CO2ByYear,
                                  volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                  local_control = local_control,
@@ -225,7 +226,7 @@ if(common_2011_2020) {
                                                       volumes_2011_2020_test) 
     
     
-    res_11_20 <- fordyn_scenario(res_01_10, SpParamsMED, meteo = interpolators,
+    res_11_20 <- fordyn_scenario(res_01_10, SpParamsMED, meteo = interpolators, progress = progress,
                                  CO2ByYear = CO2ByYear,
                                  volume_function = volume_scenario,  volume_arguments = list(province = provinces[iprov]),
                                  local_control = local_control,
@@ -296,7 +297,7 @@ if(BAU_2021_2100) {
                                                         annual_demand_by_species = volumes_BAU_test,
                                                         extraction_rate_by_year = rates) 
             
-            res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
+            res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator, progress = progress,
                                    CO2ByYear = CO2ByYear,
                                    volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                    local_control = local_control,
@@ -372,7 +373,7 @@ if(AMF_2021_2100) {
                                                       annual_demand_by_species = volumes_AMF_test,
                                                       extraction_rate_by_year = rates) 
           
-          res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
+          res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator, progress = progress,
                                  CO2ByYear = CO2ByYear,
                                  volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                  local_control = local_control,
@@ -420,7 +421,7 @@ if(AMF_2021_2100) {
                                                         annual_demand_by_species = volumes_AMF_test,
                                                         extraction_rate_by_year = rates) 
             
-            res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
+            res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator, progress = progress,
                                    CO2ByYear = CO2ByYear,
                                    volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                    local_control = local_control,

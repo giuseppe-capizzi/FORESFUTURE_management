@@ -1,4 +1,5 @@
 library(tidyverse)
+library(Hmisc)
 
 # Generates FES indicators for each year and plot in a selected province, climate model, climate scenario and management scenario
 scenario_annual_province_indicators <- function(iprov, climate_model, climate_scen, management_scen) {
@@ -20,6 +21,12 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
   st <- scen_list$shrub_table
   dst <- scen_list$dead_shrub_table
   
+  # Structure (all trees)
+  struct_trees <- tt |>
+    dplyr::select(-Step) |>
+    dplyr::group_by(Climate, Management, Province, id, Year) |>
+    dplyr::summarise(TreeRichness = length(unique(Species)), .groups = "drop")
+
   # Structure (no saplings)
   struct_nosapl <- tt |>
     dplyr::filter(DBH> 7.5) |>
@@ -27,8 +34,18 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
     dplyr::select(-Step) |>
     dplyr::group_by(Climate, Management, Province, id, Year) |>
     dplyr::summarise(TreeDensity = sum(N, na.rm=TRUE), 
-                     BasalArea = sum(BA, na.rm=TRUE), .groups = "drop") |>
-    dplyr::mutate(QMD = sqrt(BasalArea/(0.00007854*TreeDensity)))
+                     BasalArea = sum(BA, na.rm=TRUE), 
+                     meanDBH = weighted.mean(DBH, N),
+                     sdDBH  = sqrt(wtd.var(DBH, weights = N)), .groups = "drop") |>
+    dplyr::mutate(QMD = sqrt(BasalArea/(0.00007854*TreeDensity)),
+                  cvDBH = sdDBH/meanDBH)
+
+  # Structure shrubs
+  struct_shrub <- st |>
+    dplyr::select(-Step) |>
+    dplyr::group_by(Climate, Management, Province, id, Year) |>
+    dplyr::summarise(ShrubCover = min(100, sum(Cover, na.rm=TRUE)), 
+                     ShrubRichness = length(unique(Species)), .groups = "drop")
   
   # Volume stock
   all_volume_stock <- tt |>
@@ -81,15 +98,37 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
   tree_biom_dead <- dtt |>
     dplyr::select(-Step) |>
     dplyr::group_by(Climate, Management, Province, id, Year) |>
-    dplyr::summarise(TreeDeadBiomass = sum(Aerial+Roots, na.rm=TRUE), .groups = "drop")
+    dplyr::summarise(TreeDeadBiomass = sum(Aerial+Roots, na.rm=TRUE),
+                     N_dead = sum(N),
+                     N_starvation = sum(N_starvation), 
+                     N_dessication = sum(N_dessication), .groups = "drop") |>
+    dplyr::mutate(TreeDeadBiomass_starvation = TreeDeadBiomass*N_starvation/N_dead,
+                  TreeDeadBiomass_dessication = TreeDeadBiomass*N_dessication/N_dead,
+                  TreeDeadBiomass_other = TreeDeadBiomass - TreeDeadBiomass_starvation - TreeDeadBiomass_dessication) |>
+    dplyr::select(-c(N_dead, N_starvation, N_dessication))
+  
   shrub_biom_dead <- dst |>
     dplyr::select(-Step) |>
     dplyr::group_by(Climate, Management, Province, id, Year) |>
-    dplyr::summarise(ShrubDeadBiomass = sum(Aerial+Roots, na.rm=TRUE), .groups = "drop") 
+    dplyr::summarise(ShrubDeadBiomass = sum(Aerial+Roots, na.rm=TRUE),
+                     Cover_dead = sum(Cover),
+                     Cover_starvation = sum(Cover_starvation), 
+                     Cover_dessication = sum(Cover_dessication), .groups = "drop") |>
+    dplyr::mutate(ShrubDeadBiomass_starvation = ShrubDeadBiomass*Cover_starvation/Cover_dead,
+                  ShrubDeadBiomass_dessication = ShrubDeadBiomass*Cover_dessication/Cover_dead,
+                  ShrubDeadBiomass_other = ShrubDeadBiomass - ShrubDeadBiomass_starvation - ShrubDeadBiomass_dessication) |>
+    dplyr::select(-c(Cover_dead, Cover_starvation, Cover_dessication))
+  
   biom_dead <- tree_biom_dead |>
     dplyr::full_join(shrub_biom_dead, by=c("Climate", "Management", "Province", "id", "Year")) |>
-    tidyr::replace_na(list(TreeDeadBiomass = 0, ShrubDeadBiomass = 0)) |>
-    dplyr::mutate(DeadBiomass = TreeDeadBiomass+ShrubDeadBiomass)
+    tidyr::replace_na(list(TreeDeadBiomass = 0, ShrubDeadBiomass = 0,
+                           TreeDeadBiomass_other = 0, ShrubDeadBiomass_other = 0,
+                           TreeDeadBiomass_starvation = 0, ShrubDeadBiomass_starvation = 0,
+                           TreeDeadBiomass_dessication = 0, ShrubDeadBiomass_dessication = 0)) |>
+    dplyr::mutate(DeadBiomass = TreeDeadBiomass+ShrubDeadBiomass,
+                  DeadBiomass_other = TreeDeadBiomass_other + ShrubDeadBiomass_other,
+                  DeadBiomass_starvation = TreeDeadBiomass_starvation + ShrubDeadBiomass_starvation,
+                  DeadBiomass_dessication = TreeDeadBiomass_dessication + ShrubDeadBiomass_dessication)
   
   summary_table <- scen_list$summary_table |>
     dplyr::mutate(PPET = Precipitation/PET,
@@ -109,7 +148,9 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
                   CumulativePPET = CumulativePrecipitation/CumulativePET,
                   Year = as.numeric(Year))
 
-  annual_vol_biom <- struct_nosapl |>
+  annual_vol_biom <- struct_trees |>
+    dplyr::full_join(struct_nosapl, by=c("Climate", "Management", "Province", "id", "Year"))|>
+    dplyr::full_join(struct_shrub, by=c("Climate", "Management", "Province", "id", "Year"))|>
     dplyr::full_join(volume_stock, by=c("Climate", "Management", "Province", "id", "Year"))|>
     dplyr::full_join(volume_cut, by=c("Climate", "Management", "Province", "id", "Year"))|>
     dplyr::full_join(biom_trees, by=c("Climate", "Management", "Province", "id", "Year")) |>
@@ -117,15 +158,27 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
     dplyr::full_join(biom_dead, by=c("Climate", "Management", "Province", "id", "Year")) |>
     dplyr::full_join(summary_table, by=c("Climate", "Management", "Province", "id", "Year")) |>
     tidyr::replace_na(list(CutAll = 0, CutFirewood = 0, CutStructure = 0,
-                           DeadBiomass = 0, TreeDeadBiomass = 0, ShrubDeadBiomass = 0)) |>
+                           DeadBiomass = 0, TreeDeadBiomass = 0, ShrubDeadBiomass = 0,
+                           DeadBiomass_starvation = 0, TreeDeadBiomass_starvation = 0, ShrubDeadBiomass_starvation = 0,
+                           DeadBiomass_dessication = 0, TreeDeadBiomass_dessication = 0, ShrubDeadBiomass_dessication = 0,
+                           DeadBiomass_other = 0, TreeDeadBiomass_other = 0, ShrubDeadBiomass_other = 0)) |>
     dplyr::arrange(Climate, Management, Province, id, Year) |>
     dplyr::group_by(Climate, Management, Province, id) |>
     dplyr::mutate(CumulativeCutFirewood = cumsum(CutFirewood),
                   CumulativeCutStructure = cumsum(CutStructure),
                   CumulativeCutAll = cumsum(CutAll),
                   CumulativeDeadBiomass = cumsum(DeadBiomass),
+                  CumulativeDeadBiomass_starvation = cumsum(DeadBiomass_starvation),
+                  CumulativeDeadBiomass_dessication = cumsum(DeadBiomass_dessication),
+                  CumulativeDeadBiomass_other = cumsum(DeadBiomass_other),
                   CumulativeTreeDeadBiomass = cumsum(TreeDeadBiomass),
-                  CumulativeShrubDeadBiomass = cumsum(ShrubDeadBiomass)) |>
+                  CumulativeTreeDeadBiomass_starvation = cumsum(TreeDeadBiomass_starvation),
+                  CumulativeTreeDeadBiomass_dessication = cumsum(TreeDeadBiomass_dessication),
+                  CumulativeTreeDeadBiomass_other = cumsum(TreeDeadBiomass_other),
+                  CumulativeShrubDeadBiomass = cumsum(ShrubDeadBiomass),
+                  CumulativeShrubDeadBiomass_starvation = cumsum(ShrubDeadBiomass_starvation),
+                  CumulativeShrubDeadBiomass_dessication = cumsum(ShrubDeadBiomass_dessication),
+                  CumulativeShrubDeadBiomass_other = cumsum(ShrubDeadBiomass_other)) |>
     tidyr::replace_na(list(CumulativeCutFirewood = 0, CumulativeCutStructure = 0, CumulativeCutAll = 0))
   return(annual_vol_biom)
 }
@@ -141,21 +194,27 @@ scenario_annual_indicators<-function(climate_model, climate_scen, management_sce
 }
 
 climate_model <- "mpiesm_rca4"
+
 # (1) BAU
-scenario_annual_indicators(climate_model, "rcp45", "BAU")
-scenario_annual_indicators(climate_model, "rcp85", "BAU")
+# scenario_annual_indicators(climate_model, "rcp45", "BAU")
+# scenario_annual_indicators(climate_model, "rcp85", "BAU")
+
 # (2) AMF
 scenario_annual_indicators(climate_model, "rcp45", "AMF")
 scenario_annual_indicators(climate_model, "rcp85", "AMF")
+
 # (3) RSB
 scenario_annual_indicators(climate_model, "rcp45", "RSB")
 scenario_annual_indicators(climate_model, "rcp85", "RSB")
+
 # (4) ASEA
 scenario_annual_indicators(climate_model, "rcp45", "ASEA")
 scenario_annual_indicators(climate_model, "rcp85", "ASEA")
+
 # (5) ACG
 scenario_annual_indicators(climate_model, "rcp45", "ACG")
 scenario_annual_indicators(climate_model, "rcp85", "ACG")
+
 # (6) NOG
 scenario_annual_indicators(climate_model, "rcp45", "NOG")
 scenario_annual_indicators(climate_model, "rcp85", "NOG")

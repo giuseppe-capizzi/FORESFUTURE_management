@@ -71,13 +71,15 @@ bind_scenario_summary_table <- function(provinceName, climate_model, climate_sce
   td <- data.frame()
   reshape_summary<-function(sf) {
     for(i in 1:nrow(sf)) {
-      sum_i <- data.frame(sf$summary[[i]])
-      sum_i$Year <- format(as.Date(row.names(sum_i)), "%Y")
-      sum_i$id <- sf$id[i]
-      row.names(sum_i) <- NULL
-      sum_i <- sum_i |>
-        relocate(id, Year, .before = PET)
-      sf$summary[[i]] <- sum_i
+      if(!is.null(sf$summary[[i]])) {
+        sum_i <- data.frame(sf$summary[[i]])
+        sum_i$Year <- format(as.Date(row.names(sum_i)), "%Y")
+        sum_i$id <- sf$id[i]
+        row.names(sum_i) <- NULL
+        sum_i <- sum_i |>
+          relocate(id, Year, .before = PET)
+        sf$summary[[i]] <- sum_i
+      }
     }
     return(sf)
   }
@@ -175,17 +177,18 @@ bind_scenario_province_results <- function(iprov, climate_model, climate_scen, m
   cli::cli_progress_done()
 }
 
-
 climate_model <- "mpiesm_rca4"
+
 # (1) BAU
 # bind_scenario_province_results(1, climate_model, "rcp45", "BAU")
-bind_scenario_province_results(2, climate_model, "rcp45", "BAU")
-bind_scenario_province_results(3, climate_model, "rcp45", "BAU")
-bind_scenario_province_results(4, climate_model, "rcp45", "BAU")
-bind_scenario_province_results(1, climate_model, "rcp85", "BAU")
-bind_scenario_province_results(2, climate_model, "rcp85", "BAU")
-bind_scenario_province_results(3, climate_model, "rcp85", "BAU")
-bind_scenario_province_results(4, climate_model, "rcp85", "BAU")
+# bind_scenario_province_results(2, climate_model, "rcp45", "BAU")
+# bind_scenario_province_results(3, climate_model, "rcp45", "BAU")
+# bind_scenario_province_results(4, climate_model, "rcp45", "BAU")
+# bind_scenario_province_results(1, climate_model, "rcp85", "BAU")
+# bind_scenario_province_results(2, climate_model, "rcp85", "BAU")
+# bind_scenario_province_results(3, climate_model, "rcp85", "BAU")
+# bind_scenario_province_results(4, climate_model, "rcp85", "BAU")
+
 # (2) AMF
 bind_scenario_province_results(1, climate_model, "rcp45", "AMF")
 bind_scenario_province_results(2, climate_model, "rcp45", "AMF")
@@ -195,6 +198,7 @@ bind_scenario_province_results(1, climate_model, "rcp85", "AMF")
 bind_scenario_province_results(2, climate_model, "rcp85", "AMF")
 bind_scenario_province_results(3, climate_model, "rcp85", "AMF")
 bind_scenario_province_results(4, climate_model, "rcp85", "AMF")
+
 # (3) RSB
 bind_scenario_province_results(1, climate_model, "rcp45", "RSB")
 bind_scenario_province_results(2, climate_model, "rcp45", "RSB")
@@ -204,6 +208,7 @@ bind_scenario_province_results(1, climate_model, "rcp85", "RSB")
 bind_scenario_province_results(2, climate_model, "rcp85", "RSB")
 bind_scenario_province_results(3, climate_model, "rcp85", "RSB")
 bind_scenario_province_results(4, climate_model, "rcp85", "RSB")
+
 # (4) ASEA
 bind_scenario_province_results(1, climate_model, "rcp45", "ASEA")
 bind_scenario_province_results(2, climate_model, "rcp45", "ASEA")
@@ -213,6 +218,7 @@ bind_scenario_province_results(1, climate_model, "rcp85", "ASEA")
 bind_scenario_province_results(2, climate_model, "rcp85", "ASEA")
 bind_scenario_province_results(3, climate_model, "rcp85", "ASEA")
 bind_scenario_province_results(4, climate_model, "rcp85", "ASEA")
+
 # (5) ACG
 bind_scenario_province_results(1, climate_model, "rcp45", "ACG")
 bind_scenario_province_results(2, climate_model, "rcp45", "ACG")
@@ -222,6 +228,7 @@ bind_scenario_province_results(1, climate_model, "rcp85", "ACG")
 bind_scenario_province_results(2, climate_model, "rcp85", "ACG")
 bind_scenario_province_results(3, climate_model, "rcp85", "ACG")
 bind_scenario_province_results(4, climate_model, "rcp85", "ACG")
+
 # (6) NOG
 bind_scenario_province_results(1, climate_model, "rcp45", "NOG")
 bind_scenario_province_results(2, climate_model, "rcp45", "NOG")
