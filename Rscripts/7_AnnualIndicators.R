@@ -200,8 +200,8 @@ climate_model <- "mpiesm_rca4"
 # scenario_annual_indicators(climate_model, "rcp85", "BAU")
 
 # (2) AMF
-scenario_annual_indicators(climate_model, "rcp45", "AMF")
-scenario_annual_indicators(climate_model, "rcp85", "AMF")
+# scenario_annual_indicators(climate_model, "rcp45", "AMF")
+# scenario_annual_indicators(climate_model, "rcp85", "AMF")
 
 # (3) RSB
 scenario_annual_indicators(climate_model, "rcp45", "RSB")

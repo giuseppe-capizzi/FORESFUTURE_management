@@ -190,14 +190,14 @@ climate_model <- "mpiesm_rca4"
 # bind_scenario_province_results(4, climate_model, "rcp85", "BAU")
 
 # (2) AMF
-bind_scenario_province_results(1, climate_model, "rcp45", "AMF")
-bind_scenario_province_results(2, climate_model, "rcp45", "AMF")
-bind_scenario_province_results(3, climate_model, "rcp45", "AMF")
-bind_scenario_province_results(4, climate_model, "rcp45", "AMF")
-bind_scenario_province_results(1, climate_model, "rcp85", "AMF")
-bind_scenario_province_results(2, climate_model, "rcp85", "AMF")
-bind_scenario_province_results(3, climate_model, "rcp85", "AMF")
-bind_scenario_province_results(4, climate_model, "rcp85", "AMF")
+# bind_scenario_province_results(1, climate_model, "rcp45", "AMF")
+# bind_scenario_province_results(2, climate_model, "rcp45", "AMF")
+# bind_scenario_province_results(3, climate_model, "rcp45", "AMF")
+# bind_scenario_province_results(4, climate_model, "rcp45", "AMF")
+# bind_scenario_province_results(1, climate_model, "rcp85", "AMF")
+# bind_scenario_province_results(2, climate_model, "rcp85", "AMF")
+# bind_scenario_province_results(3, climate_model, "rcp85", "AMF")
+# bind_scenario_province_results(4, climate_model, "rcp85", "AMF")
 
 # (3) RSB
 bind_scenario_province_results(1, climate_model, "rcp45", "RSB")
@@ -210,9 +210,9 @@ bind_scenario_province_results(3, climate_model, "rcp85", "RSB")
 bind_scenario_province_results(4, climate_model, "rcp85", "RSB")
 
 # (4) ASEA
-bind_scenario_province_results(1, climate_model, "rcp45", "ASEA")
-bind_scenario_province_results(2, climate_model, "rcp45", "ASEA")
-bind_scenario_province_results(3, climate_model, "rcp45", "ASEA")
+# bind_scenario_province_results(1, climate_model, "rcp45", "ASEA")
+# bind_scenario_province_results(2, climate_model, "rcp45", "ASEA")
+# bind_scenario_province_results(3, climate_model, "rcp45", "ASEA")
 bind_scenario_province_results(4, climate_model, "rcp45", "ASEA")
 bind_scenario_province_results(1, climate_model, "rcp85", "ASEA")
 bind_scenario_province_results(2, climate_model, "rcp85", "ASEA")
