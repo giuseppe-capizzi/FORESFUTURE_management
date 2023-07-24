@@ -2,13 +2,17 @@ library(ggplot2)
 library(tidyverse)
 
 
-load_volume_table <- function() {
+load_volume_table <- function(test = FALSE) {
   df <- data.frame()
   for(provinceName in c("Barcelona", "Girona","Lleida", "Tarragona")) {
     for(management_scen in c("BAU", "AMF", "RSB", "ASEA", "ACG", "NOG")) {
       for(climate_model in c("mpiesm_rca4")) {
         for(climate_scen in c("rcp45", "rcp85")) {
-          bind_file <- paste0("Rdata/binded/", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
+          if(test) {
+            bind_file <- paste0("Rdata/Test_binded/Test_", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
+          } else {
+            bind_file <- paste0("Rdata/binded/", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
+          }
           if(file.exists(bind_file)) {
             scen_list <- readRDS(file = bind_file)
             df <- bind_rows(df, scen_list$volume_table) 
@@ -32,35 +36,59 @@ load_volume_table <- function() {
   return(df_decade)
 }
 
-load_result_table <- function() {
+load_result_table <- function(test = FALSE) {
   
   cli::cli_progress_step("Coordinates and area represented")
   nfiplot <- dplyr::bind_rows(readRDS(paste0("Rdata/nfiplot.rds")))
-  initial <- readRDS(paste0("Rdata/test_initial.rds"))
-  initial <- initial[[1]]
-  # initial <- dplyr::bind_rows(readRDS(paste0("Rdata/test_initial.rds")))
-  n <- nrow(nfiplot)
-  n_test<-nrow(initial)
-  initial$represented_area <- initial$represented_area*(n/n_test)
-  
+  if(test) {
+    initial <- readRDS(paste0("Rdata/test_initial.rds"))
+    initial <- initial[[1]]
+    n <- nrow(nfiplot)
+    n_test<-nrow(initial)
+    initial$represented_area <- initial$represented_area*(n/n_test)
+  } else {
+    initial <- nfiplot
+  }
   cli::cli_progress_step("Loading annual indicators")
-  BAU_rcp45 <- readRDS("Rdata/annual_indicators/BAU_mpiesm_rca4_rcp45.rds")
-  BAU_rcp85 <- readRDS("Rdata/annual_indicators/BAU_mpiesm_rca4_rcp85.rds")
+  if(test) {
+    BAU_rcp45 <- readRDS("Rdata/Test_annual_indicators/Test_BAU_mpiesm_rca4_rcp45.rds")
+    BAU_rcp85 <- readRDS("Rdata/Test_annual_indicators/Test_BAU_mpiesm_rca4_rcp85.rds")
+    
+    AMF_rcp45 <- readRDS("Rdata/Test_annual_indicators/Test_AMF_mpiesm_rca4_rcp45.rds")
+    AMF_rcp85 <- readRDS("Rdata/Test_annual_indicators/Test_AMF_mpiesm_rca4_rcp85.rds")
+    
+    RSB_rcp45 <- readRDS("Rdata/Test_annual_indicators/Test_RSB_mpiesm_rca4_rcp45.rds")
+    RSB_rcp85 <- readRDS("Rdata/Test_annual_indicators/Test_RSB_mpiesm_rca4_rcp85.rds")
+    
+    ASEA_rcp45 <- readRDS("Rdata/Test_annual_indicators/Test_ASEA_mpiesm_rca4_rcp45.rds")
+    ASEA_rcp85 <- readRDS("Rdata/Test_annual_indicators/Test_ASEA_mpiesm_rca4_rcp85.rds")
+    
+    ACG_rcp45 <- readRDS("Rdata/Test_annual_indicators/Test_ACG_mpiesm_rca4_rcp45.rds")
+    ACG_rcp85 <- readRDS("Rdata/Test_annual_indicators/Test_ACG_mpiesm_rca4_rcp85.rds")
+    
+    NOG_rcp45 <- readRDS("Rdata/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp45.rds")
+    NOG_rcp85 <- readRDS("Rdata/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp85.rds")
+  } else {
+    BAU_rcp45 <- readRDS("Rdata/annual_indicators/BAU_mpiesm_rca4_rcp45.rds")
+    BAU_rcp85 <- readRDS("Rdata/annual_indicators/BAU_mpiesm_rca4_rcp85.rds")
+    
+    AMF_rcp45 <- readRDS("Rdata/annual_indicators/AMF_mpiesm_rca4_rcp45.rds")
+    AMF_rcp85 <- readRDS("Rdata/annual_indicators/AMF_mpiesm_rca4_rcp85.rds")
+    
+    RSB_rcp45 <- readRDS("Rdata/annual_indicators/RSB_mpiesm_rca4_rcp45.rds")
+    RSB_rcp85 <- readRDS("Rdata/annual_indicators/RSB_mpiesm_rca4_rcp85.rds")
+    
+    ASEA_rcp45 <- readRDS("Rdata/annual_indicators/ASEA_mpiesm_rca4_rcp45.rds")
+    ASEA_rcp85 <- readRDS("Rdata/annual_indicators/ASEA_mpiesm_rca4_rcp85.rds")
+    
+    ACG_rcp45 <- readRDS("Rdata/annual_indicators/ACG_mpiesm_rca4_rcp45.rds")
+    ACG_rcp85 <- readRDS("Rdata/annual_indicators/ACG_mpiesm_rca4_rcp85.rds")
+    
+    NOG_rcp45 <- readRDS("Rdata/annual_indicators/NOG_mpiesm_rca4_rcp45.rds")
+    NOG_rcp85 <- readRDS("Rdata/annual_indicators/NOG_mpiesm_rca4_rcp85.rds")
+  }
   
-  AMF_rcp45 <- readRDS("Rdata/annual_indicators/AMF_mpiesm_rca4_rcp45.rds")
-  AMF_rcp85 <- readRDS("Rdata/annual_indicators/AMF_mpiesm_rca4_rcp85.rds")
   
-  RSB_rcp45 <- readRDS("Rdata/annual_indicators/RSB_mpiesm_rca4_rcp45.rds")
-  RSB_rcp85 <- readRDS("Rdata/annual_indicators/RSB_mpiesm_rca4_rcp85.rds")
-  
-  ASEA_rcp45 <- readRDS("Rdata/annual_indicators/ASEA_mpiesm_rca4_rcp45.rds")
-  ASEA_rcp85 <- readRDS("Rdata/annual_indicators/ASEA_mpiesm_rca4_rcp85.rds")
-  
-  ACG_rcp45 <- readRDS("Rdata/annual_indicators/ACG_mpiesm_rca4_rcp45.rds")
-  ACG_rcp85 <- readRDS("Rdata/annual_indicators/ACG_mpiesm_rca4_rcp85.rds")
-  
-  NOG_rcp45 <- readRDS("Rdata/annual_indicators/NOG_mpiesm_rca4_rcp45.rds")
-  NOG_rcp85 <- readRDS("Rdata/annual_indicators/NOG_mpiesm_rca4_rcp85.rds")
   
   cli::cli_progress_step("Calculating extensive variables")
   ALL <- bind_rows(BAU_rcp45, BAU_rcp85,
@@ -83,7 +111,7 @@ plot_var <- function(x, var, ylab,
                      aggregateProvinces = TRUE, stand_agg_fun = "mean", 
                      provinces = c("Barcelona", "Girona", "Lleida", "Tarragona"),
                      scenarios = c("BAU", "AMF", "RSB", "ASEA", "ACG", "NOG"),
-                     size = 0.7, se = FALSE, quantile_range = FALSE) {
+                     linewidth = 0.7, alpha = 0.2, se = FALSE, quantile_range = FALSE) {
   x <- x |>
     filter(Province %in% provinces, Management %in% scenarios)
   
@@ -107,9 +135,9 @@ plot_var <- function(x, var, ylab,
         geom_line(data = x_agg[x_agg$Year %in% common,], 
                   aes(x = Year, y=y), col = "black", linewidth = 1.0)
       if(se) g <- g+
-        geom_ribbon(aes(x = Year, ymin=y_min, ymax = y_max, fill=Management), alpha = 0.3)
+        geom_ribbon(aes(x = Year, ymin=y_min, ymax = y_max, fill=Management), alpha = alpha)
       if(quantile_range) g <- g+
-        geom_ribbon(aes(x = Year, ymin=q25, ymax = q75, fill=Management), alpha = 0.3)
+        geom_ribbon(aes(x = Year, ymin=q25, ymax = q75, fill=Management), alpha = alpha)
     } else if(stand_agg_fun == "sum") {
       x_agg <- x |>
         dplyr::group_by(Climate, Management, Year) |>
@@ -132,26 +160,27 @@ plot_var <- function(x, var, ylab,
         dplyr::mutate(y_min = y - sd.y/sqrt(n.y)*1.96,
                       y_max = y + sd.y/sqrt(n.y)*1.96)
       g<-ggplot(x_agg)+
-        geom_line(aes(x = Year, y=y, col=Management), size = size)+
-        geom_line(data = x_agg[x_agg$Year %in% common,], aes(x = Year, y=y), col = "black", size = size)+
+        geom_line(aes(x = Year, y=y, col=Management), linewidth = linewidth)+
+        geom_line(data = x_agg[x_agg$Year %in% common,], aes(x = Year, y=y), col = "black", linewidth = linewidth)+
         facet_grid(rows = vars(Climate), cols = vars(Province))
       if(se) g <- g+
-        geom_ribbon(aes(x = Year, ymin=y_min, ymax = y_max, fill=Management), alpha = 0.3)
+        geom_ribbon(aes(x = Year, ymin=y_min, ymax = y_max, fill=Management), alpha = alpha)
       if(quantile_range) g <- g+
-        geom_ribbon(aes(x = Year, ymin=q25, ymax = q75, fill=Management), alpha = 0.3)
+        geom_ribbon(aes(x = Year, ymin=q25, ymax = q75, fill=Management), alpha = alpha)
     } else if(stand_agg_fun == "sum") {
       x_agg <- x |>
         dplyr::group_by(Climate, Management, Province, Year) |>
         dplyr::summarise(y = sum(.data[[var]], na.rm = TRUE), .groups="drop")
       g<-ggplot(x_agg)+
-        geom_line(aes(x = Year, y=y, col=Management), size = size)+
-        geom_line(data = x_agg[x_agg$Year %in% common,], aes(x = Year, y=y), col = "black", size = size)+
+        geom_line(aes(x = Year, y=y, col=Management), linewidth = linewidth)+
+        geom_line(data = x_agg[x_agg$Year %in% common,], aes(x = Year, y=y), col = "black", linewidth = linewidth)+
         facet_grid(rows = vars(Climate), cols = vars(Province))
     }
   }
   g <- g+
     geom_vline(xintercept = 2020, linetype="dashed")+
-    annotate("rect", xmin = 2000, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
+    annotate("rect", xmin = 2000, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = alpha)+
+    scale_fill_brewer("Management", type ="qual", palette = "Set1")+
     scale_color_brewer("Management", type ="qual", palette = "Set1")+
     scale_x_continuous(limits = c(2000,2105), expand = c(0,0))+
     xlab("")+ylab(ylab)+theme_bw()+theme(panel.spacing = unit(1,"lines"))
@@ -273,13 +302,13 @@ plot_volume_var <- function(x, var, ylab,
 
 
 
-ALL <- load_result_table()
-VOL <- load_volume_table()
+ALL <- load_result_table(test = TRUE)
+VOL <- load_volume_table(test = TRUE)
 
-target_scenarios <- c("BAU","AMF", "ASEA")#, "RSB", "ASEA", "ACG", "NOG")
 target_scenarios <- c("BAU","AMF", "RSB", "ASEA", "ACG", "NOG")
 target_provinces <- c("Barcelona", "Girona", "Lleida", "Tarragona")
-aggregateProvinces <- F
+aggregateProvinces <- T
+se <- F
 
 plot_volume_var(VOL, "Growth", "Growth (m3)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
 plot_volume_var(VOL, "Mortality", "Mortality (m3)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
@@ -297,48 +326,52 @@ plot_volume_var(VOL, "SatisfactionRate", "Satisfaction (% of demand)", aggregate
 
 
 # Climate
-plot_var(ALL, "Precipitation", "Annual precipitation (mm/yr)")
-plot_var(ALL, "Pdaymax", "Maximum daily precipitation (mm/day)")
-plot_var(ALL, "PET", "Annual PET (mm/yr)")
-plot_var(ALL, "PPET", "Moisture index")
-plot_var(ALL, "CumulativePPET", "Cumulative moisture index")
+plot_var(ALL, "Precipitation", "Annual precipitation (mm/yr)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "Pdaymax", "Maximum daily precipitation (mm/day)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "PET", "Annual PET (mm/yr)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "PPET", "Moisture index", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "CumulativePPET", "Cumulative moisture index", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
 
 # Structure
-plot_var(ALL, "BasalArea", "Stand basal area (m2/ha), excl. saplings", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "TreeDensity", "Tree density (ind/ha), excl. saplings", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "QMD", "Quadratic mean diameter (cm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "cvDBH", "Coeffient of variation of DBH (excl. saplings)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "TreeRichness", "Tree species richness", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "ShrubRichness", "Shrub species richness", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "ShrubCover", "Overall shrub cover (%)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "LAI_max", "Woody LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "Tree_lai", "Tree LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "Shrub_lai", "Shrub LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "Total_lai", "Total LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+plot_var(ALL, "BasalArea", "Stand basal area (m2/ha), excl. saplings", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "TreeDensity", "Tree density (ind/ha), excl. saplings", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+# plot_var(ALL, "meanDBH", "Mean diameter (cm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+# plot_var(ALL, "meanHeight", "Mean height (cm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "QMD", "Quadratic mean diameter (cm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "cvDBH", "Coeffient of variation of DBH (excl. saplings)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "TreeRichness", "Tree species richness", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "ShrubRichness", "Shrub species richness", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "ShrubCover", "Overall shrub cover (%)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "LAI_max", "Woody LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "Tree_lai", "Tree LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "Shrub_lai", "Shrub LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "Herb_lai", "Herb LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "Total_lai", "Total LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
 
 # Function
-plot_var(ALL, "GrossPrimaryProduction", "Gross Primary Production (gC/m2/yr)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "NetPrimaryProduction", "Net Primary Production (gC/m2/yr)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "WaterUseEfficiency", "Water Use Efficiency (gC/mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "CarbonUseEfficiency", "Carbon Use Efficiency (gC synthesis/gC)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "StemPLC", "Maximum annual Stem PLC ([0-1])", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "PlantStress", "Maximum annual plant drought stress ([0-1])", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+plot_var(ALL, "GrossPrimaryProduction", "Gross Primary Production (gC/m2/yr)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "NetPrimaryProduction", "Net Primary Production (gC/m2/yr)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "WaterUseEfficiency", "Water Use Efficiency (gC/mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "CarbonUseEfficiency", "Carbon Use Efficiency (gC synthesis/gC)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "StemPLC", "Maximum annual Stem PLC ([0-1])", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "PlantStress", "Maximum annual plant drought stress ([0-1])", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
 
 # Timber stock
-plot_var(ALL, "AllVolume", "Tree volume stock (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "AllVolumeExt", "Tree volume stock (m3)", stand_agg_fun = "sum", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "VolumeStructure", "Structural wood volume stock (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "VolumeFirewood", "Fire wood volume stock (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+plot_var(ALL, "AllVolume", "Tree volume stock (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "AllVolumeExt", "Tree volume stock (m3)", stand_agg_fun = "sum", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "VolumeStructure", "Structural wood volume stock (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "VolumeFirewood", "Fire wood volume stock (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
 
 # Biomass stock
-plot_var(ALL, "TreeBiomass", "Tree biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "ShrubBiomass", "Shrub biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+plot_var(ALL, "LiveBiomass", "Woody live biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "TreeBiomass", "Tree biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "ShrubBiomass", "Shrub biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
 
 # Dead biomass
-plot_var(ALL, "DeadBiomass", "Dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "CumulativeDeadBiomass", "Cumulative dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "CumulativeTreeDeadBiomass", "Cumulative tree dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "CumulativeShrubDeadBiomass", "Cumulative shrub dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+plot_var(ALL, "DeadBiomass", "Dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "CumulativeDeadBiomass", "Cumulative dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "CumulativeTreeDeadBiomass", "Cumulative tree dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "CumulativeShrubDeadBiomass", "Cumulative shrub dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
 
 plot_mortality_pathway(ALL, "Dead biomass (Mg CO2/ha)", growth_form = "all", cumulative = FALSE, provinces = target_provinces, scenarios = target_scenarios)
 plot_mortality_pathway(ALL, "Tree dead biomass (Mg CO2/ha)", growth_form = "tree", cumulative = FALSE, provinces = target_provinces, scenarios = target_scenarios)
@@ -348,28 +381,28 @@ plot_mortality_pathway(ALL, "Cumulative tree dead biomass (Mg CO2/ha)", growth_f
 plot_mortality_pathway(ALL, "Cumulative shrub dead biomass (Mg CO2/ha)", growth_form = "shrub", cumulative = TRUE, provinces = target_provinces, scenarios = target_scenarios)
 
 # Wood extraction
-plot_var(ALL, "CutAll", "Annual tree volume extraction (m3/ha/yr)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "CutAllExt", "Annual tree volume extraction (m3/yr)", stand_agg_fun = "sum", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "CumulativeCutAll", "Cumulative tree volume extraction (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+plot_var(ALL, "CutAll", "Annual tree volume extraction (m3/ha/yr)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "CutAllExt", "Annual tree volume extraction (m3/yr)", stand_agg_fun = "sum", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "CumulativeCutAll", "Cumulative tree volume extraction (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
 plot_var(ALL, "CumulativeCutAllExt", "Cumulative tree volume extraction (m3)", stand_agg_fun = "sum")
 plot_var(ALL, "CumulativeCutFirewood", "Cumulative firewood volume extraction (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
 plot_var(ALL, "CumulativeCutStructure", "Cumulative structure volume extraction (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
 
 # Water supply/regulation
-plot_var(ALL, "BlueWater", "Blue water (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "Transpiration", "Plant transpiration (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "CumulativeBlueWater", "Cumulative Blue water (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "RunoffCoefficient", "Runoff Coef. [0-1]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "CumulativeRunoffCoefficient", "Cumulative Runoff Coef. [0-1]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+plot_var(ALL, "BlueWater", "Blue water (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "Transpiration", "Plant transpiration (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "CumulativeBlueWater", "Cumulative Blue water (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "RunoffCoefficient", "Runoff Coef. [0-1]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "CumulativeRunoffCoefficient", "Cumulative Runoff Coef. [0-1]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
 plot_var(ALL, "RegulationCoefficient", "Regulation Coef. [0-1]")
 plot_var(ALL, "CumulativeRegulation", "Cumulative Regulation Coef. [0-1]")
-plot_var(ALL, "Cm_mean", "Cm (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+plot_var(ALL, "Cm_mean", "Cm (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
 
 # Fire hazard
-plot_var(ALL, "Shrub_fuel", "Shrub fine fuel (kg/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "Tree_fuel", "Tree fine fuel (kg/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "SFP", "Surface fire potential [0-9]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "CFP", "Crown fire potential [0-9]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+plot_var(ALL, "Tree_fuel", "Tree fine fuel (kg/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "Shrub_fuel", "Shrub fine fuel (kg/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "SFP", "Surface fire potential [0-9]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+plot_var(ALL, "CFP", "Crown fire potential [0-9]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
 
 # volstruct_plot <- ALL |>  select(Climate, Management, id, Year, VolumeStructure) |>
 #   pivot_wider(names_from = Year, values_from = VolumeStructure) |>

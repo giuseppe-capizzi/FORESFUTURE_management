@@ -7,19 +7,17 @@ library(IFNallometry)
 
 climate_base = "emf/datasets/Climate/"
 
-ntest <- 100
-chunk_size <- 5
+chunk_size <- 20
 num_cores <- 20
 
-progress = FALSE
+progress = TRUE
 iprovinces <- 1:4
-overwrite = TRUE
-subset_initial = FALSE
-common_2001_2010 = TRUE
-common_2011_2020 = TRUE
-BAU_2021_2100 = FALSE
+overwrite = FALSE
+historic_2001_2010 = FALSE
+historic_2011_2020 = FALSE
+BAU_2021_2100 = TRUE
 AMF_2021_2100 = FALSE
-RSB_2021_2100 = FALSE
+RSB_2021_2100 = FALSE 
 ASEA_2021_2100 = FALSE
 ACG_2021_2100 = FALSE
 NOG_2021_2100 = FALSE
@@ -58,25 +56,11 @@ source("Rscripts/A2_utils.R")
 
 
 
-if(subset_initial) {
-  cli::cli_li(paste0("Subsetting ", ntest, " random test plots per province"))
-  nfiplot_prov_test <- nfiplot_provs
-  for(i in 1:4) {
-    df_i <- nfiplot_prov_test[[i]]
-    df_i <- df_i[sample(nrow(df_i), ntest), ]
-    nfiplot_prov_test[[i]] <- df_i
-  }
-  cli::cli_li(paste0("Storing initial state"))
-  saveRDS(nfiplot_prov_test, "Rdata/test_initial.rds")
-}
-
-
 # Historical 2001-2010 --------------------------------------------------------
 
-if(common_2001_2010) {
+if(historic_2001_2010) {
   cli::cli_h1(paste0("SIMULATION 2001-2010 (all scenarios)"))
-  nfiplot_prov_test <- readRDS("Rdata/test_initial.rds")
-  
+
   years <- 2001:2010
   
   cli::cli_li(paste0("CO2 levels for years 2001 to 2010"))
@@ -95,10 +79,10 @@ if(common_2001_2010) {
   for(iprov in iprovinces) {
     cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
     
-    nfiplot_test <- nfiplot_prov_test[[iprov]]
+    nfiplot_prov <- nfiplot_provs[[iprov]]
     cli::cli_li(paste0("Assigning management units by dominant species and excluding plots from management"))
-    nfiplot_test$management_unit <- assign_management_unit(nfiplot_test$dominant_tree_species, default_prescriptions)
-    nfiplot_test$management_unit[(nfiplot_test$LowQuality) | (nfiplot_test$management_BAU==0)] <- NA
+    nfiplot_prov$management_unit <- assign_management_unit(nfiplot_prov$dominant_tree_species, default_prescriptions)
+    nfiplot_prov$management_unit[(nfiplot_prov$LowQuality) | (nfiplot_prov$management_BAU==0)] <- NA
 
     cli::cli_li(paste0("Defining management scenario (historical demand)"))
     volumes <- aprofit_decade_prov_spp |>
@@ -106,28 +90,26 @@ if(common_2001_2010) {
                     Decade == "2001-2010")
     volumes_2001_2010 <- volumes$Volume
     names(volumes_2001_2010) <- volumes$Species
-    volumes_2001_2010_test <- volumes_2001_2010/(nrow(nfiplot_provs[[iprov]])/nrow(nfiplot_test))
-    scen_2001_2010_test <- create_management_scenario(default_prescriptions,  
-                                                      volumes_2001_2010_test) 
+    scen_2001_2010 <- create_management_scenario(default_prescriptions,  
+                                                 volumes_2001_2010) 
     
     cli::cli_li(paste0("Entering fordyn_scenario()"))
-    res_01_10 <- fordyn_scenario(nfiplot_test, SpParamsMED, meteo = interpolators, progress = progress,
+    res_01_10 <- fordyn_scenario(nfiplot_prov, SpParamsMED, meteo = interpolators, progress = progress,
                                  CO2ByYear = CO2ByYear,
                                  volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                  local_control = local_control,
-                                 management_scenario = scen_2001_2010_test, 
+                                 management_scenario = scen_2001_2010, 
                                  summary_function = summary_scenario, summary_arguments = list(SpParams = SpParamsMED),
                                  parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
     
     cli::cli_li(paste0("Storing results"))
-    saveRDS(res_01_10, paste0("Rdata/Test_historic/test_", provinceStrings[iprov], "_2001_2010.rds"))
+    saveRDS(res_01_10, paste0("Rdata/historic/", provinceStrings[iprov], "_2001_2010.rds"))
   }
 }
 
 
 # Historical 2011-2020 --------------------------------------------------------
-
-if(common_2011_2020) {
+if(historic_2011_2020) {
   cli::cli_h1(paste0("SIMULATION 2011-2020 (all scenarios)"))
   
   years <- 2011:2020
@@ -151,7 +133,7 @@ if(common_2011_2020) {
     cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
     
     cli::cli_li(paste0("Recovering previous run"))
-    res_01_10 <- readRDS(paste0("Rdata/Test_historic/test_", provinceStrings[iprov],"_2001_2010.rds"))
+    res_01_10 <- readRDS(paste0("Rdata/historic/", provinceStrings[iprov],"_2001_2010.rds"))
     
     cli::cli_li(paste0("Defining management scenario (historical demand)"))
     volumes <- aprofit_decade_prov_spp |>
@@ -159,9 +141,8 @@ if(common_2011_2020) {
                     Decade == "2011-2020")
     volumes_2011_2020 <- volumes$Volume
     names(volumes_2011_2020) <- volumes$Species
-    volumes_2011_2020_test <- volumes_2011_2020/(nrow(nfiplot_provs[[iprov]])/nrow(res_01_10$next_sf))
-    scen_2011_2020_test <- create_management_scenario(default_prescriptions,  
-                                                      volumes_2011_2020_test) 
+    scen_2011_2020 <- create_management_scenario(default_prescriptions,  
+                                                 volumes_2011_2020) 
     
     
     cli::cli_li(paste0("Entering fordyn_scenario()"))
@@ -169,12 +150,12 @@ if(common_2011_2020) {
                                  CO2ByYear = CO2ByYear,
                                  volume_function = volume_scenario,  volume_arguments = list(province = provinces[iprov]),
                                  local_control = local_control,
-                                 management_scenario = scen_2011_2020_test, 
+                                 management_scenario = scen_2011_2020, 
                                  summary_function = summary_scenario, summary_arguments = list(SpParams = SpParamsMED),
                                  parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
     
     cli::cli_li(paste0("Storing results"))
-    saveRDS(res_11_20, paste0("Rdata/Test_historic/test_", provinceStrings[iprov],"_2011_2020.rds"))
+    saveRDS(res_11_20, paste0("Rdata/historic/", provinceStrings[iprov],"_2011_2020.rds"))
   }
 }
 
@@ -192,7 +173,7 @@ if(BAU_2021_2100) {
         cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
         
         cli::cli_li(paste0("Recovering end of historical run"))
-        res <- readRDS(paste0("Rdata/historic/test_", provinceStrings[iprov], "_2011_2020.rds"))
+        res <- readRDS(paste0("Rdata/historic/", provinceStrings[iprov], "_2011_2020.rds"))
         
         cli::cli_li(paste0("Re-assigning management units by dominant species and excluding plots from management"))
         next_sf <- res$next_sf
@@ -204,7 +185,7 @@ if(BAU_2021_2100) {
         yearsIni <- seq(2021 , 2091, by=10)
         yearsFin <- seq(2030, 2100, by=10)
         for(iy in 1:length(yearsIni)) {
-          res_file <- paste0("Rdata/BAU/test_BAU_", provinceStrings[iprov],"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
+          res_file <- paste0("Rdata/BAU/BAU_", provinceStrings[iprov],"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
           if(!file.exists(res_file) || overwrite) {
             cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
             interpolator_file <- EMFdatautils::download_emfdata(climate_base,
@@ -229,11 +210,10 @@ if(BAU_2021_2100) {
             volumes_2001_2020 <- volumes$Volume
             names(volumes_2001_2020) <- volumes$Species
             
-            volumes_BAU_test <- volumes_2001_2020/(nrow(nfiplot_provs[[iprov]])/nrow(res$next_sf))
             rates <- rep(30, 10) # 30% extraction rate
             names(rates) <- as.character(yearsIni[iy]:yearsFin[iy])
-            scen_BAU_test <- create_management_scenario(units = default_prescriptions,  
-                                                        annual_demand_by_species = volumes_BAU_test,
+            scen_BAU <- create_management_scenario(units = default_prescriptions,  
+                                                        annual_demand_by_species = volumes_2001_2020,
                                                         extraction_rate_by_year = rates) 
             
             cli::cli_li(paste0("Entering fordyn_scenario()"))
@@ -241,7 +221,7 @@ if(BAU_2021_2100) {
                                    CO2ByYear = CO2ByYear,
                                    volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                    local_control = local_control,
-                                   management_scenario = scen_BAU_test, 
+                                   management_scenario = scen_BAU, 
                                    summary_function = summary_scenario, summary_arguments = list(SpParams = SpParamsMED),
                                    parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
             
@@ -270,10 +250,10 @@ if(AMF_2021_2100) {
       for(iprov in iprovinces) {
         cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
         
-        res_file <- paste0("Rdata/AMF/test_AMF_",provinceStrings[iprov], "_", climate_model,"_",climate_scen,"_2021_2030.rds")
+        res_file <- paste0("Rdata/AMF/AMF_",provinceStrings[iprov], "_", climate_model,"_",climate_scen,"_2021_2030.rds")
         if(!file.exists(res_file) || overwrite) {
           cli::cli_li(paste0("Recovering end of historical run"))
-          res <- readRDS(paste0("Rdata/historic/test_", provinceStrings[iprov], "_2011_2020.rds"))
+          res <- readRDS(paste0("Rdata/historic/", provinceStrings[iprov], "_2011_2020.rds"))
           
           cli::cli_li(paste0("Re-assigning management units by dominant species and excluding plots from management"))
           next_sf <- res$next_sf
@@ -306,19 +286,18 @@ if(AMF_2021_2100) {
           volumes_2001_2020 <- volumes$Volume
           names(volumes_2001_2020) <- volumes$Species
           
-          volumes_AMF_test <- volumes_2001_2020/(nrow(nfiplot)/nrow(res$next_sf))
           rates <- rep(40, 10) # 40% extraction rate
           names(rates) <- as.character(2021:2030)
-          scen_AMF_test <- create_management_scenario(units = default_prescriptions,  
-                                                      annual_demand_by_species = volumes_AMF_test,
-                                                      extraction_rate_by_year = rates) 
+          scen_AMF <- create_management_scenario(units = default_prescriptions,  
+                                                 annual_demand_by_species = volumes_2001_2020,
+                                                 extraction_rate_by_year = rates) 
           
           cli::cli_li(paste0("Entering fordyn_scenario()"))
           res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator, progress = progress,
                                  CO2ByYear = CO2ByYear,
                                  volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                  local_control = local_control,
-                                 management_scenario = scen_AMF_test, 
+                                 management_scenario = scen_AMF, 
                                  summary_function = summary_scenario, summary_arguments = list(SpParams = SpParamsMED),
                                  parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
           saveRDS(res, res_file)
@@ -330,7 +309,7 @@ if(AMF_2021_2100) {
         yearsIni <- seq(2031 , 2091, by=10)
         yearsFin <- seq(2040, 2100, by=10)
         for(iy in 1:length(yearsIni)) {
-          res_file <- paste0("Rdata/AMF/test_AMF_", provinceStrings[iprov], "_",climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
+          res_file <- paste0("Rdata/AMF/AMF_", provinceStrings[iprov], "_",climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
           
           if(!file.exists(res_file) || overwrite) {
             cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
@@ -355,19 +334,18 @@ if(AMF_2021_2100) {
             volumes_2001_2020 <- volumes$Volume
             names(volumes_2001_2020) <- volumes$Species
             
-            volumes_AMF_test <- volumes_2001_2020/(nrow(nfiplot)/nrow(res$next_sf))
             rates <- rep(70, 10) # 70% extraction rate
             names(rates) <- as.character(yearsIni[iy]:yearsFin[iy])
-            scen_AMF_test <- create_management_scenario(units = default_prescriptions,  
-                                                        annual_demand_by_species = volumes_AMF_test,
-                                                        extraction_rate_by_year = rates) 
+            scen_AMF <- create_management_scenario(units = default_prescriptions,  
+                                                   annual_demand_by_species = volumes_2001_2020,
+                                                   extraction_rate_by_year = rates) 
             
             cli::cli_li(paste0("Entering fordyn_scenario()"))
             res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator, progress = progress,
                                    CO2ByYear = CO2ByYear,
                                    volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                    local_control = local_control,
-                                   management_scenario = scen_AMF_test, 
+                                   management_scenario = scen_AMF, 
                                    summary_function = summary_scenario, summary_arguments = list(SpParams = SpParamsMED),
                                    parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
             
@@ -396,7 +374,7 @@ if(RSB_2021_2100) {
         cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
         
         cli::cli_li(paste0("Recovering end of historical run"))
-        res <- readRDS(paste0("Rdata/historic/test_", provinceStrings[iprov], "_2011_2020.rds"))
+        res <- readRDS(paste0("Rdata/historic/", provinceStrings[iprov], "_2011_2020.rds"))
         
         cli::cli_li(paste0("Re-assigning management units by dominant species and excluding plots from management"))
         next_sf <- res$next_sf
@@ -405,7 +383,7 @@ if(RSB_2021_2100) {
         next_sf$management_arguments[(next_sf$LowQuality) | (next_sf$managment_RSB==0)] <- list(NULL)
         
         # 2021 - 2030
-        res_file <- paste0("Rdata/RSB/test_RSB_",provinceStrings[iprov], "_",climate_model,"_",climate_scen,"_2021_2030.rds")
+        res_file <- paste0("Rdata/RSB/RSB_",provinceStrings[iprov], "_",climate_model,"_",climate_scen,"_2021_2030.rds")
         if(!file.exists(res_file) || overwrite) {
           cli::cli_li(paste0("Applying land-use changes (2021-2030)"))
           sel_to_agri <- next_sf$prior_agri %in% 1:10
@@ -413,7 +391,7 @@ if(RSB_2021_2100) {
           sel_to_remove <- sel_to_agri | sel_to_pasture
           i_herb <- which(sel_to_remove)
           ef<- emptyforest()
-          ef$herbCover <- 100
+          ef$herbCover <- 90
           ef$herbHeight <- 5
           for(i in i_herb) {
             next_sf$forest[[i]] <- ef
@@ -444,19 +422,18 @@ if(RSB_2021_2100) {
             dplyr::summarise(Volume = mean(Volume, na.rm=TRUE), .groups = "drop") 
           volumes_2001_2020 <- volumes$Volume
           names(volumes_2001_2020) <- volumes$Species
-          volumes_RSB_test <- volumes_2001_2020/(nrow(nfiplot)/nrow(res$next_sf))
           rates <- rep(30, 10) # 30% extraction rate
           names(rates) <- as.character(2021:2030)
-          scen_RSB_test <- create_management_scenario(units = default_prescriptions,  
-                                                      annual_demand_by_species = volumes_RSB_test,
-                                                      extraction_rate_by_year = rates) 
+          scen_RSB <- create_management_scenario(units = default_prescriptions,  
+                                                 annual_demand_by_species = volumes_2001_2020,
+                                                 extraction_rate_by_year = rates) 
           
           cli::cli_li(paste0("Entering fordyn_scenario()"))
           res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
                                  CO2ByYear = CO2ByYear,
                                  volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                  local_control = local_control,
-                                 management_scenario = scen_RSB_test, 
+                                 management_scenario = scen_RSB, 
                                  summary_function = summary_scenario, summary_arguments = list(SpParams = SpParamsMED),
                                  parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
           saveRDS(res, res_file)
@@ -465,7 +442,7 @@ if(RSB_2021_2100) {
         }
         
         # 2031 - 2040
-        res_file <- paste0("Rdata/RSB/test_RSB_",provinceStrings[iprov], "_",climate_model,"_",climate_scen,"_2031_2040.rds")
+        res_file <- paste0("Rdata/RSB/RSB_",provinceStrings[iprov], "_",climate_model,"_",climate_scen,"_2031_2040.rds")
         if(!file.exists(res_file) || overwrite) {
           cli::cli_li(paste0("Applying land-use changes (2031-2040)"))
           sel_to_agri <- next_sf$prior_agri %in% 11:20
@@ -504,19 +481,18 @@ if(RSB_2021_2100) {
             dplyr::summarise(Volume = mean(Volume, na.rm=TRUE), .groups = "drop") 
           volumes_2001_2020 <- volumes$Volume
           names(volumes_2001_2020) <- volumes$Species
-          volumes_RSB_test <- volumes_2001_2020/(nrow(nfiplot)/nrow(res$next_sf))
           rates <- rep(30, 10) # 30% extraction rate
           names(rates) <- as.character(2031:2040)
-          scen_RSB_test <- create_management_scenario(units = default_prescriptions,  
-                                                      annual_demand_by_species = volumes_RSB_test,
-                                                      extraction_rate_by_year = rates) 
+          scen_RSB <- create_management_scenario(units = default_prescriptions,  
+                                                 annual_demand_by_species = volumes_2001_2020,
+                                                 extraction_rate_by_year = rates) 
           
           cli::cli_li(paste0("Entering fordyn_scenario()"))
           res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
                                  CO2ByYear = CO2ByYear,
                                  volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                  local_control = local_control,
-                                 management_scenario = scen_RSB_test, 
+                                 management_scenario = scen_RSB, 
                                  summary_function = summary_scenario, summary_arguments = list(SpParams = SpParamsMED),
                                  parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
           saveRDS(res, res_file)
@@ -528,7 +504,7 @@ if(RSB_2021_2100) {
         yearsIni <- seq(2041 , 2091, by=10)
         yearsFin <- seq(2050, 2100, by=10)
         for(iy in 1:length(yearsIni)) {
-          res_file <- paste0("Rdata/RSB/test_RSB_",provinceStrings[iprov], "_",climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
+          res_file <- paste0("Rdata/RSB/RSB_",provinceStrings[iprov], "_",climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
 
           if(!file.exists(res_file) || overwrite) {
             cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
@@ -553,19 +529,18 @@ if(RSB_2021_2100) {
               dplyr::summarise(Volume = mean(Volume, na.rm=TRUE), .groups = "drop") 
             volumes_2001_2020 <- volumes$Volume
             names(volumes_2001_2020) <- volumes$Species
-            volumes_RSB_test <- volumes_2001_2020/(nrow(nfiplot)/nrow(res$next_sf))
             rates <- rep(30, 10) # 30% extraction rate
             names(rates) <- as.character(yearsIni[iy]:yearsFin[iy])
-            scen_RSB_test <- create_management_scenario(units = default_prescriptions,  
-                                                        annual_demand_by_species = volumes_RSB_test,
-                                                        extraction_rate_by_year = rates) 
+            scen_RSB <- create_management_scenario(units = default_prescriptions,  
+                                                   annual_demand_by_species = volumes_2001_2020,
+                                                   extraction_rate_by_year = rates) 
             
             cli::cli_li(paste0("Entering fordyn_scenario()"))
             res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
                                    CO2ByYear = CO2ByYear,
                                    volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                    local_control = local_control,
-                                   management_scenario = scen_RSB_test, 
+                                   management_scenario = scen_RSB, 
                                    summary_function = summary_scenario, summary_arguments = list(SpParams = SpParamsMED),
                                    parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
             
@@ -595,7 +570,7 @@ if(ASEA_2021_2100) {
         cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
         
         cli::cli_li(paste0("Recovering end of historical run"))
-        res <- readRDS(paste0("Rdata/historic/test_", provinceStrings[iprov], "_2011_2020.rds"))
+        res <- readRDS(paste0("Rdata/historic/", provinceStrings[iprov], "_2011_2020.rds"))
         
         cli::cli_li(paste0("Re-assigning management units by dominant species and excluding plots from management"))
         next_sf <- res$next_sf
@@ -607,46 +582,52 @@ if(ASEA_2021_2100) {
         yearsIni <- seq(2021 , 2091, by=10)
         yearsFin <- seq(2030, 2100, by=10)
         for(iy in 1:length(yearsIni)) {
-          cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
-          interpolator_file <- EMFdatautils::download_emfdata(climate_base,
-                                                              paste0("Products/InterpolationData/Catalunya/Projections/", 
-                                                                     climate_model, "_", climate_scen,"_daily_interpolator_", 
-                                                                     yearsIni[iy], "_", yearsFin[iy],".nc"))
-          interpolator <- meteoland::read_interpolator(interpolator_file)
-          file.remove(interpolator_file)
           
-          cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
-          CO2ByYear <- CO2_ppm |> 
-            dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
-          CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
-          names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+          res_file <- paste0("Rdata/ASEA/ASEA_",provinceStrings[iprov], "_",climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
           
-          
-          cli::cli_li(paste0("Defining management scenario (30% extraction rates)"))
-          volumes <- aprofit_decade_prov_spp[,1:4] |>
-            dplyr::filter(Province == provinceStrings[iprov]) |>
-            dplyr::group_by(Species) |>
-            dplyr::summarise(Volume = mean(Volume, na.rm=TRUE), .groups = "drop") 
-          volumes_2001_2020 <- volumes$Volume
-          names(volumes_2001_2020) <- volumes$Species
-          volumes_ASEA_test <- volumes_2001_2020/(nrow(nfiplot)/nrow(res$next_sf))
-          rates <- rep(30, 10) # 30% extraction rate
-          names(rates) <- as.character(yearsIni[iy]:yearsFin[iy])
-          scen_ASEA_test <- create_management_scenario(units = default_prescriptions,  
-                                                       annual_demand_by_species = volumes_ASEA_test,
-                                                       extraction_rate_by_year = rates) 
-          
-          cli::cli_li(paste0("Entering fordyn_scenario()"))
-          res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
-                                 CO2ByYear = CO2ByYear,
-                                 volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
-                                 local_control = local_control,
-                                 management_scenario = scen_ASEA_test, 
-                                 summary_function = summary_scenario, summary_arguments = list(SpParams = SpParamsMED),
-                                 parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
-          
-          cli::cli_li(paste0("Storing results"))
-          saveRDS(res, paste0("Rdata/ASEA/test_ASEA_",provinceStrings[iprov], "_",climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds"))
+          if(!file.exists(res_file) || overwrite) {
+            cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
+            interpolator_file <- EMFdatautils::download_emfdata(climate_base,
+                                                                paste0("Products/InterpolationData/Catalunya/Projections/", 
+                                                                       climate_model, "_", climate_scen,"_daily_interpolator_", 
+                                                                       yearsIni[iy], "_", yearsFin[iy],".nc"))
+            interpolator <- meteoland::read_interpolator(interpolator_file)
+            file.remove(interpolator_file)
+            
+            cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+            CO2ByYear <- CO2_ppm |> 
+              dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
+            CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
+            names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+            
+            
+            cli::cli_li(paste0("Defining management scenario (30% extraction rates)"))
+            volumes <- aprofit_decade_prov_spp[,1:4] |>
+              dplyr::filter(Province == provinceStrings[iprov]) |>
+              dplyr::group_by(Species) |>
+              dplyr::summarise(Volume = mean(Volume, na.rm=TRUE), .groups = "drop") 
+            volumes_2001_2020 <- volumes$Volume
+            names(volumes_2001_2020) <- volumes$Species
+            rates <- rep(30, 10) # 30% extraction rate
+            names(rates) <- as.character(yearsIni[iy]:yearsFin[iy])
+            scen_ASEA <- create_management_scenario(units = default_prescriptions,  
+                                                    annual_demand_by_species = volumes_2001_2020,
+                                                    extraction_rate_by_year = rates) 
+            
+            cli::cli_li(paste0("Entering fordyn_scenario()"))
+            res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
+                                   CO2ByYear = CO2ByYear,
+                                   volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
+                                   local_control = local_control,
+                                   management_scenario = scen_ASEA, 
+                                   summary_function = summary_scenario, summary_arguments = list(SpParams = SpParamsMED),
+                                   parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
+            
+            cli::cli_li(paste0("Storing results"))
+            saveRDS(res, res_file)
+          } else {
+            res <- readRDS(res_file)
+          }
         } 
       }
     }
@@ -667,7 +648,7 @@ if(ACG_2021_2100) {
         cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
         
         cli::cli_li(paste0("Recovering end of historical run"))
-        res <- readRDS(paste0("Rdata/historic/test_", provinceStrings[iprov], "_2011_2020.rds"))
+        res <- readRDS(paste0("Rdata/historic/", provinceStrings[iprov], "_2011_2020.rds"))
         
         cli::cli_li(paste0("Re-assigning management units by dominant species and excluding plots from management"))
         next_sf <- res$next_sf
@@ -680,7 +661,7 @@ if(ACG_2021_2100) {
         yearsFin <- seq(2030, 2100, by=10)
         for(iy in 1:length(yearsIni)) {
           
-          res_file <- paste0("Rdata/ACG/test_ACG_", provinceStrings[iprov],"_",climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
+          res_file <- paste0("Rdata/ACG/ACG_", provinceStrings[iprov],"_",climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
           if(!file.exists(res_file) || overwrite) {
             cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
             interpolator_file <- EMFdatautils::download_emfdata(climate_base,
@@ -698,14 +679,14 @@ if(ACG_2021_2100) {
             
             
             cli::cli_li(paste0("Defining management scenario (no demand and adaptation prescriptions)"))
-            scen_ACG_test <- create_management_scenario(units = adaptation_prescriptions) 
+            scen_ACG <- create_management_scenario(units = adaptation_prescriptions) 
             
             cli::cli_li(paste0("Entering fordyn_scenario()"))
             res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
                                    CO2ByYear = CO2ByYear,
                                    volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                    local_control = local_control,
-                                   management_scenario = scen_ACG_test, 
+                                   management_scenario = scen_ACG, 
                                    summary_function = summary_scenario, summary_arguments = list(SpParams = SpParamsMED),
                                    parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
             
@@ -734,7 +715,7 @@ if(NOG_2021_2100) {
         cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
         
         cli::cli_li(paste0("Recovering end of historical run"))
-        res <- readRDS(paste0("Rdata/historic/test_", provinceStrings[iprov], "_2011_2020.rds"))
+        res <- readRDS(paste0("Rdata/historic/", provinceStrings[iprov], "_2011_2020.rds"))
         
         cli::cli_li(paste0("Re-assigning management units to missing"))
         next_sf <- res$next_sf
@@ -746,7 +727,7 @@ if(NOG_2021_2100) {
         yearsFin <- seq(2030, 2100, by=10)
         for(iy in 1:length(yearsIni)) {
           
-          res_file <- paste0("Rdata/NOG/test_NOG_", provinceStrings[iprov],"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
+          res_file <- paste0("Rdata/NOG/NOG_", provinceStrings[iprov],"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
           if(!file.exists(res_file) || overwrite) {
             cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
             interpolator_file <- EMFdatautils::download_emfdata(climate_base,
@@ -763,14 +744,14 @@ if(NOG_2021_2100) {
             names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
             
             cli::cli_li(paste0("Defining management scenario (no management)"))
-            scen_NOG_test <- create_management_scenario(units = 1) 
+            scen_NOG <- create_management_scenario(units = 1) 
             
             cli::cli_li(paste0("Entering fordyn_scenario()"))
             res <- fordyn_scenario(res, SpParamsMED, meteo = interpolator,
                                    CO2ByYear = CO2ByYear,
                                    volume_function = volume_scenario, volume_arguments = list(province = provinces[iprov]),
                                    local_control = local_control,
-                                   management_scenario = scen_NOG_test, 
+                                   management_scenario = scen_NOG, 
                                    summary_function = summary_scenario, summary_arguments = list(SpParams = SpParamsMED),
                                    parallelize = TRUE, chunk_size = chunk_size, num_cores = num_cores)
             

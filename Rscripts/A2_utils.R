@@ -5,6 +5,20 @@ provinces <- c(8,17,25,43)
 provinceStrings <- c("Barcelona", "Girona", "Lleida", "Tarragona")
 
 
+cli::cli_li(paste0("Defining function to load and check historical interpolator"))
+load_interpolator <- function(interpolator_file, year) {
+  interp <- meteoland::read_interpolator(interpolator_file)
+  file.remove(interpolator_file)
+  # Set missing wind speed values to NA
+  ws0 <- interp$WindSpeed==0
+  ws0[is.na(ws0)] <- FALSE
+  if(sum(ws0)>0) {
+    cli::cli_li(paste0("Number of 0 windspeed for year ", year, ": ", sum(ws0)))
+    interp$WindSpeed[ws0] <- NA
+  }
+  return(interp)
+}
+
 cli::cli_li(paste0("Defining tree biomass function"))
 tree_biomass_scenario<-function(x, SpParams, as.CO2 = TRUE){
   if(inherits(x, "forest")) x <- x$treeData
@@ -137,3 +151,77 @@ volume_scenario<-function(x, SpParams, province){
   return(numeric(0))
 }
 
+cli::cli_li(paste0("Defining summary function"))
+summary_scenario <- function(object, SpParams, ...) {
+  summary_wb <- medfate::summary.fordyn(object, 
+                                        output = "WaterBalance", 
+                                        freq = "years", FUN = sum, na.rm=TRUE) # fordyn summar
+  summary_cb <- medfate::summary.fordyn(object, 
+                                        output = "CarbonBalance", 
+                                        freq = "years", FUN = sum, na.rm=TRUE) # fordyn summar
+  summary_fire <- medfate::summary.fordyn(object, 
+                                          output = "FireHazard", 
+                                          freq = "years", 
+                                          FUN = max, na.rm = TRUE)
+  summary_stand_mean <- medfate::summary.fordyn(object, 
+                                                output="Stand", 
+                                                freq="years", 
+                                                FUN = mean, na.rm=TRUE)
+  colnames(summary_stand_mean)[c(4,6)] <- c("LAI_mean", "Cm_mean")
+  summary_stand_min <- medfate::summary.fordyn(object, 
+                                               output="Stand", 
+                                               freq="years", 
+                                               FUN = min, months=6:9, na.rm=TRUE)
+  colnames(summary_stand_min)[c(4,6)] <- c("LAI_min", "Cm_min")
+  summary_stand_max <- medfate::summary.fordyn(object, 
+                                               output="Stand", 
+                                               freq="years", 
+                                               FUN = max, months=6:9, na.rm=TRUE)
+  colnames(summary_stand_max)[c(4,6)] <- c("LAI_max", "Cm_max")
+  f_sum <- t(sapply(object$ForestStructures, function(x) {unlist(summary(x, SpParams))}))
+  summary_meteo <- t(sapply(object$GrowthResults, function(x) {
+    c(Pdaymax = max(x$weather$Precipitation, na.rm = TRUE), 
+      MAT = mean(x$weather$MeanTemperature, na.rm=TRUE))
+  }))
+  lai_coh_year <- summary(object, output="Plants$LAI", FUN = max)
+  plc_coh_year <- summary(object, output="Plants$StemPLC", FUN = max)
+  stress_coh_year <- summary(object, output="Plants$PlantStress", FUN = max)
+  summary_stress <- data.frame(PlantStress = rowSums(stress_coh_year*lai_coh_year)/rowSums(lai_coh_year),
+                               StemPLC = rowSums(plc_coh_year*lai_coh_year)/rowSums(lai_coh_year))
+  summary_fmc <- t(sapply(object$GrowthResults, function(x) {
+      cfmc_overstory<- x$FireHazard$CFMC_overstory
+      cfmc_understory<- x$FireHazard$CFMC_understory
+      dfmc <- x$FireHazard$DFMC
+      c(CFMC_overstory_min = min(cfmc_overstory, na.rm = TRUE),
+        CFMC_understory_min = min(cfmc_understory, na.rm = TRUE),
+        DFMC_min = min(dfmc, na.rm = TRUE),
+        N120 = sum(cfmc_understory<120, na.rm=TRUE),
+        N100 = sum(cfmc_understory<100, na.rm=TRUE),
+        N80 = sum(cfmc_understory<80, na.rm=TRUE),
+        N880 = sum(dfmc < 8 & cfmc_understory<80), na.rm=TRUE)
+  }))
+  return(cbind(summary_wb,
+               summary_cb,
+               f_sum[-1, , drop = FALSE], 
+               summary_fire[,c(13,14), drop = FALSE],
+               summary_stand_mean[,c(4,6), drop = FALSE], # LAI, Cm average (for regulation)
+               summary_stand_min[,c(4,6), drop = FALSE], # LAI, Cm min in summer
+               summary_stand_max[,c(4,6), drop = FALSE], # LAI, Cm max in summer
+               summary_stress,
+               summary_fmc,
+               summary_meteo))
+}
+
+cli::cli_li(paste0("Defining function to assign management unit"))
+assign_management_unit <- function(dominant_tree_species, prescription_by_species) {
+  n_units <- nrow(prescription_by_species)
+  management_unit <- rep(NA, length(dominant_tree_species))
+  sp_index_list <- strsplit(prescription_by_species$SpIndex, "/")
+  for(i in 1:n_units) {
+    sp_ind <- sp_index_list[[i]]
+    sp_names <- SpParamsMED$Name[SpParamsMED$SpIndex %in% sp_ind]
+    # cat(paste0("     ", i," ", paste0(sp_names, collapse = "/"), " ", paste0(sp_ind, collapse = "/"),"\n"))
+    management_unit[dominant_tree_species %in% sp_names] <- i
+  }
+  return(management_unit)
+}
