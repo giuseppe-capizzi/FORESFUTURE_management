@@ -1,6 +1,6 @@
 library(ggplot2)
 library(tidyverse)
-
+library(medfate)
 
 load_volume_table <- function(test = FALSE) {
   df <- data.frame()
@@ -48,6 +48,7 @@ load_result_table <- function(test = FALSE) {
     initial$represented_area <- initial$represented_area*(n/n_test)
   } else {
     initial <- nfiplot
+    initial$represented_area <- initial$area
   }
   cli::cli_progress_step("Loading annual indicators")
   if(test) {
@@ -105,6 +106,29 @@ load_result_table <- function(test = FALSE) {
                   CumulativeCutAllExt = CumulativeCutAll*represented_area) |>
     dplyr::mutate(Climate = toupper(Climate))
   return(ALL)
+}
+
+load_species_abundance_table <- function(test = FALSE) {
+  df <- data.frame()
+  for(management_scen in c("BAU", "AMF", "RSB", "ASEA", "ACG", "NOG")) {
+    for(climate_model in c("mpiesm_rca4")) {
+      for(climate_scen in c("rcp45", "rcp85")) {
+        if(test) {
+          bind_file <- paste0("Rdata/Test_species_abundance/Test_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
+        } else {
+          bind_file <- paste0("Rdata/species_abundance/", management_scen, "_", climate_model,"_", climate_scen, ".rds")
+        }
+        if(file.exists(bind_file)) {
+          df <- bind_rows(df, readRDS(file = bind_file)) 
+        }
+      }
+    }
+  }
+  df <- df |>
+    dplyr::mutate(TotalBiomass = Aerial + Roots)|>
+    dplyr::left_join(SpParamsMED[,c("Name", "Genus", "Order","Family", "Group")], by=c("Species"="Name"))
+    
+  return(df)
 }
 
 plot_var <- function(x, var, ylab, 
@@ -301,14 +325,16 @@ plot_volume_var <- function(x, var, ylab,
 }
 
 
+test <- FALSE
+ALL <- load_result_table(test = test)
+VOL <- load_volume_table(test = test)
+SP <- load_species_abundance_table(test = test)
 
-ALL <- load_result_table(test = TRUE)
-VOL <- load_volume_table(test = TRUE)
 
-target_scenarios <- c("BAU","AMF", "RSB", "ASEA", "ACG", "NOG")
-target_provinces <- c("Barcelona", "Girona", "Lleida", "Tarragona")
-aggregateProvinces <- T
-se <- F
+target_scenarios <- c("BAU", "ACG")#,"AMF", "RSB", "ASEA", "ACG", "NOG")
+target_provinces <- c("Barcelona", "Girona")#, "Lleida", "Tarragona")
+aggregateProvinces <- F
+se <- T
 
 plot_volume_var(VOL, "Growth", "Growth (m3)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
 plot_volume_var(VOL, "Mortality", "Mortality (m3)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
@@ -403,6 +429,37 @@ plot_var(ALL, "Tree_fuel", "Tree fine fuel (kg/m2)", aggregateProvinces = aggreg
 plot_var(ALL, "Shrub_fuel", "Shrub fine fuel (kg/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
 plot_var(ALL, "SFP", "Surface fire potential [0-9]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
 plot_var(ALL, "CFP", "Crown fire potential [0-9]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+
+SP |>
+  dplyr::filter(GrowthForm == "Tree") |>
+  dplyr::group_by(Climate, Management, Step, Year, Genus) |>
+  dplyr::summarise(Biomass = sum(TotalBiomass, na.rm=TRUE), 
+                   Volume = sum(Volume, na.rm=TRUE), 
+                   .groups="drop") -> tree_group
+
+SP |>
+  dplyr::filter(GrowthForm == "Tree") |>
+  dplyr::group_by(Climate, Management, Step, Year) |>
+  dplyr::summarise(TotalBiomass = sum(TotalBiomass, na.rm=TRUE), 
+                   TotalVolume = sum(Volume, na.rm=TRUE), 
+                   .groups="drop") -> tree_total
+
+tree_group |> 
+  dplyr::left_join(tree_total, by=c("Climate", "Management", "Step", "Year"))|>
+  dplyr::mutate(RelBiomass = Biomass/TotalBiomass) -> tree_group_rel
+
+# target_families <- c("Betulaceae","Pinaceae", "Fagaceae", "Oleaceae", "Sapindaceae")
+# tree_group_rel$Family[!(tree_group_rel$Family %in% target_families)] <- "Other"
+
+target_genus <- c("Pinus","Fagus", "Quercus", "Acer", "Arbutus", "Castanea", "Phillyrea")
+tree_group_rel$Genus[!(tree_group_rel$Genus %in% target_genus)] <- "Other"
+
+p1 <- ggplot(tree_group_rel, aes(x = Year, y = RelBiomass)) +
+  geom_col(aes(fill = Genus), position = "stack")+
+  scale_fill_brewer("Genus", type = "qual", palette = "Set1")+
+  facet_grid(rows = vars(Climate), cols = vars(Management))+
+  theme_bw()
+ggsave("kk.png", p1)
 
 # volstruct_plot <- ALL |>  select(Climate, Management, id, Year, VolumeStructure) |>
 #   pivot_wider(names_from = Year, values_from = VolumeStructure) |>

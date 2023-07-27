@@ -207,29 +207,103 @@ scenario_annual_indicators<-function(climate_model, climate_scen, management_sce
   }
 }
 
+scenario_annual_province_species_abundance <- function(iprov, climate_model, climate_scen, management_scen, test = FALSE) {
+  
+  provinces <- c(8,17,25,43)
+  provinceStrings <- c("Barcelona", "Girona", "Lleida", "Tarragona")
+  
+  provinceCode <- provinces[iprov]
+  provinceName <- provinceStrings[iprov]
+  
+  if(test) {
+    bind_file <- paste0("Rdata/Test_binded/Test_", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
+  } else {
+    bind_file <- paste0("Rdata/binded/", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
+  }
+  if(!file.exists(bind_file)) return(data.frame())
+  
+  scen_list <- readRDS(file = bind_file)
+  
+  tt <- scen_list$tree_table
+  st <- scen_list$shrub_table
+  
+  tree_species_abundance <- tt |>
+    dplyr::group_by(Climate, Management, Province, Step, Year, Species) |>
+    dplyr::summarise(Volume = sum(Volume, na.rm=TRUE),
+                     Aerial = sum(Aerial, na.rm=TRUE),
+                     Roots = sum(Roots, na.rm=TRUE),
+                     .groups = "drop") |>
+    dplyr::mutate(GrowthForm = "Tree")
+
+  shrub_species_abundance <- st |>
+    dplyr::group_by(Climate, Management, Province, Step, Year, Species) |>
+    dplyr::summarise(Aerial = sum(Aerial, na.rm=TRUE),
+                     Roots = sum(Roots, na.rm=TRUE),
+                     .groups = "drop") |>
+    dplyr::mutate(GrowthForm = "Shrub") 
+  
+  species_abundance <- tree_species_abundance |>
+    dplyr::bind_rows(shrub_species_abundance)
+  return(species_abundance)
+}
+
+scenario_species_abundance<-function(climate_model, climate_scen, management_scen, test = FALSE) {
+  BCN <- scenario_annual_province_species_abundance(1, climate_model, climate_scen, management_scen, test)
+  GIR <- scenario_annual_province_species_abundance(2, climate_model, climate_scen, management_scen, test)
+  LLE <- scenario_annual_province_species_abundance(3, climate_model, climate_scen, management_scen, test)
+  TAR <- scenario_annual_province_species_abundance(4, climate_model, climate_scen, management_scen, test)
+  if(test) {
+    saveRDS(bind_rows(BCN, GIR, LLE, TAR),
+            file = paste0("Rdata/Test_species_abundance/Test_", management_scen, "_", climate_model, "_", climate_scen, ".rds"))
+  } else {
+    saveRDS(bind_rows(BCN, GIR, LLE, TAR),
+            file = paste0("Rdata/species_abundance/", management_scen, "_", climate_model, "_", climate_scen, ".rds"))
+  }
+  
+}
+
 climate_model <- "mpiesm_rca4"
+test <- FALSE
 
 # (1) BAU
-scenario_annual_indicators(climate_model, "rcp45", "BAU", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "BAU", test = TRUE)
+scenario_annual_indicators(climate_model, "rcp45", "BAU", test = test)
+scenario_annual_indicators(climate_model, "rcp85", "BAU", test = test)
+
+scenario_species_abundance(climate_model, "rcp45", "BAU", test = test)
+scenario_species_abundance(climate_model, "rcp85", "BAU", test = test)
 
 # (2) AMF
-scenario_annual_indicators(climate_model, "rcp45", "AMF", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "AMF", test = TRUE)
+scenario_annual_indicators(climate_model, "rcp45", "AMF", test = test)
+scenario_annual_indicators(climate_model, "rcp85", "AMF", test = test)
+
+scenario_species_abundance(climate_model, "rcp45", "AMF", test = test)
+scenario_species_abundance(climate_model, "rcp85", "AMF", test = test)
 
 # (3) RSB
-scenario_annual_indicators(climate_model, "rcp45", "RSB", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "RSB", test = TRUE)
+scenario_annual_indicators(climate_model, "rcp45", "RSB", test = test)
+scenario_annual_indicators(climate_model, "rcp85", "RSB", test = test)
+
+scenario_species_abundance(climate_model, "rcp45", "RSB", test = test)
+scenario_species_abundance(climate_model, "rcp85", "RSB", test = test)
 
 # (4) ASEA
-scenario_annual_indicators(climate_model, "rcp45", "ASEA", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "ASEA", test = TRUE)
+scenario_annual_indicators(climate_model, "rcp45", "ASEA", test = test)
+scenario_annual_indicators(climate_model, "rcp85", "ASEA", test = test)
+
+scenario_species_abundance(climate_model, "rcp45", "ASEA", test = test)
+scenario_species_abundance(climate_model, "rcp85", "ASEA", test = test)
 
 # (5) ACG
-scenario_annual_indicators(climate_model, "rcp45", "ACG", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "ACG", test = TRUE)
+scenario_annual_indicators(climate_model, "rcp45", "ACG", test = test)
+scenario_annual_indicators(climate_model, "rcp85", "ACG", test = test)
+
+scenario_species_abundance(climate_model, "rcp45", "ACG", test = test)
+scenario_species_abundance(climate_model, "rcp85", "ACG", test = test)
 
 # (6) NOG
-scenario_annual_indicators(climate_model, "rcp45", "NOG", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "NOG", test = TRUE)
+scenario_annual_indicators(climate_model, "rcp45", "NOG", test = test)
+scenario_annual_indicators(climate_model, "rcp85", "NOG", test = test)
+
+scenario_species_abundance(climate_model, "rcp45", "NOG", test = test)
+scenario_species_abundance(climate_model, "rcp85", "NOG", test = test)
 
