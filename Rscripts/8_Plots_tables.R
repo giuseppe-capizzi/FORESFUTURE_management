@@ -6,6 +6,7 @@ load_volume_table <- function(test = FALSE) {
   df <- data.frame()
   for(provinceName in c("Barcelona", "Girona","Lleida", "Tarragona")) {
     for(management_scen in c("BAU", "AMF", "RSB", "ASEA", "ACG", "NOG")) {
+      cli::cli_progress_step(paste0("Province: ", provinceName, " Scenario: ", management_scen))
       for(climate_model in c("mpiesm_rca4")) {
         for(climate_scen in c("rcp45", "rcp85")) {
           if(test) {
@@ -21,6 +22,7 @@ load_volume_table <- function(test = FALSE) {
       }
     }
   }
+  cli::cli_progress_step("Decade summaries")
   df_decade <- df |>
     dplyr::mutate(Decade = cut(Year, seq(2000,2100, by=10), 
                                labels = paste0(seq(2001, 2091, by=10),"-", seq(2010, 2100, by=10)))) |>
@@ -331,24 +333,39 @@ VOL <- load_volume_table(test = test)
 SP <- load_species_abundance_table(test = test)
 
 
-target_scenarios <- c("BAU", "ACG")#,"AMF", "RSB", "ASEA", "ACG", "NOG")
-target_provinces <- c("Barcelona", "Girona")#, "Lleida", "Tarragona")
+target_scenarios <- c("BAU","AMF", "RSB", "ASEA", "ACG", "NOG")
+target_provinces <- c("Barcelona", "Girona", "Lleida", "Tarragona")
 aggregateProvinces <- F
 se <- T
 
-plot_volume_var(VOL, "Growth", "Growth (m3)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_volume_var(VOL, "Mortality", "Mortality (m3)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_volume_var(VOL, "Extraction", "Extraction (m3)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_volume_var(VOL, "ExtractionRate", "Extraction rate (% of growth)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)+
+p1<-plot_volume_var(VOL, "Growth", "Growth (m3)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+ggsave("Plots/GrowthByDecade_provinces.png", p1, width = 16, height = 8)
+
+p2<- plot_volume_var(VOL, "Mortality", "Mortality (m3)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+ggsave("Plots/MortalityByDecade_provinces.png", p2, width = 16, height = 8)
+
+p3<- plot_volume_var(VOL, "Extraction", "Extraction (m3)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+ggsave("Plots/ExtractionByDecade_provinces.png", p3, width = 16, height = 8)
+
+p4<- plot_volume_var(VOL, "ExtractionRate", "Extraction rate (% of growth)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)+
   geom_hline(yintercept = 30, linetype="dotted")+
   geom_hline(yintercept = 40, linetype="dotted")+
   geom_hline(yintercept = 70, linetype="dotted")+
   geom_hline(yintercept = 100, linetype="dotted")
+ggsave("Plots/ExtractionRateByDecade_provinces.png", p4, width = 16, height = 8)
 
-plot_volume_var(VOL, "ExtractionTarget", "Extraction target species (m3)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_volume_var(VOL, "Demand", "Nominal demand (m3)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_volume_var(VOL, "SatisfactionRate", "Satisfaction (% of demand)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)+
+p5<- plot_volume_var(VOL, "ExtractionTarget", "Extraction target species (m3)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+ggsave("Plots/ExtractionTargetByDecade_provinces.png", p5, width = 16, height = 8)
+
+p6<- plot_volume_var(VOL, "Demand", "Nominal demand (m3)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+ggsave("Plots/NominalDemandByDecade_provinces.png", p6, width = 16, height = 8)
+
+p7<- plot_volume_var(VOL, "SatisfactionRate", "Satisfaction (% of demand)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)+
   geom_hline(yintercept = 100, linetype="dotted")
+ggsave("Plots/SatisfactionRate_provinces.png", p7, width = 16, height = 8)
+
+rm(p1, p2, p3, p4, p5, p6, p7)
+gc()
 
 
 # Climate
@@ -359,76 +376,179 @@ plot_var(ALL, "PPET", "Moisture index", aggregateProvinces = aggregateProvinces,
 plot_var(ALL, "CumulativePPET", "Cumulative moisture index", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
 
 # Structure
-plot_var(ALL, "BasalArea", "Stand basal area (m2/ha), excl. saplings", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "TreeDensity", "Tree density (ind/ha), excl. saplings", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+p1<-plot_var(ALL, "BasalArea", "Stand basal area (m2/ha), excl. saplings", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/BasalArea_provinces.png", p1, width = 16, height = 8)
+
+p2 <- plot_var(ALL, "TreeDensity", "Tree density (ind/ha), excl. saplings", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/TreeDensity_provinces.png", p2, width = 16, height = 8)
 # plot_var(ALL, "meanDBH", "Mean diameter (cm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
 # plot_var(ALL, "meanHeight", "Mean height (cm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "QMD", "Quadratic mean diameter (cm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "cvDBH", "Coeffient of variation of DBH (excl. saplings)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "TreeRichness", "Tree species richness", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "ShrubRichness", "Shrub species richness", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "ShrubCover", "Overall shrub cover (%)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "LAI_max", "Woody LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "Tree_lai", "Tree LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "Shrub_lai", "Shrub LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "Herb_lai", "Herb LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "Total_lai", "Total LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+
+p3 <-plot_var(ALL, "QMD", "Quadratic mean diameter (cm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/QMD_provinces.png", p3, width = 16, height = 8)
+
+p4<-plot_var(ALL, "cvDBH", "Coeffient of variation of DBH (excl. saplings)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/cvDBH_provinces.png", p4, width = 16, height = 8)
+
+p5 <-plot_var(ALL, "TreeRichness", "Tree species richness", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/TreeRichness_provinces.png", p5, width = 16, height = 8)
+
+p6<-plot_var(ALL, "ShrubRichness", "Shrub species richness", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/ShrubRichness_provinces.png", p6, width = 16, height = 8)
+
+p7<-plot_var(ALL, "ShrubCover", "Overall shrub cover (%)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/ShrubCover_provinces.png", p7, width = 16, height = 8)
+
+p8<-plot_var(ALL, "LAI_max", "Woody LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/LAImax_provinces.png", p8, width = 16, height = 8)
+
+p9 <- plot_var(ALL, "Tree_lai", "Tree LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/TreeLAI_provinces.png", p9, width = 16, height = 8)
+
+p10 <- plot_var(ALL, "Shrub_lai", "Shrub LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/ShrubLAI_provinces.png", p10, width = 16, height = 8)
+
+p11 <- plot_var(ALL, "Herb_lai", "Herb LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/HerbLAI_provinces.png", p11, width = 16, height = 8)
+
+p12<-plot_var(ALL, "Total_lai", "Total LAI (m2/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/TotalLAI_provinces.png", p12, width = 16, height = 8)
 
 # Function
-plot_var(ALL, "GrossPrimaryProduction", "Gross Primary Production (gC/m2/yr)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "NetPrimaryProduction", "Net Primary Production (gC/m2/yr)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "WaterUseEfficiency", "Water Use Efficiency (gC/mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "CarbonUseEfficiency", "Carbon Use Efficiency (gC synthesis/gC)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "StemPLC", "Maximum annual Stem PLC ([0-1])", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "PlantStress", "Maximum annual plant drought stress ([0-1])", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+p13<-plot_var(ALL, "GrossPrimaryProduction", "Gross Primary Production (gC/m2/yr)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/GPP_provinces.png", p13, width = 16, height = 8)
+
+p14<-plot_var(ALL, "NetPrimaryProduction", "Net Primary Production (gC/m2/yr)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/NPP_provinces.png", p14, width = 16, height = 8)
+
+p15<-plot_var(ALL, "WaterUseEfficiency", "Water Use Efficiency (gC/mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/WUE_provinces.png", p15, width = 16, height = 8)
+
+p16<-plot_var(ALL, "CarbonUseEfficiency", "Carbon Use Efficiency (gC synthesis/gC)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/CUE_provinces.png", p16, width = 16, height = 8)
+
+p17<-plot_var(ALL, "StemPLC", "Maximum annual Stem PLC ([0-1])", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/StemPLC_provinces.png", p17, width = 16, height = 8)
+
+p18<-plot_var(ALL, "PlantStress", "Maximum annual plant drought stress ([0-1])", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/PlantStress_provinces.png", p18, width = 16, height = 8)
 
 # Timber stock
-plot_var(ALL, "AllVolume", "Tree volume stock (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "AllVolumeExt", "Tree volume stock (m3)", stand_agg_fun = "sum", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "VolumeStructure", "Structural wood volume stock (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "VolumeFirewood", "Fire wood volume stock (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+p19<-plot_var(ALL, "AllVolume", "Tree volume stock (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/VolumeStock_provinces.png", p19, width = 16, height = 8)
+
+p20<-plot_var(ALL, "AllVolumeExt", "Tree volume stock (m3)", stand_agg_fun = "sum", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/VolumeStockExtensive_provinces.png", p20, width = 16, height = 8)
+
+p21<-plot_var(ALL, "VolumeStructure", "Structural wood volume stock (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/VolumeStructureStock_provinces.png", p21, width = 16, height = 8)
+
+p22<-plot_var(ALL, "VolumeFirewood", "Fire wood volume stock (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/VolumeFirewoodStock_provinces.png", p22, width = 16, height = 8)
+
+rm(p19, p20, p21, p22)
+gc()
 
 # Biomass stock
-plot_var(ALL, "LiveBiomass", "Woody live biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "TreeBiomass", "Tree biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "ShrubBiomass", "Shrub biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+p23<-plot_var(ALL, "LiveBiomass", "Woody live biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/LiveWoodyBiomass_provinces.png", p23, width = 16, height = 8)
+
+p24<-plot_var(ALL, "TreeBiomass", "Tree biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/LiveTreeBiomass_provinces.png", p24, width = 16, height = 8)
+
+p25 <- plot_var(ALL, "ShrubBiomass", "Shrub biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/LiveShrubBiomass_provinces.png", p25, width = 16, height = 8)
+
+rm(p23, p24, p25)
+gc()
 
 # Dead biomass
-plot_var(ALL, "DeadBiomass", "Dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "CumulativeDeadBiomass", "Cumulative dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "CumulativeTreeDeadBiomass", "Cumulative tree dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "CumulativeShrubDeadBiomass", "Cumulative shrub dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+p26 <- plot_var(ALL, "DeadBiomass", "Dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/DeadWoodyBiomass_provinces.png", p26, width = 16, height = 8)
 
-plot_mortality_pathway(ALL, "Dead biomass (Mg CO2/ha)", growth_form = "all", cumulative = FALSE, provinces = target_provinces, scenarios = target_scenarios)
-plot_mortality_pathway(ALL, "Tree dead biomass (Mg CO2/ha)", growth_form = "tree", cumulative = FALSE, provinces = target_provinces, scenarios = target_scenarios)
-plot_mortality_pathway(ALL, "Shrub dead biomass (Mg CO2/ha)", growth_form = "shrub", cumulative = FALSE, provinces = target_provinces, scenarios = target_scenarios)
-plot_mortality_pathway(ALL, "Cumulative dead biomass (Mg CO2/ha)", growth_form = "all", cumulative = TRUE, provinces = target_provinces, scenarios = target_scenarios)
-plot_mortality_pathway(ALL, "Cumulative tree dead biomass (Mg CO2/ha)", growth_form = "tree", cumulative = TRUE, provinces = target_provinces, scenarios = target_scenarios)
-plot_mortality_pathway(ALL, "Cumulative shrub dead biomass (Mg CO2/ha)", growth_form = "shrub", cumulative = TRUE, provinces = target_provinces, scenarios = target_scenarios)
+p27<-plot_var(ALL, "CumulativeDeadBiomass", "Cumulative dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/CumulativeDeadWoodyBiomass_provinces.png", p27, width = 16, height = 8)
+
+p28<-plot_var(ALL, "CumulativeTreeDeadBiomass", "Cumulative tree dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/CumulativeDeadTreeBiomass_provinces.png", p28, width = 16, height = 8)
+
+p29<-plot_var(ALL, "CumulativeShrubDeadBiomass", "Cumulative shrub dead biomass (Mg CO2/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/CumulativeDeadTreeBiomass_provinces.png", p29, width = 16, height = 8)
+
+rm(p26, p27, p28, p29)
+gc()
+
+# plot_mortality_pathway(ALL, "Dead biomass (Mg CO2/ha)", growth_form = "all", cumulative = FALSE, provinces = target_provinces, scenarios = target_scenarios)
+# plot_mortality_pathway(ALL, "Tree dead biomass (Mg CO2/ha)", growth_form = "tree", cumulative = FALSE, provinces = target_provinces, scenarios = target_scenarios)
+# plot_mortality_pathway(ALL, "Shrub dead biomass (Mg CO2/ha)", growth_form = "shrub", cumulative = FALSE, provinces = target_provinces, scenarios = target_scenarios)
+
+p30 <- plot_mortality_pathway(ALL, "Cumulative dead biomass (Mg CO2/ha)", growth_form = "all", cumulative = TRUE, provinces = target_provinces, scenarios = target_scenarios)
+ggsave("Plots/CumulativeDeadWoodyBiomassCause_provinces.png", p30, width = 16, height = 8)
+
+p31<-plot_mortality_pathway(ALL, "Cumulative tree dead biomass (Mg CO2/ha)", growth_form = "tree", cumulative = TRUE, provinces = target_provinces, scenarios = target_scenarios)
+ggsave("Plots/CumulativeDeadTreeBiomassCause_provinces.png", p31, width = 16, height = 8)
+
+p32<-plot_mortality_pathway(ALL, "Cumulative shrub dead biomass (Mg CO2/ha)", growth_form = "shrub", cumulative = TRUE, provinces = target_provinces, scenarios = target_scenarios)
+ggsave("Plots/CumulativeDeadShrubBiomassCause_provinces.png", p32, width = 16, height = 8)
+
+rm(p30, p31, p32)
+gc()
+
 
 # Wood extraction
-plot_var(ALL, "CutAll", "Annual tree volume extraction (m3/ha/yr)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "CutAllExt", "Annual tree volume extraction (m3/yr)", stand_agg_fun = "sum", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "CumulativeCutAll", "Cumulative tree volume extraction (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "CumulativeCutAllExt", "Cumulative tree volume extraction (m3)", stand_agg_fun = "sum")
-plot_var(ALL, "CumulativeCutFirewood", "Cumulative firewood volume extraction (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
-plot_var(ALL, "CumulativeCutStructure", "Cumulative structure volume extraction (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+p33<-plot_var(ALL, "CutAll", "Annual tree volume extraction (m3/ha/yr)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/AnnualTreeVolumeExtraction_provinces.png", p33, width = 16, height = 8)
+# plot_var(ALL, "CutAllExt", "Annual tree volume extraction (m3/yr)", stand_agg_fun = "sum", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+
+p34<-plot_var(ALL, "CumulativeCutAll", "Cumulative tree volume extraction (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/CumulativeTreeVolumeExtraction_provinces.png", p34, width = 16, height = 8)
+
+# plot_var(ALL, "CumulativeCutAllExt", "Cumulative tree volume extraction (m3)", stand_agg_fun = "sum")
+p35<-plot_var(ALL, "CumulativeCutFirewood", "Cumulative firewood volume extraction (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+ggsave("Plots/CumulativeFirewoodVolumeExtraction_provinces.png", p35, width = 16, height = 8)
+
+p36<-plot_var(ALL, "CumulativeCutStructure", "Cumulative structure volume extraction (m3/ha)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios)
+ggsave("Plots/CumulativeStructureVolumeExtraction_provinces.png", p36, width = 16, height = 8)
+
+rm(p33, p34, p35, p36)
+gc()
 
 # Water supply/regulation
-plot_var(ALL, "BlueWater", "Blue water (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "Transpiration", "Plant transpiration (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "CumulativeBlueWater", "Cumulative Blue water (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "RunoffCoefficient", "Runoff Coef. [0-1]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "CumulativeRunoffCoefficient", "Cumulative Runoff Coef. [0-1]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "RegulationCoefficient", "Regulation Coef. [0-1]")
-plot_var(ALL, "CumulativeRegulation", "Cumulative Regulation Coef. [0-1]")
-plot_var(ALL, "Cm_mean", "Cm (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+p37<-plot_var(ALL, "BlueWater", "Blue water (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/AnnualBlueWater_provinces.png", p37, width = 16, height = 8)
+
+p38<-plot_var(ALL, "CumulativeBlueWater", "Cumulative Blue water (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/CumulativeBlueWater_provinces.png", p38, width = 16, height = 8)
+
+p39<-plot_var(ALL, "RunoffCoefficient", "Runoff Coef. [0-1]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/AnnualRunoffCoefficient_provinces.png", p39, width = 16, height = 8)
+
+p40<-plot_var(ALL, "CumulativeRunoffCoefficient", "Cumulative Runoff Coef. [0-1]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/CumulativeRunoffCoefficient_provinces.png", p40, width = 16, height = 8)
+
+# plot_var(ALL, "RegulationCoefficient", "Regulation Coef. [0-1]")
+# plot_var(ALL, "CumulativeRegulation", "Cumulative Regulation Coef. [0-1]")
+p41 <- plot_var(ALL, "Cm_mean", "Cm (mm)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/CmMean_provinces.png", p41, width = 16, height = 8)
+
+rm(p37,p38, p39, p40, p41)
+gc()
 
 # Fire hazard
-plot_var(ALL, "Tree_fuel", "Tree fine fuel (kg/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "Shrub_fuel", "Shrub fine fuel (kg/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "SFP", "Surface fire potential [0-9]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
-plot_var(ALL, "CFP", "Crown fire potential [0-9]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+p42 <- plot_var(ALL, "Tree_fuel", "Tree fine fuel (kg/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/TreeFuel_provinces.png", p42, width = 16, height = 8)
+
+p43 <- plot_var(ALL, "Shrub_fuel", "Shrub fine fuel (kg/m2)", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/ShrubFuel_provinces.png", p43, width = 16, height = 8)
+
+p44 <- plot_var(ALL, "SFP", "Surface fire potential [0-9]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/SurfaceFirePotential_provinces.png", p44, width = 16, height = 8)
+
+p45 <- plot_var(ALL, "CFP", "Crown fire potential [0-9]", aggregateProvinces = aggregateProvinces, provinces = target_provinces, scenarios = target_scenarios, se = se)
+ggsave("Plots/CrownFirePotential_provinces.png", p45, width = 16, height = 8)
+
+rm(p42,p43, p44, p45)
+gc()
 
 SP |>
   dplyr::filter(GrowthForm == "Tree") |>

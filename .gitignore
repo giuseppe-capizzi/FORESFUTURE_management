@@ -3,4 +3,5 @@
 .RData
 .Ruserdata
 Rdata/*
+Plots/*
 res_opt*
