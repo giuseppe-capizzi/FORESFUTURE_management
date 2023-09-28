@@ -212,6 +212,47 @@ summary_scenario <- function(object, SpParams, ...) {
                summary_meteo))
 }
 
+summary_scenario_spwb <- function(object, ...) {
+  summary_wb <- medfate::summary.spwb(object, 
+                                        output = "WaterBalance", 
+                                        freq = "years", FUN = sum, na.rm=TRUE)
+  summary_fire_max <- medfate::summary.spwb(object, 
+                                        output = "FireHazard", 
+                                        freq = "years", 
+                                        FUN = max, na.rm = TRUE)
+  summary_fire_min <- medfate::summary.spwb(object, 
+                                            output = "FireHazard", 
+                                            freq = "years", 
+                                            FUN = min, na.rm = TRUE)
+  summary_stand_mean <- medfate::summary.spwb(object, 
+                                                output="Stand", 
+                                                freq="years", 
+                                                FUN = mean, na.rm=TRUE)
+  colnames(summary_stand_mean)[c(4,6)] <- c("LAI_mean", "Cm_mean")
+  summary_stand_min <- medfate::summary.spwb(object, 
+                                               output="Stand", 
+                                               freq="years", 
+                                               FUN = min, months=6:9, na.rm=TRUE)
+  colnames(summary_stand_min)[c(4,6)] <- c("LAI_min", "Cm_min")
+  summary_stand_max <- medfate::summary.spwb(object, 
+                                               output="Stand", 
+                                               freq="years", 
+                                               FUN = max, months=6:9, na.rm=TRUE)
+  colnames(summary_stand_max)[c(4,6)] <- c("LAI_max", "Cm_max")
+  lai_coh_year <- summary(object, output="Plants$LAI", FUN = max)
+  plc_coh_year <- summary(object, output="Plants$StemPLC", FUN = max)
+  stress_coh_year <- summary(object, output="Plants$PlantStress", FUN = max)
+  summary_stress <- data.frame(PlantStress = rowSums(stress_coh_year*lai_coh_year)/rowSums(lai_coh_year),
+                               StemPLC = rowSums(plc_coh_year*lai_coh_year)/rowSums(lai_coh_year))
+  return(cbind(summary_wb,
+               summary_fire_max[, c(13,14), drop = FALSE],
+               summary_fire_min[, c(1,2,3), drop = FALSE],
+               summary_stand_mean[,c(4,6), drop = FALSE], # LAI, Cm average (for regulation)
+               summary_stand_min[,c(4,6), drop = FALSE], # LAI, Cm min in summer
+               summary_stand_max[,c(4,6), drop = FALSE], # LAI, Cm max in summer
+               summary_stress))
+}
+
 cli::cli_li(paste0("Defining function to assign management unit"))
 assign_management_unit <- function(dominant_tree_species, prescription_by_species) {
   n_units <- nrow(prescription_by_species)
