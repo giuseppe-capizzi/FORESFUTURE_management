@@ -1,0 +1,287 @@
+---
+title: "FORESFUTURE simulation results (medfate)"
+author: "Miquel De Cáceres"
+date: "2023-09-21"
+output:
+  html_document: 
+    toc: true
+  word_document: 
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+### Goal
+
+This document presents a summary of the results obtained in a simulation exercise for the Oficina Catalana de Canvi Climàtic, regarding the potential effects of different alternative climatic and management scenarios in Catalonia (NE Spain). Management scenarios were designed in a participative process with several institutions.
+
+### Simulation design
+
+*Region*: Catalonia, divided into four provinces (Barcelona, Girona, Lleida, Tarragona)
+
+*Starting forests*: IFN3 (~ 11.000 plots)
+
+*Historical period*: 2001-2020
+*Projected period*: 2021-2100
+
+*Climate scenarios*:
+
+ + **RCP 4.5**
+ + **RCP 8.5**
+ 
+*Management scenarios*:
+
+| Acronym | Name              | Key aspects                                           |
+|---------|-------------------|-------------------------------------------------------|
+| **BAU** | Business as usual |  30% extraction rate (also in ASEA and RSB)                          |
+| **AMF** | Alta mobilització de fusta | 40% extraction 2030-2040, 70% 2040-2100 |
+| **RSB** | Reducció superfície de bosc | Land use conversion to agriculture/pastures |
+| **ASEA**| Augment de la superfície exclosa d'aprofitaments | Increase in area without management |
+| **ACG** | Acompanyament de l'ecosistema per l'adaptació al canvi global | No demand-based management. Change in silviculture towards irregular models and more frequent thinning. |
+| **NOG** | No gestió | No management actions (natural dynamics) |
+ 
+### Simulation models
+
+Simulations under the different scenarios were run using packages 'medfate' [ver. 3.1.3] and 'medfateland' [ver. 2.0.2]. In particular, function 'fordyn_scenario()' was developed and used for the purpose of considering management scenarios.
+
+ 
+## Decadal results
+### Verification of management wood volume targets and satisfaction
+
+Wood demand for the two decades of the historic period (2001-2010 and 2011-2020) was prescribed using reported timber statistics in each province. Some scenarios (BAU, ASEA, RSB) aimed at 30% extraction rate throughout the century, whereas AMF targeted 40% and 70% extraction rates. No demand was defined for ACG or NOG. Actual demand values change from one decade to the other because they depend on previous growth and could be affected by the climate scenario (i.e. somewhat lower demand in RCP8.5).  
+
+```{r, out.width='100%', fig.align="center", fig.cap="Nominal decadal wood volume demand per province and scenario.", echo=FALSE}
+knitr::include_graphics("../Plots/NominalDemandByDecade_provinces.png")
+```
+
+Actual wood demand included nominal wood demand as well as offset (i.e. the result of wood demand vs. actual cuts) from the previous year, but the information essentially is the same as the nominal demand:
+
+```{r, out.width='100%', fig.align="center", fig.cap="Actual decadal wood volume demand per province and scenario.", echo=FALSE}
+knitr::include_graphics("../Plots/ExtractionTargetByDecade_provinces.png")
+```
+
+Extracted wood volume simulated by the model are shown in the figure below. They are of course zero under the no management scenario (NOG), but note that extraction was almost always higher for ACG than AMF, meaning that a scenario where cuts emerge simply from silviculture prescriptions (ACG) may actually result in larger timber extraction than the scenario were an increase in wood demand is scheduled (AMF). The extracted amount was similar among scenarios BAU, ASEA and RSB, which had all been scheduled a 30% extraction rate, and lower than that of ACG or AMF.
+
+```{r extraction, out.width='100%', fig.align="center", fig.cap="Decadal extracted wood volume per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/ExtractionByDecade_provinces.png")
+```
+
+If we express wood extraction as a fraction of forest growth (i.e. extraction rates) we see that BAU, ASEA and RSB scenarios reach a bit less 30% of growth, except in Tarragona where they clearly fall below. Extraction rates of the AMF scenario are often above 50% of growth but do not reach 70% as requested by demand, probably due to the fact that a large increase in timber extraction is not possible for some species (e.g. *P. sylvestris*) for the given silvicultural prescriptions. Extraction rates are highest in the ACG scenario, but they are always below 90-100%, so that even in this scenario one could expect a progressive accumulation of wood (specially for those species where initial demand was very low).
+
+```{r, out.width='100%', fig.align="center", fig.cap="Decadal extraction rates per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/ExtractionRateByDecade_provinces.png")
+```
+
+### Wood volume changes due to growth and mortality
+
+Wood volume increase due to tree growth was highest for the NOG scenario, where tree densities are highest. BAU and ASEA are next, whereas wood accumulation rates are lowest in ACG and AMF, due to the highest extraction. Here the model may underestimate growth reduction due to competition effects. Growth varies also following climatic fluctuations and is somewhat lower under RCP 8.5.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Decadal volume increase due to tree growth per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/GrowthByDecade_provinces.png")
+```
+
+Wood volume decrease due to mortality increases towards the end of the century, specially under scenario NOG. This is in part due to an increase of basal mortality due to higher living stocks. Climate change effects are also evident, specially under scenario RCP 8.5. The management scenario with lowest decrease due to mortality is ACG, which stay more ore less constant throught the century.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Decadal volume decrease due to mortality per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/MortalityByDecade_provinces.png")
+```
+
+## Forest structure
+
+Here we focus on simulated forest structure dynamics. Management intensities reported in the previous section are very important to correctly interpret the results.
+
+### Basal area
+
+In terms of basal area (an usual metric of forest development) dynamics there were substantial differences among management scenarios, but some differences could also be observed among climate scenarios. NOG is the scenario where basal area grows the most (here I would expect a slope decrease due to increase in competition, but see below), as could be expected, although growth rates are lower in Tarragona due to a more arid climate. Scenarios ASEA and BAU are almost undistinguishable and predict a substantially lower basal area accumulation. Scenarios AMF and, specially, ACG are those where basal area increases at the lowest rate, due to higher extraction rates. Climate change effects on growth rates are very small in scenario RCP4.5, but much more apparent in the 2070-2080 decade of RCP8.5.  
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of mean basal area, per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/BasalArea_provinces.png")
+```
+
+
+### Tree density
+
+Like with basal area, temporal changes in tree density was strikingly different depending on the management scenario. As before, NOG is the scenario where density increased the most after 2021 (note that historical period did include management for all scenarios), leveling off during the second part of the century. This asymptotic behavior is to be expected by an increase in basal mortality rates, counterbalanced by new recruitment. Scenarios ASEA, BAU and RSB resulted in rather stable tree density under RCP4.5. All management scenarios included  density reductions in the 2070-2080 decade under RCP8.5, but reductions where somewhat lower under ACG. The increased extraction rates of AMF and ACG result in a progressive reduction of tree density regardless of the climate scenario.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of mean tree (DBH > 7.5) density, per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/TreeDensity_provinces.png")
+```
+
+### Quadratic mean tree diameter
+
+Quadratic mean diameter (i.e. average tree size) increased under all scenarios, meaning that overall forests are expected to be formed by larger individuals. However, there were substantial differences among management scenarios in the rate of diameter increase, here being NOG the scenario with slowest mean diameter increase rates, due to a stronger effect of young recruits and lack of size selection via management. In all the scenarios including management, prescriptions remove preferentially young individuals during thinning operations [below-systematic] for most species, causing an increase in mean diameter. RSB scenario also has lower mean diameter than others, but this can be an artifact of conversion from forests to agricultural/pastures. Generally speaking, the more intense the wood extraction, the higher the rate of increase of mean diameter. Very small differences among climate scenarios are observed.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of quadratic mean tree diameter per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/QMD_provinces.png")
+```
+
+
+### Coefficient of variation of tree diameter
+
+The irregularity of stands, measured by the coefficient of variation of the diameter, varied strongly along the century and across management scenarios. Under many scenarios there was an increase in irregularity, being NOG the one where irregularity attained highest values. Only in ACG there was a reduction in diameter variability, specially in Tarragona. As with average diameter, differences across climate scenarios are minor.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of the coefficient of variation in diameter per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/cvDBH_provinces.png")
+```
+
+### Shrub cover
+
+Shrub cover dynamics in the model is affected by tree canopy closure, management operations (although many species can resprout in the model) as well as its own dynamics. Generally speaking, shrub cover remained rather constant or slightly decreased under RCP4.5 (due to tree canopy closure), whereas stronger reductions were observed under RCP8.5 resulting from harder climate conditions. Differences across management scenarios were not large and occurred mostly in the second half of the century. Here the strongest reductions were observed under NOG, presumably due to the lower light reaching the understory, but also under ACG due to a more intense clearing during management operations. The initial decrease in shrub cover obtained for Tarragona may be due to an overestimation of shrub initial leaf area for this province, caused by the fact that allometric biomass models may not be representative for its drier conditions (this artifact is also seen in other variables).
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of the shrub cover per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/ShrubCover_provinces.png")
+```
+
+## Forest composition
+
+The model version used in this exercise was suited for simulating changes in woody species richness, since seed dispersal process was missing. Therefore, species richness could only decrease (due to local extinction). Nevertheless, we report the simulation results here.
+
+Average tree richness was overall very stable under all scenarios, with very gentle decreases in all provinces. Richness under NOG was slightly higher due to the absence of management, which could led to local extinctions for non-resprouting species.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of the tree richness per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/TreeRichness_provinces.png")
+```
+
+Temporal variation i.n shrub richness was less stable than tree richness. Surprisingly, bot ACG and NOG led to higher values of shrub richness, whereas the other scenarios resulted in more consistent decreases. This cause of this pattern deserves investigation.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of the shrub richness per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/ShrubRichness_provinces.png")
+```
+
+
+## Leaf area index (LAI)
+
+The dynamics of leaf area index (i.e. the one-side leaf area over ground area) is an important component to examine in simulations of process-based models, because it is a key functional variable for many processes (photosynthesis, transpiration, growth, etc.) and is also affected by anthropogenic (i.e. management) and natural (e.g. drought) disturbances. 
+
+### Maximum stand leaf area index
+
+Here we call maximum stand LAI to the leaf area that the model predicts as function of forest structure only. Thus, it excludes the effect of phenology or drought-induced defoliation which can temporarily reduce LAI. We obtained an overall rather constant stand LAI under RCP4.5, whereas strong LAI reductions occurred in the 2070-2080 under RCP8.5, concomitantly with density reductions reported above. In contrast with differences in forest structure, differences in LAI were not extraordinary large across management scenarios, being NOG and ACG the more contrasted ones differing in 0.5-0.8 units by the end of the century, depending on the province. This can be explained by the fact that leaf biomass allometries take into account the degree of competition. Hence, when tree or shrub competition is reduced (e.g. due to a thinning operation) the remaining plants may increase their leaf area to profit from the increased light availability, so that variations in leaf area are buffered with respect to variation in forest structure (however, see below the compensation between tree and shrub LAI dynamics).
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of maximum stand LAI per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/TotalLAI_provinces.png")
+```
+
+### Actual stand leaf area index
+
+If we focus on actual stand LAI values, now including drought-induced defoliation transient effects, we see that the overall patterns are similar than the previous figure, but with frequent drops caused by years with decreased precipitation. Comparing this figure with the one before we can see the difference between those years where recovery is soon observed (i.e. plants were defoliated but did not died) as opposed to those years causing an effect in forest structure (i.e. drought-induced mortality, although there could be resprouting) and hence causing a long-term legacy.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of actual stand LAI per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/LAImax_provinces.png")
+```
+
+### Tree leaf area index
+
+The dynamics for overall stand LAI disaggregate into somewhat different patterns for trees and shrubs (here removing again the effects of temporal defoliation). Trees conform the largest contribution to stand LAI and are predicted to increase slowly (sometimes reaching an asymptote). Here, we see again climatic effects, and larger differences across management scenarios, of the order of 0.8-1.0 by the end of the century in Barcelona and Girona. Note the initial reduction of tree LAI under RSB, which is an artifact caused by the land-use conversion.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of maximum tree LAI per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/TreeLAI_provinces.png")
+```
+
+### Shrub leaf area index
+
+Unlike tree LAI, shrub LAI was predicted to progressively decrease under all climate and management scenarios, coherently with the predictions of shrub cover. Although the overall range of shrub LAI variation was modest (between 0.4 and 1.2), this decrease partially compensated the tree LAI increase, explaining why overall stand LAI was rather constant. 
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of maximum shrub LAI per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/ShrubLAI_provinces.png")
+```
+
+## Wood volume and biomass
+
+### Wood volume stocks
+
+Wood volume stocks generally increased under all scenarios, consistently with results obtained for stand basal area (higher degree of long-term stabilization would be expected). Nevertheless, large differences can also be observed across management scenarios, resulting from the more or less intense wood extraction. Scenario ACG is the only one where wood volume stabilized (due to being not demand-based and adaptive to forest progression). Drought-caused decreases of wood stocks can also be observed under RCP8.5.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of (overall) wood volume stocks per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/VolumeStock_provinces.png")
+```
+
+If we focus on large wood for construction (or furniture), we see that the former repeats the same pattern.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of construction timber volume stocks per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/VolumeStructureStock_provinces.png")
+```
+
+In contrast, firewood stocks have different dynamics, depending on the transient amount of trees of small diameter. Scenarios with stronger management effects reduce the stocks of firewood, because management preferentially removed smaller trees, as opposed to NOG which leads to an accumulation of firewood stocks. Climate change effects seem to be stronger for firewood.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of firewood volume stocks per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/VolumeFirewoodStock_provinces.png")
+```
+
+### Biomass stocks
+
+Like wood volume stocks, living biomass stocks (which include both aboveground and belowground biomass) generally increased under all scenarios, and similar patterns were also observed with respect to differences among scenarios.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of woody biomass stocks per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/LiveWoodyBiomass_provinces.png")
+```
+
+
+Since they conform most of the living biomass, tree biomass stocks followed the same patterns as overall biomass stocks.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of tree biomass stocks per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/LiveTreeBiomass_provinces.png")
+```
+
+In contrast, the temporal changes of shrub biomass stocks followed the patterns already seen for shrub cover or shrub LAI dynamics.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of shrub biomass stocks per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/LiveShrubBiomass_provinces.png")
+```
+
+### Dead biomass
+
+Mortality is one of the most difficult processes to predict accurately. Model simulations resulted in an initial mortality of small trees and shrubs, which can be attributed to an excess of biomass with respect to what the model "thinks" can be sustained. In the case of trees, it is the result of applying self-thinning curves to initial density of small trees. Despite this initial pattern, the dead biomass produced during the simulation was rather stable, but increasing due to live biomass accumulation. Particular years resulted in an increase in dead biomass, presumably as a result of drought effects. This is most apparent under RCP8.5 during the 2070-2080 decade. It is also worth noticing that mortality due to extreme dry years was more important in Girona and Barcelona provinces.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of annual dead biomass produced per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/DeadWoodyBiomass_provinces.png")
+```
+
+We can display the same results in a cumulative way and distinguishing among death cause attribution. For trees, most of the mortality predicted is caused by basal (unspecified cause) mortality, but years with increased mortality rates correspond to an increase in starvation and dessication rates. Across managements scenarios, NOG is the scenario where there is highest accumulation of dead wood. RSB appears the lowest, but this is an artifact of land-use conversion (which can be seen by the fact that is a lower basal mortality what makes RSB to have the lowest cumulative mortality), and ACG is the next lowest one, especially under RCP8.5, due to lower mortality rates due to starvation and dessication.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of cumulative dead tree biomass under combinations of management and climate scenarios, differentiating among cause attribution.", echo=FALSE}
+knitr::include_graphics("../Plots/CumulativeDeadTreeBiomassCause_provinces.png")
+```
+
+In contrast with trees, mortality in shrubs occurred mostly due to starvation. This is ecologically sound given the lower light availability in the understory. Nevertheless, years with increased mortality due to drought impacts (and not light limitation) are also evident, increasing specially starvation, but also dessication.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of cumulative dead shrub biomass under combinations of management and climate scenarios, differentiating among cause attribution.", echo=FALSE}
+knitr::include_graphics("../Plots/CumulativeDeadShrubBiomassCause_provinces.png")
+```
+
+## Blue water generation
+
+The amount of blue water generation generated annually was highly variable due to interannual variation in precipitation. This strongly hiddens differences among management scenarios. Note, in addition, the prediction of years with very high annual rainfall (and hence runoff) under climate scenarios, specially in the Girona and Barcelona provinces.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of blue water generated per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/AnnualBlueWater_provinces.png")
+```
+
+If we look at the annual runoff coefficient (i.e. blue water divided by precipitation), the interannual variation is still high, because the runoff coefficient is also higher in years with higher precipitation (meaning that most of it falls in few rainfall events).
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of runoff coefficient  per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/AnnualRunoffCoefficient_provinces.png")
+```
+
+One way to smooth out interannual variation is to look at the runoff coefficient in a cumulative way, i.e. dividing the cumulative blue water by the cumulative precipitation. Here we see some differences among management scenarios, being RSB the one that would have the highest long-term runoff coefficient, with larger increases in Barcelona. Nevertheless, note that the differences between NOG and RSB attain 7-8% of increase in runoff coefficient at most, whereas the difference between BAU and RSB would be around 5%. As expected from an overall drier environment, differences in cumulative runoff coefficient were smallest in Tarragona.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of cumulative runoff coefficient  per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/CumulativeRunoffCoefficient_provinces.png")
+```
+
+## Fire hazard
+
+Surface and crown fire hazard was assessed using FCCS metrics, which quantify hazard in a 0-9 scale. Surface fire hazard was very high along the century, with little variation among management scenarios, except for RSB, where a decrease in the average is observed due to land-use conversion, meaning that fire hazard obviously decreases in those areas. Stronger interanual variation was observed in Lleida, with causes to be investigated, but which could be related to climatic variation in the Pyrenees.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of surface fire potential [0-9] per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/SurfaceFirePotential_provinces.png")
+```
+
+More interesting results were obtained for crown fire potential, which is on average more variable across provinces. Progressive decrease in crown fire hazard was predicted due to an increase in the gap between shrub layer and the tree layer. Also, scenarios with strongest management, such as ACG, resulted in stronger reductions in fire hazard, specially in Barcelona and Girona, emphasizing the decrease in crown fuel availability. Mortality events derived from climatic impacts also affected fire hazard for the same reason.
+
+```{r, out.width='100%', fig.align="center", fig.cap="Temporal variation of crown fire potential [0-9] per province and scenario", echo=FALSE}
+knitr::include_graphics("../Plots/CrownFirePotential_provinces.png")
+```
