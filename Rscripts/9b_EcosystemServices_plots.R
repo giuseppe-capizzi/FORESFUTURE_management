@@ -15,8 +15,6 @@ ES_ALL_MEDFATE_sf  <- readRDS("Rdata/ES_MEDFATE.rds")|>
   mutate(id = as.character(as.numeric(substr(id, 1,6))))
 ES_ALL_FORMES_sf <- readRDS("Rdata/ES_FORMES.rds")
 ids_formes <- unique(ES_ALL_FORMES_sf$id)
-# ids_formes_RSB <- unique(ES_ALL_FORMES_sf$id[ES_ALL_FORMES_sf$Management=="RSB" & ES_ALL_FORMES_sf$Period=="2041-2060"])
-# ids_formes_non_RSB <- ids_formes[!(ids_formes %in% ids_formes_RSB)]
 ES_ALL_MEDFATE_sf <- ES_ALL_MEDFATE_sf |>
   filter(id %in% ids_formes)
 ES_ALL <- dplyr::bind_rows(ES_ALL_MEDFATE_sf, ES_ALL_FORMES_sf) |>
@@ -243,8 +241,8 @@ map_scenario<-function(sf_ALL, var, climate_scen, breaks, breaks_diff, units, ty
 # ES1_VolumeStructure -----------------------------------------------------
 d_ES <- plot_ES(ES_ALL, ES1_VolumeStructure, "Stock fusta estructural (m3/ha)", c(0,250), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES1_VolumeStructure.png",d_ES, width = 10, height = 8, bg = "white")
-breaks = seq(0,200, by=25)
-breaks_diff = c(-100,-50, -25, -5, 5, 25, 50, 100)
+breaks = c(seq(0,200, by=25),500)
+breaks_diff = c(-200, -100,-50, -25, -5, 5, 25, 50, 100, 200)
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES1_VolumeStructure", climate_scen = "RCP45", 
                         breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
 ggsave2("Plots/ES_maps/ES1_VolumeStructure_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
@@ -322,7 +320,8 @@ m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_CutAdultFirewood", climate_sce
 ggsave2("Plots/ES_maps/ES1_CutAdultFirewood_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
 
 # ES2_AdultTreeBiomass --------------------------------------------
-d_ES <- plot_ES(ES_ALL, ES2_AdultTreeBiomass, ylab = "Stock de carboni arbres (Mg C/ha)", ylim = c(0,600), outlier = 1000, add_formes = TRUE)
+d_ES <- plot_ES(ES_ALL, ES2_AdultTreeBiomass, ylab = "Stock de carboni arbres (Mg C/ha)", ylim = c(0,600), 
+                outlier = 1000, add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES2_AdultTreeBiomass.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES2_AdultTreeBiomass)
 summary(ES_ALL_FORMES_sf$ES2_AdultTreeBiomass)
