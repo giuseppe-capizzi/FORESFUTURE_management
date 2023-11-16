@@ -189,34 +189,35 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
   }
 
   # Biomass cut
+  # Only count Aerial part
   adult_tree_biom_cut <- ctt_na |>
     dplyr::filter(DBH > 7.5) |>
     dplyr::select(-Step) |>
     dplyr::group_by(Climate, Management, Province, id, Year) |>
-    dplyr::summarise(CutBiomassAdultTree = sum(Aerial+Roots, na.rm=TRUE), .groups = "drop")
+    dplyr::summarise(CutBiomassAdultTree = sum(Aerial, na.rm=TRUE), .groups = "drop")
   struct_biom_cut <- ctt_na |>
     dplyr::filter(DBH> 7.5) |>
     dplyr::filter((DBH > 22.5) & !(Species %in% firewood_species)) |>
     dplyr::select(-Step) |>
     dplyr::group_by(Climate, Management, Province, id, Year) |>
-    dplyr::summarise(CutBiomassStructure = sum(Aerial+Roots, na.rm=TRUE), .groups = "drop")
+    dplyr::summarise(CutBiomassStructure = sum(Aerial, na.rm=TRUE), .groups = "drop")
   firewood_biom_cut <- ctt_na |>
     dplyr::filter(DBH> 7.5) |>
     dplyr::filter((DBH <= 22.5) | (Species %in% firewood_species)) |>
     dplyr::select(-Step) |>
     dplyr::group_by(Climate, Management, Province, id, Year) |>
-    dplyr::summarise(CutBiomassAdultFirewood = sum(Aerial+Roots, na.rm=TRUE), .groups = "drop") 
+    dplyr::summarise(CutBiomassAdultFirewood = sum(Aerial, na.rm=TRUE), .groups = "drop") 
   sapling_tree_biom_cut <- ctt_na |>
     dplyr::filter(DBH <= 7.5) |>
     dplyr::select(-Step) |>
     dplyr::group_by(Climate, Management, Province, id, Year) |>
-    dplyr::summarise(CutBiomassSaplingTree = sum(Aerial+Roots, na.rm=TRUE), .groups = "drop")
+    dplyr::summarise(CutBiomassSaplingTree = sum(Aerial, na.rm=TRUE), .groups = "drop")
   if(!formes) {
     shrub_biom_cut <- cst |>
       tidyr::replace_na(list(Year = 2000)) |>
       dplyr::select(-Step) |>
       dplyr::group_by(Climate, Management, Province, id, Year) |>
-      dplyr::summarise(CutBiomassShrub = sum(Aerial+Roots, na.rm=TRUE), .groups = "drop") 
+      dplyr::summarise(CutBiomassShrub = sum(Aerial, na.rm=TRUE), .groups = "drop") 
     biom_cut <- adult_tree_biom_cut |>
       dplyr::full_join(shrub_biom_cut, by=c("Climate", "Management", "Province", "id", "Year")) |>
       dplyr::full_join(sapling_tree_biom_cut, by=c("Climate", "Management", "Province", "id", "Year")) |>
