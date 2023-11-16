@@ -7,4 +7,5 @@ Plots/*
 Report/*.html
 Report/*.pdf
 Report/*.docx
+Data/Comarques/*
 res_opt*

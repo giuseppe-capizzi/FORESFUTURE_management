@@ -5,6 +5,8 @@ firewood_species <- c("Quercus ilex", "Quercus ilex ssp. ballota",
                       "Quercus pubescens", "Quercus pubescens (Q. humilis)",
                       "Quercus faginea", "Quercus cerrioides", "Erica arborea")
 
+climate_model <- "mpiesm_rca4"
+
 # Generates FES indicators for each year and plot in a selected province, climate model, climate scenario and management scenario
 scenario_annual_province_indicators <- function(iprov, climate_model, climate_scen, management_scen, test = FALSE, formes = FALSE) {
   
@@ -46,8 +48,8 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
       tidyr::replace_na(list(Year = 2000))
   } else {
     tt_na <- tt
-    ctt_na <- ctt
-    dtt_na <- dtt
+    ctt_na <- ctt[ctt$Year!="2000", ]
+    dtt_na <- dtt[ctt$Year!="2000", ]
   }
   
   # Structure (all trees)
@@ -430,7 +432,6 @@ scenario_species_abundance<-function(climate_model, climate_scen, management_sce
   
 }
 
-climate_model <- "mpiesm_rca4"
 
 # (1) BAU
 scenario_annual_indicators(climate_model, "rcp45", "BAU", test = TRUE)

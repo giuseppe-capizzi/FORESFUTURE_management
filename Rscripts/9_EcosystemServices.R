@@ -280,6 +280,38 @@ ES5_function <- function(ALL, model) {
   return(ES5)
 }
 
+# ES6 - Fire risk per 20-year periods -----------
+ES6_function <- function(ALL, model) {
+  if(model=="FORMES") {
+    ALL$Management <- ALL$Management[ALL$Year=="2021-2030"][1]
+    ALL$Year[ALL$Year=="2001-2010"] = "2005"
+    ALL$Year[ALL$Year=="2011-2020"] = "2015"
+    ALL$Year[ALL$Year=="2021-2030"] = "2025"
+    ALL$Year[ALL$Year=="2031-2040"] = "2035"
+    ALL$Year[ALL$Year=="2041-2050"] = "2045"
+    ALL$Year[ALL$Year=="2051-2060"] = "2055"
+    ALL$Year[ALL$Year=="2061-2070"] = "2065"
+    ALL$Year[ALL$Year=="2071-2080"] = "2075"
+    ALL$Year[ALL$Year=="2081-2090"] = "2085"
+    ALL$Year[ALL$Year=="2091-2100"] = "2095"
+    ALL$Year <- as.numeric(ALL$Year)
+  } 
+  ES6 <- ALL |>
+    filter(Year!=2000) |>
+    select(Climate, Management, Province, id, Year, SFP, CFP) |>
+    mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c("2001-2020", "2021-2040", "2041-2060", "2061-2080", "2081-2100"))),
+           MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c(2010, 2030, 2050, 2070, 2090))))) |>
+    group_by(Climate, Management, Province, id, Period, MidYear) |>
+    summarise(ES6_SurfaceFirePotential = mean(SFP, na.rm=TRUE),
+              ES6_CrownFirePotential = mean(CFP, na.rm=TRUE),
+              .groups = "drop") |>
+    tidyr::replace_na(list(ES6_SurfaceFirePotential = 0, ES6_CrownFirePotential = 0)) |>
+    mutate(Model = model) |>
+    relocate(Model, .after = MidYear)|>
+    dplyr::mutate(Climate = toupper(Climate))
+  return(ES6)
+}
+
 # ES - ALL ----------------------------------------------------------------
 generate_ES_table <- function(test = FALSE, model = "MEDFATE") {
   ES_function<-function(ALL, model) {
@@ -296,6 +328,9 @@ generate_ES_table <- function(test = FALSE, model = "MEDFATE") {
       ES5 <- ES5_function(ALL, model)
       ES <- ES |>
         left_join(ES5, by=c("Climate", "Management", "Province", "id", "Period", "MidYear","Model"))
+      ES6 <- ES6_function(ALL, model)
+      ES <- ES |>
+        left_join(ES6, by=c("Climate", "Management", "Province", "id", "Period", "MidYear","Model"))
     }
     return(ES)
   }
@@ -321,7 +356,7 @@ generate_ES_table <- function(test = FALSE, model = "MEDFATE") {
       ACG_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_ACG_mpiesm_rca4_rcp45.rds"), model)
       cli::cli_progress_step("ACG/RCP85")
       ACG_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_ACG_mpiesm_rca4_rcp85.rds"), model)
-      cli::cli_progress_step("NOG/RCP45")
+      # cli::cli_progress_step("NOG/RCP45")
       # NOG_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp45.rds"), model)
       # cli::cli_progress_step("NOG/RCP85")
       # NOG_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp85.rds"), model)
@@ -346,7 +381,7 @@ generate_ES_table <- function(test = FALSE, model = "MEDFATE") {
       ACG_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/ACG_mpiesm_rca4_rcp45.rds"), model)
       cli::cli_progress_step("ACG/RCP85")
       ACG_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/ACG_mpiesm_rca4_rcp85.rds"), model)
-      cli::cli_progress_step("NOG/RCP45")
+      # cli::cli_progress_step("NOG/RCP45")
       # NOG_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/NOG_mpiesm_rca4_rcp45.rds"), model)
       # cli::cli_progress_step("NOG/RCP85")
       # NOG_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/NOG_mpiesm_rca4_rcp85.rds"), model)
@@ -388,15 +423,13 @@ generate_ES_table <- function(test = FALSE, model = "MEDFATE") {
   return(ALL)
 }
 
-test <-TRUE
+test <-FALSE
 ES_ALL_MEDFATE <- generate_ES_table(test, model = "MEDFATE")
-# Add coordinates
 ES_ALL_MEDFATE_sf <- ES_ALL_MEDFATE |>
   left_join(nfiplot[,c("id")], by="id") |>
   sf::st_as_sf()
 saveRDS(ES_ALL_MEDFATE_sf, "Rdata/ES_MEDFATE.rds")
 # saveRDS(ES_ALL_MEDFATE_sf, "Rdata/ES_MEDFATE_test.rds")
-
 
 ES_ALL_FORMES <- generate_ES_table(FALSE, model = "FORMES")
 nfiplot_formes <- nfiplot |>
@@ -413,29 +446,34 @@ ES_ALL_sf <- dplyr::bind_rows(ES_ALL_MEDFATE_sf,
                            ES_ALL_FORMES_sf)
 saveRDS(ES_ALL_sf, "Rdata/ES_ALL.rds")
 
-
-
-# Plots -------------------------------------------------------------------
-
 ES_ALL_sf  = readRDS("Rdata/ES_ALL.rds")
 ES_ALL <- sf::st_drop_geometry(ES_ALL_sf)
+
+
+# Plots/Map/Table functions  -------------------------------------------------------------------
 
 plot_ES <- function(ES_all, var, ylab, ylim, add_formes = TRUE) {
   ES_sum <- ES_all |>
     filter(!(Management %in% c("NOG", "NOGEST"))) |>
     group_by(Climate, Management, Period, MidYear, Model) |>
-    summarise(ES = mean({{var}}, na.rm=TRUE), .groups = "drop")
+    summarise(ES = mean({{var}}, na.rm=TRUE), 
+              ES_se = sd({{var}}, na.rm=TRUE)/sqrt(n()),
+              ES_q25 = quantile({{var}}, probs=0.25, na.rm = TRUE),
+              ES_q75 = quantile({{var}}, probs=0.75, na.rm = TRUE),
+              .groups = "drop")
     
   p1<-ggplot(ES_sum[ES_sum$Climate=="RCP45" & ES_sum$Model =="MEDFATE",])+
     geom_point(aes(x = MidYear, y = ES, col = Management))+
+    geom_ribbon(aes(x = MidYear, ymin = ES - ES_se*1.96, ymax = ES + ES_se*1.96, fill = Management), alpha = 0.3)+
     geom_line(aes(x = MidYear, y = ES, col = Management))+
     scale_x_continuous("",breaks = unique(ES_sum$MidYear),
                        labels = unique(ES_sum$Period))+
-    scale_color_discrete("Gestió forestal")+
+    scale_color_discrete("Escenari")+
     ylab(ylab)+ ylim(ylim)+labs(title = "MEDFATE / RCP 4.5")+theme_bw()
   l <- get_legend(p1)
   p2<-ggplot(ES_sum[ES_sum$Climate=="RCP85" & ES_sum$Model =="MEDFATE",])+
     geom_point(aes(x = MidYear, y = ES, col = Management))+
+    geom_ribbon(aes(x = MidYear, ymin = ES - ES_se*1.96, ymax = ES + ES_se*1.96, fill = Management), alpha = 0.3)+
     geom_line(aes(x = MidYear, y = ES, col = Management))+
     scale_x_continuous("",breaks = unique(ES_sum$MidYear),
                        labels = unique(ES_sum$Period))+
@@ -445,6 +483,7 @@ plot_ES <- function(ES_all, var, ylab, ylim, add_formes = TRUE) {
   if(add_formes) {
     p3<-ggplot(ES_sum[ES_sum$Climate=="RCP45" & ES_sum$Model =="FORMES",])+
       geom_point(aes(x = MidYear, y = ES, col = Management))+
+      geom_ribbon(aes(x = MidYear, ymin = ES - ES_se*1.96, ymax = ES + ES_se*1.96, fill = Management), alpha = 0.3)+
       geom_line(aes(x = MidYear, y = ES, col = Management))+
       scale_x_continuous("",breaks = unique(ES_sum$MidYear),
                          labels = unique(ES_sum$Period))+
@@ -452,6 +491,7 @@ plot_ES <- function(ES_all, var, ylab, ylim, add_formes = TRUE) {
     l <- get_legend(p1)
     p4<-ggplot(ES_sum[ES_sum$Climate=="RCP85"& ES_sum$Model =="FORMES",])+
       geom_point(aes(x = MidYear, y = ES, col = Management))+
+      geom_ribbon(aes(x = MidYear, ymin = ES - ES_se*1.96, ymax = ES + ES_se*1.96, fill = Management), alpha = 0.3)+
       geom_line(aes(x = MidYear, y = ES, col = Management))+
       scale_x_continuous("",breaks = unique(ES_sum$MidYear),
                          labels = unique(ES_sum$Period))+
@@ -462,25 +502,9 @@ plot_ES <- function(ES_all, var, ylab, ylim, add_formes = TRUE) {
   } else {
     pALL <- pA
   }
-  return(plot_grid(pALL, l, rel_widths = c(1,0.1)))
+  return(plot_grid(pALL, l, rel_widths = c(1,0.2)))
 }
 
-plot_ES(ES_ALL, ES1_VolumeStructure, "Stock fusta estructural (m3/ha)", c(0,250), add_formes = TRUE)
-plot_ES(ES_ALL, ES1_CutStructure, "Provisió fusta estructural (m3/ha/any)", c(0,2), add_formes = TRUE)
-plot_ES(ES_ALL, ES1_VolumeAdultFirewood, "Stock llenyes (m3/ha)", c(0,100), add_formes = TRUE)
-plot_ES(ES_ALL, ES1_CutAdultFirewood, ylab= "Provisió llenyes (m3/ha/any)", ylim = c(0,5), add_formes = TRUE)
-plot_ES(ES_ALL, ES2_AdultTreeBiomassSequestr, ylab = "Embornal de carboni arbres (Mg C/ha/any)", ylim = c(-5,5), add_formes = FALSE)
-plot_ES(ES_ALL, ES2_ShrubBiomassSequestr, ylab = "Embornal de carboni arbusts (Mg C/ha/any)", ylim = c(-1,1), add_formes = FALSE)
-plot_ES(ES_ALL, ES3_BlueWater, ylab = "Aigua blava (mm/any)", ylim = c(150,300), add_formes = FALSE)
-plot_ES(ES_ALL, ES3_RunoffCoefficient, ylab = "Coeficient d'escolament [%]", ylim = c(23,45), add_formes = FALSE)
-plot_ES(ES_ALL, ES4_RainfallErosivity, ylab = "Erosivitat de la precipitació", ylim = c(0,2000), add_formes = FALSE)
-plot_ES(ES_ALL, ES4_StructuralImpact, ylab = "Impacte estructural (Mg/ha/any)", ylim = c(0,200), add_formes = FALSE)
-plot_ES(ES_ALL, ES4_ErosionMitigation, ylab = "Mitigació de l'erosió (Mg/ha/any)", ylim = c(100,150), add_formes = FALSE)
-plot_ES(ES_ALL, ES5_RecreationalValue, ylab = "Valor recreatiu [0-1]", ylim = c(0.4,0.55), add_formes = FALSE)
-
-
-
-# Tables ------------------------------------------------------------------
 table_ES <- function(ES_all, var) {
  ES_sum <- ES_all |>
     filter(!(Management %in% c("NOG", "NOGEST"))) |>
@@ -492,26 +516,12 @@ table_ES <- function(ES_all, var) {
     arrange(Management,Model)
  return(ES_sum)
 }
-table_ES(ES_ALL, ES1_VolumeStructure)
-table_ES(ES_ALL, ES1_CutStructure)
-table_ES(ES_ALL, ES1_VolumeAdultFirewood)
-table_ES(ES_ALL, ES1_CutAdultFirewood)
-table_ES(ES_ALL, ES2_AdultTreeBiomassSequestr)
-table_ES(ES_ALL, ES2_ShrubBiomassSequestr)
-table_ES(ES_ALL, ES3_BlueWater)
-table_ES(ES_ALL, ES3_RunoffCoefficient)
-table_ES(ES_ALL, ES4_RainfallErosivity)
-table_ES(ES_ALL, ES5_RecreationalValue)
 
-
-# Maps --------------------------------------------------------------------
-# Define raster (latlon)
 sf::st_bbox(nfiplot)
 xmin <- 260000
 xmax <- 520000
 ymin <- 4495000
 ymax <- 4750000
-
 
 map_scenario<-function(sf_ALL, var, climate_scen, breaks, breaks_diff, units, type = "div", palette = "YlGnBu", res = 5000) {
   r <-terra::rast(resolution  = c(res,res), xmin = xmin, ymin = ymin, xmax = xmax, ymax = ymax)
@@ -668,121 +678,280 @@ map_scenario<-function(sf_ALL, var, climate_scen, breaks, breaks_diff, units, ty
   return(g)
 }
 
-#ES1_VolumeStructure
+# ES1_VolumeStructure -----------------------------------------------------
+
+table_ES(ES_ALL, ES1_VolumeStructure)
+d_ES <- plot_ES(ES_ALL, ES1_VolumeStructure, "Stock fusta estructural (m3/ha)", c(0,250), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES1_VolumeStructure.png",d_ES, width = 10, height = 5, bg = "white")
+breaks = seq(0,200, by=25)
+breaks_diff = c(-100,-50, -25, -5, 5, 25, 50, 100)
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES1_VolumeStructure", climate_scen = "RCP45", 
-                        breaks = seq(0,200, by=25), breaks_diff = seq(-100,100, by=25), units = "m3/ha")
-ggsave2("Plots/ES_maps/ES1_1_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_VolumeStructure", climate_scen = "RCP45", 
-                     breaks = seq(0,200, by=25), breaks_diff = seq(-100,100, by=25), units = "m3/ha")
-ggsave2("Plots/ES_maps/ES1_1_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-
+                        breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+ggsave2("Plots/ES_maps/ES1_VolumeStructure_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_VolumeStructure", climate_scen = "RCP45", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+# ggsave2("Plots/ES_maps/ES1_VolumeStructure_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES1_VolumeStructure", climate_scen = "RCP85", 
-                        breaks = seq(0,200, by=25), breaks_diff = seq(-100,100, by=25), units = "m3/ha")
-ggsave2("Plots/ES_maps/ES1_1_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_VolumeStructure", climate_scen = "RCP85", 
-                     breaks = seq(0,200, by=25), breaks_diff = seq(-100,100, by=25), units = "m3/ha")
-ggsave2("Plots/ES_maps/ES1_1_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+                        breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+ggsave2("Plots/ES_maps/ES1_VolumeStructure_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_VolumeStructure", climate_scen = "RCP85", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+# ggsave2("Plots/ES_maps/ES1_VolumeStructure_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
 
-#ES1_VolumeAdultFirewood
+
+# ES1_VolumeAdultFirewood -------------------------------------------------
+table_ES(ES_ALL, ES1_VolumeAdultFirewood)
+d_ES <- plot_ES(ES_ALL, ES1_VolumeAdultFirewood, "Stock llenyes (m3/ha)", c(0,100), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES1_VolumeAdultFirewood.png",d_ES, width = 10, height = 5, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES1_VolumeAdultFirewood)
+breaks = seq(0,200, by=25)
+breaks_diff = c(-100,-50, -25, -5, 5, 25, 50, 100)
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES1_VolumeAdultFirewood", climate_scen = "RCP45", 
-                     breaks = seq(0,200, by=25), breaks_diff = seq(-100,100, by=25), units = "m3/ha")
-ggsave2("Plots/ES_maps/ES1_2_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_VolumeAdultFirewood", climate_scen = "RCP45", 
-                     breaks = seq(0,200, by=25), breaks_diff = seq(-100,100, by=25), units = "m3/ha")
-ggsave2("Plots/ES_maps/ES1_2_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-
+                     breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+ggsave2("Plots/ES_maps/ES1_VolumeAdultFirewood_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_VolumeAdultFirewood", climate_scen = "RCP45", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+# ggsave2("Plots/ES_maps/ES1_VolumeAdultFirewood_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES1_VolumeAdultFirewood", climate_scen = "RCP85", 
-                     breaks = seq(0,200, by=25), breaks_diff = seq(-100,100, by=25), units = "m3/ha")
-ggsave2("Plots/ES_maps/ES1_2_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_VolumeAdultFirewood", climate_scen = "RCP85", 
-                     breaks = seq(0,200, by=25), breaks_diff = seq(-100,100, by=25), units = "m3/ha")
-ggsave2("Plots/ES_maps/ES1_2_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+                     breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+ggsave2("Plots/ES_maps/ES1_VolumeAdultFirewood_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_VolumeAdultFirewood", climate_scen = "RCP85", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+# ggsave2("Plots/ES_maps/ES1_VolumeAdultFirewood_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
 
-#ES1_CutStructure
+
+# ES1_CutStructure --------------------------------------------------------
+table_ES(ES_ALL, ES1_CutStructure)
+d_ES <- plot_ES(ES_ALL, ES1_CutStructure, "Provisió de fusta estructural (m3/ha/any)", c(0,2.1), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES1_CutStructure.png",d_ES, width = 10, height = 5, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES1_CutStructure)
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES1_CutStructure", climate_scen = "RCP45", 
-                     breaks = c(0,0.5,1,2,5,10,50), breaks_diff = c(-50, -10, -5, -2, -1,1, 2,5, 10, 50), units = "m3/ha/any")
-ggsave2("Plots/ES_maps/ES1_3_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
 summary(ES_ALL_FORMES_sf$ES1_CutStructure)
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_CutStructure", climate_scen = "RCP45", 
-                     breaks = c(0,0.5,1,2,5,10,50), breaks_diff = c(-50, -10, -5, -2, -1,1, 2,5, 10, 50), units = "m3/ha/any")
-ggsave2("Plots/ES_maps/ES1_3_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-
+breaks = c(0,0.1,0.5,1,2,5,30)
+breaks_diff = c(-30, -5, -2, -1,-0.5, 0.5,1, 2,5, 30)
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES1_CutStructure", climate_scen = "RCP45", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha/any")
+ggsave2("Plots/ES_maps/ES1_CutStructure_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_CutStructure", climate_scen = "RCP45", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha/any")
+# ggsave2("Plots/ES_maps/ES1_CutStructure_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES1_CutStructure", climate_scen = "RCP85", 
-                     breaks = c(0,0.5,1,2,5,10,50), breaks_diff = c(-50, -10, -5, -2, -1,1, 2,5, 10, 50), units = "m3/ha/any")
-ggsave2("Plots/ES_maps/ES1_3_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_CutStructure", climate_scen = "RCP85", 
-                     breaks = c(0,0.5,1,2,5,10,50), breaks_diff = c(-50, -10, -5, -2, -1,1, 2,5, 10, 50), units = "m3/ha/any")
-ggsave2("Plots/ES_maps/ES1_3_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+                     breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha/any")
+ggsave2("Plots/ES_maps/ES1_CutStructure_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_CutStructure", climate_scen = "RCP85", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha/any")
+# ggsave2("Plots/ES_maps/ES1_CutStructure_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
 
-#ES1_CutAdultFirewood
+
+# ES1_CutAdultFirewood ----------------------------------------------------
+table_ES(ES_ALL, ES1_CutAdultFirewood)
+d_ES <- plot_ES(ES_ALL, ES1_CutAdultFirewood, ylab= "Provisió de llenyes (m3/ha/any)", ylim = c(0,5), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES1_CutAdultFirewood.png",d_ES, width = 10, height = 5, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES1_CutAdultFirewood)
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES1_CutAdultFirewood", climate_scen = "RCP45", 
-                     breaks = c(0,0.1,0.5,1,2,5,10,20), breaks_diff = c(-20, -5, -2, -1,-0.5, 0.5, 1, 2,5, 20), units = "m3/ha/any")
-ggsave2("Plots/ES_maps/ES1_4_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
 summary(ES_ALL_FORMES_sf$ES1_CutAdultFirewood)
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_CutAdultFirewood", climate_scen = "RCP45", 
-                     breaks = c(0,0.1,0.5,1,2,5,10,20), breaks_diff = c(-20, -5, -2, -1,-0.5, 0.5, 1, 2,5, 20), units = "m3/ha/any")
-ggsave2("Plots/ES_maps/ES1_4_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-
+breaks = c(0,0.1,0.2, 0.5,1,2,5,20)
+breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20)
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES1_CutAdultFirewood", climate_scen = "RCP45", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha/any")
+ggsave2("Plots/ES_maps/ES1_CutAdultFirewood_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_CutAdultFirewood", climate_scen = "RCP45", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha/any")
+# ggsave2("Plots/ES_maps/ES1_CutAdultFirewood_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES1_CutAdultFirewood", climate_scen = "RCP85", 
-                     breaks = c(0,0.1,0.5,1,2,5,10,20), breaks_diff = c(-20, -5, -2, -1,-0.5, 0.5, 1, 2,5, 20), units = "m3/ha/any")
-ggsave2("Plots/ES_maps/ES1_4_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_CutAdultFirewood", climate_scen = "RCP85", 
-                     breaks = c(0,0.1,0.5,1,2,5,10,20), breaks_diff = c(-20, -5, -2, -1,-0.5, 0.5, 1, 2,5, 20), units = "m3/ha/any")
-ggsave2("Plots/ES_maps/ES1_4_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+                     breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha/any")
+ggsave2("Plots/ES_maps/ES1_CutAdultFirewood_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES1_CutAdultFirewood", climate_scen = "RCP85", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha/any")
+# ggsave2("Plots/ES_maps/ES1_CutAdultFirewood_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
 
-#ES2_AdultTreeBiomassSequestr
+# ES2_AdultTreeBiomass --------------------------------------------
+table_ES(ES_ALL, ES2_AdultTreeBiomass)
+d_ES <- plot_ES(ES_ALL, ES2_AdultTreeBiomass, ylab = "Stock de carboni arbres (Mg C/ha)", ylim = c(0,1000), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES2_AdultTreeBiomass.png",d_ES, width = 10, height = 5, bg = "white")
+summary(ES_ALL_MEDFATE_sf$ES2_AdultTreeBiomass)
+summary(ES_ALL_FORMES_sf$ES2_AdultTreeBiomass)
+breaks = c(0,25,50,100,200, 500, 1000, 3000)
+breaks_diff = c(-1000, -500, -200, -100, -50, -25, 25, 50, 100 ,200, 500, 1000)
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_AdultTreeBiomass", climate_scen = "RCP45", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+ggsave2("Plots/ES_maps/ES2_AdultTreeBiomass_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_AdultTreeBiomass", climate_scen = "RCP45", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+# ggsave2("Plots/ES_maps/ES2_AdultTreeBiomass_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_AdultTreeBiomass", climate_scen = "RCP85", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+ggsave2("Plots/ES_maps/ES2_AdultTreeBiomass_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_AdultTreeBiomass", climate_scen = "RCP85", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+# ggsave2("Plots/ES_maps/ES2_AdultTreeBiomass_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+
+# ES2_AdultTreeBiomassChange --------------------------------------------
+table_ES(ES_ALL, ES2_AdultTreeBiomassChange)
+d_ES <- plot_ES(ES_ALL, ES2_AdultTreeBiomassChange, ylab = "Embornal de carboni arbres (Mg C/ha/any)", ylim = c(-5,10), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES2_AdultTreeBiomassChange.png",d_ES, width = 10, height = 5, bg = "white")
+summary(ES_ALL_MEDFATE_sf$ES2_AdultTreeBiomassChange)
+summary(ES_ALL_FORMES_sf$ES2_AdultTreeBiomassChange)
+breaks = c(-10,-0.5, 0.5,1,2,5,10,50)
+breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20)
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_AdultTreeBiomassChange", climate_scen = "RCP45", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassChange_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_AdultTreeBiomassChange", climate_scen = "RCP45", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+# ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassChange_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_AdultTreeBiomassChange", climate_scen = "RCP85", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassChange_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_AdultTreeBiomassChange", climate_scen = "RCP85", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+# ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassChange_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+
+
+# ES2_CutBiomassStructure --------------------------------------------
+table_ES(ES_ALL, ES2_CutBiomassStructure)
+d_ES <- plot_ES(ES_ALL, ES2_CutBiomassStructure, ylab = "Embornal de carboni fusta estructural (Mg C/ha/any)", ylim = c(-5,10), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES2_CutBiomassStructure.png",d_ES, width = 10, height = 5, bg = "white")
+summary(ES_ALL_MEDFATE_sf$ES2_CutBiomassStructure)
+summary(ES_ALL_FORMES_sf$ES2_CutBiomassStructure)
+breaks = c(-10,-0.5, 0.5,1,2,5,10,50)
+breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20)
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_CutBiomassStructure", climate_scen = "RCP45", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+ggsave2("Plots/ES_maps/ES2_CutBiomassStructure_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_CutBiomassStructure", climate_scen = "RCP45", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+# ggsave2("Plots/ES_maps/ES2_CutBiomassStructure_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_CutBiomassStructure", climate_scen = "RCP85", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+ggsave2("Plots/ES_maps/ES2_CutBiomassStructure_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_CutBiomassStructure", climate_scen = "RCP85", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+# ggsave2("Plots/ES_maps/ES2_CutBiomassStructure_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+
+
+# ES2_AdultTreeBiomassSequestr --------------------------------------------
+table_ES(ES_ALL, ES2_AdultTreeBiomassSequestr)
+d_ES <- plot_ES(ES_ALL, ES2_AdultTreeBiomassSequestr, ylab = "Embornal de carboni arbres+fusta (Mg C/ha/any)", ylim = c(-5,10), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES2_AdultTreeBiomassSequestr.png",d_ES, width = 10, height = 5, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES2_AdultTreeBiomassSequestr)
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_AdultTreeBiomassSequestr", climate_scen = "RCP45", 
-                     breaks = c(-10,-0.5, 0.5,1,2,5,10,50), breaks_diff = c(-20, -5, -2, -1,-0.5, 0.5, 1, 2,5, 20), units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_1_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
 summary(ES_ALL_FORMES_sf$ES2_AdultTreeBiomassSequestr)
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_AdultTreeBiomassSequestr", climate_scen = "RCP45", 
-                     breaks = c(-10,-0.5, 0.5,1,2,5,10,50), breaks_diff = c(-20, -5, -2, -1,-0.5, 0.5, 1, 2,5, 20), units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_1_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-
+breaks = c(-10,-0.5, 0.5,1,2,5,10,50)
+breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20)
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_AdultTreeBiomassSequestr", climate_scen = "RCP45", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassSequestr_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_AdultTreeBiomassSequestr", climate_scen = "RCP45", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+# ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassSequestr_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_AdultTreeBiomassSequestr", climate_scen = "RCP85", 
-                     breaks = c(-10,-0.5, 0.5,1,2,5,10,50), breaks_diff = c(-20, -5, -2, -1,-0.5, 0.5, 1, 2,5, 20), units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_1_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_AdultTreeBiomassSequestr", climate_scen = "RCP85", 
-                     breaks = c(-10,-0.5, 0.5,1,2,5,10,50), breaks_diff = c(-20, -5, -2, -1,-0.5, 0.5, 1, 2,5, 20), units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_1_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassSequestr_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+# m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_AdultTreeBiomassSequestr", climate_scen = "RCP85", 
+#                      breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+# ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassSequestr_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
 
-#ES3_BlueWater
+
+# ES2_LiveBiomassSequestr --------------------------------------------
+table_ES(ES_ALL, ES2_LiveBiomassSequestr)
+d_ES <- plot_ES(ES_ALL, ES2_LiveBiomassSequestr, ylab = "Embornal de carboni total (Mg C/ha/any)", ylim = c(-5,10), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES2_LiveBiomassSequestr.png",d_ES, width = 10, height = 5, bg = "white")
+summary(ES_ALL_MEDFATE_sf$ES2_LiveBiomassSequestr)
+summary(ES_ALL_FORMES_sf$ES2_LiveBiomassSequestr)
+breaks = c(-10,-0.5, 0.5,1,2,5,10,50)
+breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20)
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_LiveBiomassSequestr", climate_scen = "RCP45", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+ggsave2("Plots/ES_maps/ES2_LiveBiomassSequestr_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_LiveBiomassSequestr", climate_scen = "RCP85", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
+ggsave2("Plots/ES_maps/ES2_LiveBiomassSequestr_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+
+
+# ES3_BlueWater -----------------------------------------------------------
+table_ES(ES_ALL, ES3_BlueWater)
+d_ES <- plot_ES(ES_ALL, ES3_BlueWater, ylab = "Aigua blava (mm/any)", ylim = c(150,300), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES3_BlueWater.png",d_ES, width = 10, height = 5, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES3_BlueWater)
+breaks = seq(0,320, by=40)
+breaks_diff = seq(-200,200, by = 40)
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES3_BlueWater", climate_scen = "RCP45", 
-                     breaks = seq(0,320, by=40), breaks_diff = seq(-200,200, by = 40), units = "mm/any")
-ggsave2("Plots/ES_maps/ES3_1_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+                     breaks = breaks, breaks_diff = breaks_diff, units = "mm/any")
+ggsave2("Plots/ES_maps/ES3_BlueWater_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES3_BlueWater", climate_scen = "RCP85", 
-                     breaks = seq(0,320, by=40), breaks_diff = seq(-200,200, by = 40), units = "mm/any")
-ggsave2("Plots/ES_maps/ES3_1_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+                     breaks = breaks, breaks_diff = breaks_diff, units = "mm/any")
+ggsave2("Plots/ES_maps/ES3_BlueWater_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
 
-#ES3_RunoffCoefficient
+
+# ES3_RunoffCoefficient ---------------------------------------------------
+table_ES(ES_ALL, ES3_RunoffCoefficient)
+d_ES <- plot_ES(ES_ALL, ES3_RunoffCoefficient, ylab = "Coeficient d'escolament [%]", ylim = c(23,45), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES3_RunoffCoefficient.png",d_ES, width = 10, height = 5, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES3_RunoffCoefficient)
+breaks = c(0,5,10,20,40,60,80, 100)
+breaks_diff = c(-50,-10,-20,-5, -2,2,5,10,20,50)
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES3_RunoffCoefficient", climate_scen = "RCP45", 
-                     breaks = seq(0,100, by=15), breaks_diff = c(-50,-10,-5, -2,2,5,10,50), units = "%")
-ggsave2("Plots/ES_maps/ES3_2_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+                     breaks = breaks, breaks_diff = breaks_diff, units = "%")
+ggsave2("Plots/ES_maps/ES3_RunoffCoefficient_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES3_RunoffCoefficient", climate_scen = "RCP85", 
-             breaks = seq(0,100, by=15), breaks_diff = c(-50,-10,-5, -2,2,5,10,50), units = "%")
-ggsave2("Plots/ES_maps/ES3_2_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+             breaks = breaks, breaks_diff = breaks_diff, units = "%")
+ggsave2("Plots/ES_maps/ES3_RunoffCoefficient_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
 
 
-#ES4_ErosionMitigation
+# ES4_ErosionMitigation ---------------------------------------------------
+table_ES(ES_ALL, ES4_ErosionMitigation)
+d_ES <- plot_ES(ES_ALL, ES4_ErosionMitigation, ylab = "Mitigació de l'erosió (Mg/ha/any)", ylim = c(100,150), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES4_ErosionMitigation.png",d_ES, width = 10, height = 5, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES4_ErosionMitigation)
+breaks = c(0,25, 50, 100, 150, 200, 300, 4000)
+breaks_diff = c(-100, -50,-10,-5, 5,10,50, 100)
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES4_ErosionMitigation", climate_scen = "RCP45", 
-                     breaks = c(seq(0,200, by=25),4000), breaks_diff = c(-50,-10,-5, -2,2,5,10,50), units = "Mg/ha/any")
-ggsave2("Plots/ES_maps/ES4_1_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+                     breaks = breaks, breaks_diff = breaks_diff, units = "Mg/ha/any")
+ggsave2("Plots/ES_maps/ES4_ErosionMitigation_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES4_ErosionMitigation", climate_scen = "RCP85", 
-                     breaks = c(seq(0,200, by=25),4000), breaks_diff = c(-50,-10,-5, -2,2,5,10,50), units = "Mg/ha/any")
-ggsave2("Plots/ES_maps/ES4_1_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+                     breaks = breaks, breaks_diff = breaks_diff, units = "Mg/ha/any")
+ggsave2("Plots/ES_maps/ES4_ErosionMitigation_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
 
-#ES5_RecreationalValue
+
+# ES5_RecreationalValue ---------------------------------------------------
+table_ES(ES_ALL, ES5_RecreationalValue)
+d_ES <- plot_ES(ES_ALL, ES5_RecreationalValue, ylab = "Valor recreatiu [0-1]", ylim = c(0.4,0.55), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES5_RecreationalValue.png",d_ES, width = 10, height = 5, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES5_RecreationalValue)
+breaks = c(0,0.05,0.1,0.2,0.4,0.6,0.8, 1)
+breaks_diff = c(-0.5,-0.3, -0.2, -0.1, -0.05, 0.05, 0.1, 0.2, 0.5)
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES5_RecreationalValue", climate_scen = "RCP45", 
-                     breaks = seq(0,1, by=0.15), breaks_diff = seq(-0.5,0.5, by =0.15), units = "[0-1]")
-ggsave2("Plots/ES_maps/ES5_1_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]")
+ggsave2("Plots/ES_maps/ES5_RecreationalValue_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
 m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES5_RecreationalValue", climate_scen = "RCP85", 
-                     breaks = seq(0,1, by=0.15), breaks_diff = seq(-0.5,0.5, by =0.15), units = "[0-1]")
-ggsave2("Plots/ES_maps/ES5_1_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]")
+ggsave2("Plots/ES_maps/ES5_RecreationalValue_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+
+
+# ES6_SurfaceFirePotential  ---------------------------------------------------
+table_ES(ES_ALL, ES6_SurfaceFirePotential)
+d_ES <- plot_ES(ES_ALL, ES6_SurfaceFirePotential, ylab = "Risk d'incendi de superficie [0-9]", ylim = c(7,9), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES6_SurfaceFirePotential.png",d_ES, width = 10, height = 5, bg = "white")
+summary(ES_ALL_MEDFATE_sf$ES6_SurfaceFirePotential)
+breaks = seq(0,9, by=1)
+breaks_diff = c(-5,-4,-3,-2,-1,1,2,3,4,5)
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES6_SurfaceFirePotential", climate_scen = "RCP45", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]")
+ggsave2("Plots/ES_maps/ES6_SurfaceFirePotential_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES6_SurfaceFirePotential", climate_scen = "RCP85", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]")
+ggsave2("Plots/ES_maps/ES6_SurfaceFirePotential_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+
+# ES6_CrownFirePotential  ---------------------------------------------------
+table_ES(ES_ALL, ES6_CrownFirePotential)
+d_ES <- plot_ES(ES_ALL, ES6_CrownFirePotential, ylab = "Risk d'incendi de capçada [0-9]", ylim = c(4,7), add_formes = FALSE)
+ggsave2("Plots/ES_dynamics/ES6_CrownFirePotential.png",d_ES, width = 10, height = 5, bg = "white")
+summary(ES_ALL_MEDFATE_sf$ES6_CrownFirePotential)
+breaks = seq(0,9, by=1)
+breaks_diff = c(-5,-4,-3,-2,-1,1,2,3,4,5)
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES6_CrownFirePotential", climate_scen = "RCP45", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]")
+ggsave2("Plots/ES_maps/ES6_CrownFirePotential_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
+m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES6_CrownFirePotential", climate_scen = "RCP85", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]")
+ggsave2("Plots/ES_maps/ES6_CrownFirePotential_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+
+
