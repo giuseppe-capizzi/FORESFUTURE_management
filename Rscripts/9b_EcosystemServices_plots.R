@@ -14,13 +14,14 @@ cat <- sf::st_union(comarques)
 ES_ALL_MEDFATE_sf  <- readRDS("Rdata/ES_MEDFATE.rds")|>
   mutate(id = as.character(as.numeric(substr(id, 1,6))))
 ES_ALL_FORMES_sf <- readRDS("Rdata/ES_FORMES.rds")
-ids_formes <- unique(ES_ALL_sf$id[ES_ALL_sf$Model=="FORMES"])
+ids_formes <- unique(ES_ALL_FORMES_sf$id)
+# ids_formes_RSB <- unique(ES_ALL_FORMES_sf$id[ES_ALL_FORMES_sf$Management=="RSB" & ES_ALL_FORMES_sf$Period=="2041-2060"])
+# ids_formes_non_RSB <- ids_formes[!(ids_formes %in% ids_formes_RSB)]
 ES_ALL_MEDFATE_sf <- ES_ALL_MEDFATE_sf |>
   filter(id %in% ids_formes)
-ES_ALL_sf <- dplyr::bind_rows(ES_ALL_MEDFATE_sf,
-                              ES_ALL_FORMES_sf)
-ES_ALL <- sf::st_drop_geometry(ES_ALL_sf)
-
+ES_ALL <- dplyr::bind_rows(ES_ALL_MEDFATE_sf, ES_ALL_FORMES_sf) |>
+  sf::st_drop_geometry()
+n_plots <- length(ids_formes)
 
 # Functions to generate plots/maps --------------------------------------------------------
 plot_ES <- function(ES_all, var, ylab, ylim, outlier = Inf, add_formes = FALSE) {
@@ -28,8 +29,8 @@ plot_ES <- function(ES_all, var, ylab, ylim, outlier = Inf, add_formes = FALSE) 
     filter(!(Management %in% c("NOG", "NOGEST"))) |>
     filter({{var}} < outlier) |>
     group_by(Climate, Management, Period, MidYear, Model) |>
-    summarise(ES = mean({{var}}, na.rm=TRUE), 
-              ES_se = sd({{var}}, na.rm=TRUE)/sqrt(n()),
+    summarise(ES = sum({{var}}, na.rm=TRUE)/n_plots, 
+              ES_se = sd({{var}}, na.rm=TRUE)/sqrt(n_plots),
               ES_q25 = quantile({{var}}, probs=0.25, na.rm = TRUE),
               ES_q75 = quantile({{var}}, probs=0.75, na.rm = TRUE),
               .groups = "drop")
@@ -279,7 +280,7 @@ ggsave2("Plots/ES_maps/ES1_VolumeAdultFirewood_formes_rcp85.png",m_ES, width = 1
 
 
 # ES1_CutStructure --------------------------------------------------------
-d_ES <- plot_ES(ES_ALL, ES1_CutStructure, "Provisió de fusta estructural (m3/ha/any)", c(0,4), outlier = 25, add_formes = TRUE)
+d_ES <- plot_ES(ES_ALL, ES1_CutStructure, "Provisió de fusta estructural (m3/ha/any)", c(0,3), outlier = 25, add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES1_CutStructure.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES1_CutStructure)
 summary(ES_ALL_FORMES_sf$ES1_CutStructure)
@@ -301,7 +302,7 @@ ggsave2("Plots/ES_maps/ES1_CutStructure_formes_rcp85.png",m_ES, width = 13, heig
 
 # ES1_CutAdultFirewood ----------------------------------------------------
 d_ES <- plot_ES(ES_ALL, ES1_CutAdultFirewood, ylab= "Provisió de llenyes (m3/ha/any)", 
-                ylim = c(0,5), outlier = 20, add_formes = TRUE)
+                ylim = c(0,4), outlier = 20, add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES1_CutAdultFirewood.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES1_CutAdultFirewood)
 summary(ES_ALL_FORMES_sf$ES1_CutAdultFirewood)
@@ -364,7 +365,7 @@ ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassChange_formes_rcp85.png",m_ES, width 
 
 # ES2_CutBiomassStructure --------------------------------------------
 d_ES <- plot_ES(ES_ALL, ES2_CutBiomassStructure, ylab = "Embornal de carboni fusta estructural (Mg C/ha/any)", 
-                outlier = 80, ylim = c(0,30), add_formes = TRUE)
+                outlier = 80, ylim = c(0,20), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES2_CutBiomassStructure.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES2_CutBiomassStructure)
 summary(ES_ALL_FORMES_sf$ES2_CutBiomassStructure)
@@ -387,7 +388,7 @@ ggsave2("Plots/ES_maps/ES2_CutBiomassStructure_formes_rcp85.png",m_ES, width = 1
 # ES2_AdultTreeBiomassSequestr --------------------------------------------
 d_ES <- plot_ES(ES_ALL, ES2_AdultTreeBiomassSequestr, ylab = "Embornal de carboni arbres+fusta (Mg C/ha/any)", 
                 outlier = 80, ylim = c(-5,30), add_formes = TRUE)
-ggsave2("Plots/ES_dynamics/ES2_AdultTreeBiomassSequestr.png",d_ES, width = 10, height = 5, bg = "white")
+ggsave2("Plots/ES_dynamics/ES2_AdultTreeBiomassSequestr.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES2_AdultTreeBiomassSequestr)
 summary(ES_ALL_FORMES_sf$ES2_AdultTreeBiomassSequestr)
 breaks = c(-10,-0.5, 0.5,1,2,5,10,50)
@@ -436,7 +437,7 @@ ggsave2("Plots/ES_maps/ES3_BlueWater_medfate_rcp85.png",m_ES, width = 13, height
 
 
 # ES3_RunoffCoefficient ---------------------------------------------------
-d_ES <- plot_ES(ES_ALL, ES3_RunoffCoefficient, ylab = "Coeficient d'escolament [%]", ylim = c(23,45), add_formes = FALSE)
+d_ES <- plot_ES(ES_ALL, ES3_RunoffCoefficient, ylab = "Coeficient d'escolament [%]", ylim = c(23,40), add_formes = FALSE)
 ggsave2("Plots/ES_dynamics/ES3_RunoffCoefficient.png",d_ES, width = 10, height = 4, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES3_RunoffCoefficient)
 breaks = c(0,5,10,20,40,60,80, 100)
@@ -450,7 +451,8 @@ ggsave2("Plots/ES_maps/ES3_RunoffCoefficient_medfate_rcp85.png",m_ES, width = 13
 
 
 # ES4_ErosionMitigation ---------------------------------------------------
-d_ES <- plot_ES(ES_ALL, ES4_ErosionMitigation, ylab = "Mitigació de l'erosió (Mg/ha/any)", ylim = c(100,150), add_formes = FALSE)
+d_ES <- plot_ES(ES_ALL, ES4_ErosionMitigation, ylab = "Mitigació de l'erosió (Mg/ha/any)", ylim = c(100,175), 
+                outlier = 3000, add_formes = FALSE)
 ggsave2("Plots/ES_dynamics/ES4_ErosionMitigation.png",d_ES, width = 10, height = 4, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES4_ErosionMitigation)
 breaks = c(0,25, 50, 100, 150, 200, 300, 4000)
@@ -464,7 +466,7 @@ ggsave2("Plots/ES_maps/ES4_ErosionMitigation_medfate_rcp85.png",m_ES, width = 13
 
 
 # ES5_RecreationalValue ---------------------------------------------------
-d_ES <- plot_ES(ES_ALL, ES5_RecreationalValue, ylab = "Valor recreatiu [0-1]", ylim = c(0.4,0.55), add_formes = FALSE)
+d_ES <- plot_ES(ES_ALL, ES5_RecreationalValue, ylab = "Valor recreatiu [0-1]", ylim = c(0.4,0.60), add_formes = FALSE)
 ggsave2("Plots/ES_dynamics/ES5_RecreationalValue.png",d_ES, width = 10, height = 4, bg = "white")
 summary(ES_ALL_MEDFATE_sf$ES5_RecreationalValue)
 breaks = c(0,0.05,0.1,0.2,0.4,0.6,0.8, 1)

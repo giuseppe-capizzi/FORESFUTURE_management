@@ -18,9 +18,8 @@ ES_ALL_FORMES_sf <- readRDS("Rdata/ES_FORMES.rds")
 ids_formes <- unique(ES_ALL_sf$id[ES_ALL_sf$Model=="FORMES"])
 ES_ALL_MEDFATE_sf <- ES_ALL_MEDFATE_sf |>
   filter(id %in% ids_formes)
-ES_ALL_sf <- dplyr::bind_rows(ES_ALL_MEDFATE_sf,
-                              ES_ALL_FORMES_sf)
-ES_ALL <- sf::st_drop_geometry(ES_ALL_sf)
+ES_ALL <- dplyr::bind_rows(ES_ALL_MEDFATE_sf, ES_ALL_FORMES_sf) |>
+  sf::st_drop_geometry()
 ```
 
 

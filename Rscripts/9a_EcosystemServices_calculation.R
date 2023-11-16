@@ -29,10 +29,14 @@ ES1_function <- function(ALL, model) {
     ALL$Year <- as.numeric(ALL$Year)
   } 
   ES1 <- ALL |>
+    ungroup() |>
     filter(Year!=2000) |>
     select(Climate, Management, Province, id, Year, VolumeStructure, VolumeAdultFirewood, VolumeSaplingFirewood, CutStructure, CutAdultFirewood, CutSaplingFirewood) |>
+    group_by(Climate, Management, Province) |>
+    complete(id, Year, fill = list(VolumeStructure = 0, VolumeAdultFirewood = 0, VolumeSaplingFirewood = 0, CutStructure = 0, CutAdultFirewood =0, CutSaplingFirewood = 0))|>
     mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c("2001-2020", "2021-2040", "2041-2060", "2061-2080", "2081-2100"))),
-           MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c(2010, 2030, 2050, 2070, 2090))))) |>
+           MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), 
+                                                 labels = c(2010, 2030, 2050, 2070, 2090))))) |>
     group_by(Climate, Management, Province, id, Period, MidYear) |>
     summarise(ES1_VolumeStructure = mean(VolumeStructure, na.rm=TRUE),
               ES1_VolumeAdultFirewood = mean(VolumeAdultFirewood, na.rm=TRUE),
@@ -67,8 +71,11 @@ ES2_function <- function(ALL, model) {
     ALL1$Year <- as.numeric(ALL1$Year)
   } 
   StockBiomass <- ALL1 |>
+    ungroup() |>
     filter(Year!=2000) |>
     select(Climate, Management, Province, id, Year, AdultTreeBiomass, SaplingTreeBiomass, ShrubBiomass) |>
+    group_by(Climate, Management, Province) |>
+    complete(id, Year, fill = list(AdultTreeBiomass = 0, SaplingTreeBiomass = 0, ShrubBiomass = 0))|>
     mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), 
                                      labels = c("P1", "P2", "P3", "P4", "P5")))) |>
     group_by(Climate, Management, Province, id, Period) |>
@@ -80,8 +87,11 @@ ES2_function <- function(ALL, model) {
     mutate(ES2_LiveBiomass = ES2_AdultTreeBiomass + ES2_SaplingTreeBiomass+ES2_ShrubBiomass)
   
   BT<-ALL1 |>
+    ungroup() |>
     filter(Year %in% c(2000,2020,2040,2060,2080,2100)) |>
     select(Climate, Management, Province, id, Year, AdultTreeBiomass) |>
+    group_by(Climate, Management, Province) |>
+    complete(id, Year, fill = list(AdultTreeBiomass = 0))|>
     pivot_wider(values_from = AdultTreeBiomass, names_from = Year)
   BT$P1 <- BT$`2020` - BT$`2000`
   BT$P2 <- BT$`2040` - BT$`2020`
@@ -95,8 +105,11 @@ ES2_function <- function(ALL, model) {
     ungroup()
   rm(BT)
   BT<-ALL1 |>
+    ungroup() |>
     filter(Year %in% c(2000,2020,2040,2060,2080,2100)) |>
     select(Climate, Management, Province, id, Year, SaplingTreeBiomass) |>
+    group_by(Climate, Management, Province) |>
+    complete(id, Year, fill = list(SaplingTreeBiomass = 0))|>
     pivot_wider(values_from = SaplingTreeBiomass, names_from = Year)
   BT$P1 <- BT$`2020` - BT$`2000`
   BT$P2 <- BT$`2040` - BT$`2020`
@@ -111,8 +124,11 @@ ES2_function <- function(ALL, model) {
   rm(BT)
   
   BS<-ALL1 |>
+    ungroup() |>
     filter(Year %in% c(2000,2020,2040,2060,2080,2100)) |>
     select(Climate, Management, Province, id, Year, ShrubBiomass) |>
+    group_by(Climate, Management, Province) |>
+    complete(id, Year, fill = list(ShrubBiomass = 0))|>
     pivot_wider(values_from = ShrubBiomass, names_from = Year)
   BS$P1 <- BS$`2020` - BS$`2000`
   BS$P2 <- BS$`2040` - BS$`2020`
@@ -127,9 +143,13 @@ ES2_function <- function(ALL, model) {
   rm(BS)
   
   CutBiomass <- ALL1 |>
+    ungroup() |>
     filter(Year!=2000) |>
     select(Climate, Management, Province, id, Year, CutBiomassAdultTree, CutBiomassSaplingTree, CutBiomassShrub,
            CutBiomassStructure, CutBiomassAdultFirewood) |>
+    group_by(Climate, Management, Province) |>
+    complete(id, Year, fill = list(CutBiomassAdultTree = 0, CutBiomassSaplingTree = 0, CutBiomassShrub = 0,
+                                   CutBiomassStructure = 0, CutBiomassAdultFirewood = 0))|>
     mutate(Period = as.character(cut(Year, 
                                      breaks = c(2000,2020,2040,2060,2080,2100), 
                                      labels = c("P1", "P2", "P3", "P4", "P5")
@@ -261,8 +281,12 @@ ES5_function <- function(ALL, model) {
     return(mean(val_sum/w_sum, na.rm = na.rm))
   }
   ALL_SEL <- ALL |>
+    ungroup() |>
     filter(Year!=2000) |>
     select(Climate, Management, Province, id, Year, cvDBH, maxDBH, MaxShrubCover, LAI_max, TreeRichness, ShrubRichness)|>
+    group_by(Climate, Management, Province) |>
+    complete(id, Year, fill = list(cvDBH = NA, maxDBH = 0, MaxShrubCover = 0,
+                                   LAI_max = 0, TreeRichness = 0, ShrubRichness = 0))|>
     mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c("2001-2020", "2021-2040", "2041-2060", "2061-2080", "2081-2100"))),
            MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c(2010, 2030, 2050, 2070, 2090))))) |>
     mutate(idparcela = as.character(as.numeric(substr(id, 1,6))))
@@ -294,8 +318,11 @@ ES6_function <- function(ALL, model) {
     ALL$Year <- as.numeric(ALL$Year)
   } 
   ES6 <- ALL |>
+    ungroup() |>
     filter(Year!=2000) |>
     select(Climate, Management, Province, id, Year, SFP, CFP) |>
+    group_by(Climate, Management, Province) |>
+    complete(id, Year, fill = list(SFP = 0, CFP = 0))|>
     mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c("2001-2020", "2021-2040", "2041-2060", "2061-2080", "2081-2100"))),
            MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c(2010, 2030, 2050, 2070, 2090))))) |>
     group_by(Climate, Management, Province, id, Period, MidYear) |>
