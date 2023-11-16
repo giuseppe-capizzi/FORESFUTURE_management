@@ -1,0 +1,416 @@
+---
+title: "Ecosystem Services"
+author: "Miquel De Cáceres, Núria Aquilué, Giuseppe Cappizzi"
+date: "2023-11-16"
+output: 
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+library(sf)
+library(tidyverse)
+knitr::opts_chunk$set(echo = TRUE)
+
+ES_ALL_sf  = readRDS("../Rdata/ES_ALL.rds")
+ES_ALL <- sf::st_drop_geometry(ES_ALL_sf)
+```
+
+
+```{r, include = FALSE}
+table_ES <- function(ES_all, var, add_formes = FALSE) {
+  ES_sum <- ES_all |>
+    filter(!(Management %in% c("NOG", "NOGEST"))) |>
+    group_by(Climate, Management, Period, MidYear, Model) |>
+    summarise(ES = mean({{var}}, na.rm=TRUE), .groups = "drop") |>
+    select(-MidYear) |>
+    filter(Period %in% unique(ES_ALL$Period)[c(1,3,5)]) |>
+    pivot_wider(names_from = c(Climate,Period), names_sort = TRUE, values_from = ES) |>
+    arrange(Management,Model)
+  if(!add_formes) ES_sum <- ES_sum |>
+      filter(Model == "MEDFATE")
+  return(ES_sum)
+}
+```
+
+## ES1 - Provisió de fusta
+
+### ES1_VolumeStructure - Estoc de fusta estructural (m3/ha)
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES1_VolumeStructure), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_dynamics/ES1_VolumeStructure.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES1_VolumeStructure_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES1_VolumeStructure_medfate_rcp85.png")
+```
+
+
+### ES1_VolumeAdultFirewood - Estoc de llenya (m3/ha)
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES1_VolumeAdultFirewood), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_dynamics/ES1_VolumeAdultFirewood.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES1_VolumeAdultFirewood_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES1_VolumeAdultFirewood_medfate_rcp85.png")
+```
+
+
+### ES1_CutStructure - Provisió anual de fusta estructural (m3/ha/any)
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES1_CutStructure), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_dynamics/ES1_CutStructure.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES1_CutStructure_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES1_CutStructure_medfate_rcp85.png")
+```
+
+
+
+### ES1_CutAdultFirewood - Provisió anual de llenyes (m3/ha/any)
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES1_CutAdultFirewood), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_dynamics/ES1_CutAdultFirewood.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES1_CutAdultFirewood_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES1_CutAdultFirewood_medfate_rcp85.png")
+```
+
+
+## ES2 - Embornal de carboni
+
+### ES2_AdultTreeBiomass - Estoc de biomassa en peu (adults) (MgC/ha)
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES2_AdultTreeBiomass), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_dynamics/ES2_AdultTreeBiomass.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomass_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomass_medfate_rcp85.png")
+```
+
+### ES2_AdultTreeBiomassChange - Embornal per creixement del bosc (arbres adults) (MgC/ha/any)
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES2_AdultTreeBiomassChange), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_dynamics/ES2_AdultTreeBiomassChange.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassChange_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassChange_medfate_rcp85.png")
+```
+
+
+### ES2_CutBiomassStructure - Embornal per extracció de fusta estructural (MgC/ha/any)
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES2_CutBiomassStructure), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_dynamics/ES2_CutBiomassStructure.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES2_CutBiomassStructure_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES2_CutBiomassStructure_medfate_rcp85.png")
+```
+
+### ES2_AdultTreeBiomassSequestr - Embornal de carboni arbres+fusta (MgC/ha/any)
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES2_AdultTreeBiomassSequestr), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_dynamics/ES2_AdultTreeBiomassSequestr.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassSequestr_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassSequestr_medfate_rcp85.png")
+```
+
+
+### ES2_LiveBiomassSequestr - Embornal total (inc. sotabosc) (MgC/ha/any)
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES2_LiveBiomassSequestr), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_dynamics/ES2_LiveBiomassSequestr.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES2_LiveBiomassSequestr_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES2_LiveBiomassSequestr_medfate_rcp85.png")
+```
+
+
+## ES3 - Provisió d'aigua
+
+### ES3_BlueWater - Aigua blava (mm/any)
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES3_BlueWater), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_dynamics/ES3_BlueWater.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES3_BlueWater_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES3_BlueWater_medfate_rcp85.png")
+```
+
+### ES3_RunoffCoefficient - Coeficient d'escolament (%)
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES3_RunoffCoefficient), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_dynamics/ES3_RunoffCoefficient.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES3_RunoffCoefficient_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES3_RunoffCoefficient_medfate_rcp85.png")
+```
+
+## ES4 - Mitigació de l'erosió
+
+### ES4_ErosionMitigation - Mitigació de l'erosió (Mg/ha/any)
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES4_ErosionMitigation), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_dynamics/ES4_ErosionMitigation.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES4_ErosionMitigation_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES4_ErosionMitigation_medfate_rcp85.png")
+```
+
+
+
+## ES5 - Valor recreatiu
+
+### ES5_RecreationalValue - Valor recreatiu [0-1]
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES5_RecreationalValue), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_dynamics/ES5_RecreationalValue.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES5_RecreationalValue_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES5_RecreationalValue_medfate_rcp85.png")
+```
+
+## ES6 - Risc d'incendi
+
+### ES6_SurfaceFirePotential - Risc d'incendi de superfície [0-9]
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES6_SurfaceFirePotential), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+  knitr::include_graphics("../Plots/ES_dynamics/ES6_SurfaceFirePotential.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES6_SurfaceFirePotential_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES6_SurfaceFirePotential_medfate_rcp85.png")
+```
+
+### ES6_CrownFirePotential - Risc d'incendi de capçades [0-9]
+
+#### Summary table
+
+```{r, echo = FALSE}
+knitr::kable(table_ES(ES_ALL, ES6_CrownFirePotential), digits = 2)
+```
+
+#### Dynamics 
+
+```{r, echo=FALSE, fig.width=8}
+  knitr::include_graphics("../Plots/ES_dynamics/ES6_CrownFirePotential.png")
+```
+
+#### MEDFATE / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES6_CrownFirePotential_medfate_rcp45.png")
+```
+
+#### MEDFATE / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES6_CrownFirePotential_medfate_rcp85.png")
+```
