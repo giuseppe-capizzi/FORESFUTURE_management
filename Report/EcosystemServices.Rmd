@@ -3,9 +3,9 @@ title: "Ecosystem Services"
 author: "Miquel De Cáceres, Núria Aquilué, Giuseppe Cappizzi"
 date: "2023-11-16"
 output:
-  word_document:
-    toc: yes
   html_document:
+    toc: yes
+  word_document:
     toc: yes
 ---
 
@@ -14,19 +14,31 @@ library(sf)
 library(tidyverse)
 knitr::opts_chunk$set(echo = TRUE)
 
-ES_ALL_MEDFATE_sf  <- readRDS("../Rdata/ES_MEDFATE.rds")|>
-  mutate(id = as.character(as.numeric(substr(id, 1,6))))
-ES_ALL_FORMES_sf <- readRDS("../Rdata/ES_FORMES.rds")
-ids_formes <- unique(ES_ALL_FORMES_sf$id)
-ES_ALL_MEDFATE_sf <- ES_ALL_MEDFATE_sf |>
+ES_state_FORMES <- readRDS("../Rdata/ES_state_FORMES.rds")
+ids_formes <- unique(ES_state_FORMES$id)
+n_plots <- length(ids_formes)
+ES_state_MEDFATE  <- readRDS("../Rdata/ES_state_MEDFATE.rds")|>
+  mutate(id = as.character(as.numeric(substr(id, 1,6))))|>
   filter(id %in% ids_formes)
-ES_ALL <- dplyr::bind_rows(ES_ALL_MEDFATE_sf, ES_ALL_FORMES_sf) |>
+ES_state <- dplyr::bind_rows(ES_state_MEDFATE, ES_state_FORMES) |>
   sf::st_drop_geometry()
+rm(ES_state_MEDFATE)
+rm(ES_state_FORMES)
+
+ES_period_MEDFATE  <- readRDS("../Rdata/ES_period_MEDFATE.rds")|>
+  mutate(id = as.character(as.numeric(substr(id, 1,6)))) |>
+  filter(id %in% ids_formes)
+ES_period_FORMES <- readRDS("../Rdata/ES_period_FORMES.rds")
+ES_period <- dplyr::bind_rows(ES_period_MEDFATE, ES_period_FORMES)  |>
+  sf::st_drop_geometry()
+rm(ES_period_MEDFATE)
+rm(ES_period_FORMES)
+gc()
 ```
 
 
 ```{r, include = FALSE}
-table_ES <- function(ES_all, var, outlier = Inf, add_formes = FALSE) {
+table_ES_period <- function(ES_all, var, outlier = Inf, add_formes = FALSE) {
   ES_sum <- ES_all |>
     filter({{var}} < outlier) |>
     filter(!(Management %in% c("NOG", "NOGEST"))) |>
@@ -35,11 +47,29 @@ table_ES <- function(ES_all, var, outlier = Inf, add_formes = FALSE) {
     group_by(Climate, Management, Period, MidYear, Model) |>
     summarise(ES = mean({{var}}, na.rm=TRUE), .groups = "drop") |>
     select(-MidYear) |>
-    filter(Period %in% unique(ES_ALL$Period)[c(1,3,5)]) |>
+    filter(Period %in% c("2001-2020", "2041-2060", "2081-2100")) |>
     pivot_wider(names_from = c(Climate,Period), names_sort = TRUE, values_from = ES) |>
     arrange(Management,Model) |>
     select(-c("RCP85_2001-2020")) |>
     rename("2001-2020" = "RCP45_2001-2020") 
+  if(!add_formes) ES_sum <- ES_sum |>
+      filter(Model == "MEDFATE")
+  return(ES_sum)
+}
+table_ES_state <- function(ES_all, var, outlier = Inf, add_formes = FALSE) {
+  ES_sum <- ES_all |>
+    filter({{var}} < outlier) |>
+    filter(!(Management %in% c("NOG", "NOGEST"))) |>
+    mutate(Model = factor(Model, levels = c("MEDFATE", "FORMES")),
+           Management = factor(Management, levels = c("BAU", "ASEA", "ACG", "AMF", "RSB"))) |>
+    group_by(Climate, Management, Year, Model) |>
+    summarise(ES = mean({{var}}, na.rm=TRUE), .groups = "drop") |>
+    filter(Year %in% c(2000, 2010, 2050, 2090)) |>
+    pivot_wider(names_from = c(Climate,Year), names_sort = TRUE, values_from = ES) |>
+    arrange(Management,Model) |>
+    select(-c("RCP85_2000", "RCP85_2010")) |>
+    rename("2000" = "RCP45_2000") |>
+    rename("2010" = "RCP45_2010") 
   if(!add_formes) ES_sum <- ES_sum |>
       filter(Model == "MEDFATE")
   return(ES_sum)
@@ -53,7 +83,7 @@ table_ES <- function(ES_all, var, outlier = Inf, add_formes = FALSE) {
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES1_VolumeStructure, add_formes = TRUE), digits = 2)
+knitr::kable(table_ES_state(ES_state, ES1_VolumeStructure, add_formes = TRUE), digits = 0)
 ```
 
 #### Dynamics 
@@ -88,7 +118,7 @@ knitr::include_graphics("../Plots/ES_maps/ES1_VolumeStructure_formes_rcp85.png")
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES1_VolumeAdultFirewood, add_formes = TRUE), digits = 2)
+knitr::kable(table_ES_state(ES_state, ES1_VolumeAdultFirewood, add_formes = TRUE), digits = 0)
 ```
 
 #### Dynamics 
@@ -123,7 +153,7 @@ knitr::include_graphics("../Plots/ES_maps/ES1_VolumeAdultFirewood_formes_rcp85.p
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES1_CutStructure, outlier = 25, add_formes = TRUE), digits = 2)
+knitr::kable(table_ES_period(ES_period, ES1_CutStructure, outlier = 25, add_formes = TRUE), digits = 2)
 ```
 
 #### Dynamics 
@@ -158,7 +188,7 @@ knitr::include_graphics("../Plots/ES_maps/ES1_CutStructure_formes_rcp85.png")
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES1_CutAdultFirewood, outlier = 20, add_formes = TRUE), digits = 2)
+knitr::kable(table_ES_period(ES_period, ES1_CutAdultFirewood, outlier = 20, add_formes = TRUE), digits = 2)
 ```
 
 #### Dynamics 
@@ -195,7 +225,7 @@ knitr::include_graphics("../Plots/ES_maps/ES1_CutAdultFirewood_formes_rcp85.png"
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES2_AdultTreeBiomass, outlier = 1000, add_formes = TRUE), digits = 2)
+knitr::kable(table_ES_state(ES_state, ES2_AdultTreeBiomass, outlier = 1000, add_formes = TRUE), digits = 0)
 ```
 
 #### Dynamics 
@@ -229,7 +259,7 @@ knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomass_formes_rcp85.png"
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES2_AdultTreeBiomassChange, outlier = 50, add_formes = TRUE), digits = 2)
+knitr::kable(table_ES_period(ES_period, ES2_AdultTreeBiomassChange, outlier = 50, add_formes = TRUE), digits = 2)
 ```
 
 #### Dynamics 
@@ -264,7 +294,7 @@ knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassChange_formes_rcp8
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES2_CutBiomassStructure, outlier = 80, add_formes = TRUE), digits = 2)
+knitr::kable(table_ES_period(ES_period, ES2_CutBiomassStructure, outlier = 80, add_formes = TRUE), digits = 2)
 ```
 
 #### Dynamics 
@@ -298,7 +328,7 @@ knitr::include_graphics("../Plots/ES_maps/ES2_CutBiomassStructure_formes_rcp85.p
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES2_AdultTreeBiomassSequestr, outlier = 80, add_formes = T), digits = 2)
+knitr::kable(table_ES_period(ES_period, ES2_AdultTreeBiomassSequestr, outlier = 80, add_formes = T), digits = 2)
 ```
 
 #### Dynamics 
@@ -333,7 +363,7 @@ knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassSequestr_formes_rc
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES2_LiveBiomassSequestr), digits = 2)
+knitr::kable(table_ES_period(ES_period, ES2_LiveBiomassSequestr), digits = 2)
 ```
 
 #### Dynamics 
@@ -360,7 +390,7 @@ knitr::include_graphics("../Plots/ES_maps/ES2_LiveBiomassSequestr_medfate_rcp85.
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES3_BlueWater), digits = 2)
+knitr::kable(table_ES_period(ES_period, ES3_BlueWater), digits = 0)
 ```
 
 #### Dynamics 
@@ -384,7 +414,7 @@ knitr::include_graphics("../Plots/ES_maps/ES3_BlueWater_medfate_rcp85.png")
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES3_RunoffCoefficient), digits = 2)
+knitr::kable(table_ES_period(ES_period, ES3_RunoffCoefficient), digits = 1)
 ```
 
 #### Dynamics 
@@ -410,7 +440,7 @@ knitr::include_graphics("../Plots/ES_maps/ES3_RunoffCoefficient_medfate_rcp85.pn
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES4_ErosionMitigation), digits = 2)
+knitr::kable(table_ES_period(ES_period, ES4_ErosionMitigation), digits = 1)
 ```
 
 #### Dynamics 
@@ -438,7 +468,7 @@ knitr::include_graphics("../Plots/ES_maps/ES4_ErosionMitigation_medfate_rcp85.pn
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES5_RecreationalValue), digits = 2)
+knitr::kable(table_ES_state(ES_state, ES5_RecreationalValue), digits = 2)
 ```
 
 #### Dynamics 
@@ -464,7 +494,7 @@ knitr::include_graphics("../Plots/ES_maps/ES5_RecreationalValue_medfate_rcp85.pn
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES6_SurfaceFirePotential), digits = 2)
+knitr::kable(table_ES_period(ES_period, ES6_SurfaceFirePotential), digits = 2)
 ```
 
 #### Dynamics 
@@ -488,7 +518,7 @@ knitr::include_graphics("../Plots/ES_maps/ES6_SurfaceFirePotential_medfate_rcp85
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES(ES_ALL, ES6_CrownFirePotential), digits = 2)
+knitr::kable(table_ES_period(ES_period, ES6_CrownFirePotential), digits = 2)
 ```
 
 #### Dynamics 
