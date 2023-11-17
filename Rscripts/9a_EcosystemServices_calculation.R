@@ -115,63 +115,108 @@ ES2_function_period <- function(ALL, model) {
     ALL1$Year <- as.numeric(ALL1$Year)
   } 
   
-  BT<-ALL1 |>
+  diff_20 <- function(x) {
+    x |>
+      mutate(P1 = `2020` - `2000`,
+             P2 = `2040` - `2020`,
+             P3 = `2060` - `2040`,
+             P4 = `2080` - `2060`,
+             P5 = `2100` - `2080`)
+  }
+  diff_10 <- function(x) {
+    x |>
+      mutate(P1 = `2010` - `2000`,
+             P2 = `2020` - `2010`,
+             P3 = `2030` - `2020`,
+             P4 = `2040` - `2030`,
+             P5 = `2050` - `2040`,
+             P6 = `2060` - `2050`,
+             P7 = `2070` - `2060`,
+             P8 = `2080` - `2070`,
+             P9 = `2090` - `2080`,
+             P10 = `2100` - `2090`)
+  }
+  
+  BATC_20 <-ALL1 |>
     ungroup() |>
-    filter(Year %in% c(2000,2020,2040,2060,2080,2100)) |>
+    filter(Year %in% seq(2000,2100, by=20)) |>
     select(Climate, Management, Province, id, Year, AdultTreeBiomass) |>
     group_by(Climate, Management, Province) |>
     complete(id, Year, fill = list(AdultTreeBiomass = 0))|>
-    pivot_wider(values_from = AdultTreeBiomass, names_from = Year)
-  BT$P1 <- BT$`2020` - BT$`2000`
-  BT$P2 <- BT$`2040` - BT$`2020`
-  BT$P3 <- BT$`2060` - BT$`2040`
-  BT$P4 <- BT$`2080` - BT$`2060`
-  BT$P5 <- BT$`2100` - BT$`2080`
-  BATC <- BT |>
+    pivot_wider(values_from = AdultTreeBiomass, names_from = Year) |>
+    diff_20() |>
     select(Climate, Management, Province, id, "P1", "P2", "P3", "P4", "P5") |>
     pivot_longer(cols = 5:9, names_to = "Period", values_to = "AdultTreeBiomassChange") |>
     mutate(AdultTreeBiomassChange = AdultTreeBiomassChange/20) |>
     ungroup()
-  rm(BT)
-  BT<-ALL1 |>
+  
+  BATC_10 <-ALL1 |>
     ungroup() |>
-    filter(Year %in% c(2000,2020,2040,2060,2080,2100)) |>
+    filter(Year %in% seq(2000,2100, by=10)) |>
+    select(Climate, Management, Province, id, Year, AdultTreeBiomass) |>
+    group_by(Climate, Management, Province) |>
+    complete(id, Year, fill = list(AdultTreeBiomass = 0))|>
+    pivot_wider(values_from = AdultTreeBiomass, names_from = Year) |>
+    diff_10() |>
+    select(Climate, Management, Province, id, "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10") |>
+    pivot_longer(cols = 5:14, names_to = "Period", values_to = "AdultTreeBiomassChange") |>
+    mutate(AdultTreeBiomassChange = AdultTreeBiomassChange/20) |>
+    ungroup()
+  
+  BSTC_20<-ALL1 |>
+    ungroup() |>
+    filter(Year %in% seq(2000,2100, by=20)) |>
     select(Climate, Management, Province, id, Year, SaplingTreeBiomass) |>
     group_by(Climate, Management, Province) |>
     complete(id, Year, fill = list(SaplingTreeBiomass = 0))|>
-    pivot_wider(values_from = SaplingTreeBiomass, names_from = Year)
-  BT$P1 <- BT$`2020` - BT$`2000`
-  BT$P2 <- BT$`2040` - BT$`2020`
-  BT$P3 <- BT$`2060` - BT$`2040`
-  BT$P4 <- BT$`2080` - BT$`2060`
-  BT$P5 <- BT$`2100` - BT$`2080`
-  BSTC <- BT |>
+    pivot_wider(values_from = SaplingTreeBiomass, names_from = Year) |>
+    diff_20() |>
     select(Climate, Management, Province, id, "P1", "P2", "P3", "P4", "P5") |>
     pivot_longer(cols = 5:9, names_to = "Period", values_to = "SaplingTreeBiomassChange") |>
     mutate(SaplingTreeBiomassChange = SaplingTreeBiomassChange/20) |>
     ungroup()
-  rm(BT)
-  
-  BS<-ALL1 |>
+
+  BSTC_10<-ALL1 |>
     ungroup() |>
-    filter(Year %in% c(2000,2020,2040,2060,2080,2100)) |>
+    filter(Year %in% seq(2000,2100, by=10)) |>
+    select(Climate, Management, Province, id, Year, SaplingTreeBiomass) |>
+    group_by(Climate, Management, Province) |>
+    complete(id, Year, fill = list(SaplingTreeBiomass = 0))|>
+    pivot_wider(values_from = SaplingTreeBiomass, names_from = Year) |>
+    diff_10() |>
+    select(Climate, Management, Province, id, "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10") |>
+    pivot_longer(cols = 5:14, names_to = "Period", values_to = "SaplingTreeBiomassChange") |>
+    mutate(SaplingTreeBiomassChange = SaplingTreeBiomassChange/20) |>
+    ungroup()
+  
+  BSC_20 <-ALL1 |>
+    ungroup() |>
+    filter(Year %in% seq(2000,2100, by=20)) |>
     select(Climate, Management, Province, id, Year, ShrubBiomass) |>
     group_by(Climate, Management, Province) |>
     complete(id, Year, fill = list(ShrubBiomass = 0))|>
-    pivot_wider(values_from = ShrubBiomass, names_from = Year)
-  BS$P1 <- BS$`2020` - BS$`2000`
-  BS$P2 <- BS$`2040` - BS$`2020`
-  BS$P3 <- BS$`2060` - BS$`2040`
-  BS$P4 <- BS$`2080` - BS$`2060`
-  BS$P5 <- BS$`2100` - BS$`2080`
-  BSC <- BS |>
+    pivot_wider(values_from = ShrubBiomass, names_from = Year) |>
+    diff_20() |>
     select(Climate, Management, Province, id, P1, P2, P3, P4, P5) |>
     pivot_longer(cols = 5:9, names_to = "Period", values_to = "ShrubBiomassChange")|>
     mutate(ShrubBiomassChange = ShrubBiomassChange/20) |>
     ungroup()
-  rm(BS)
   
-  CutBiomass <- ALL1 |>
+  
+  BSC_10 <-ALL1 |>
+    ungroup() |>
+    filter(Year %in% seq(2000,2100, by=10)) |>
+    select(Climate, Management, Province, id, Year, ShrubBiomass) |>
+    group_by(Climate, Management, Province) |>
+    complete(id, Year, fill = list(ShrubBiomass = 0))|>
+    pivot_wider(values_from = ShrubBiomass, names_from = Year) |>
+    diff_10() |>
+    select(Climate, Management, Province, id, "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10") |>
+    pivot_longer(cols = 5:14, names_to = "Period", values_to = "ShrubBiomassChange")|>
+    mutate(ShrubBiomassChange = ShrubBiomassChange/20) |>
+    ungroup()
+
+  CutBiomass_20 <- ALL1 |>
     ungroup() |>
     filter(Year!=2000) |>
     select(Climate, Management, Province, id, Year, CutBiomassAdultTree, CutBiomassSaplingTree, CutBiomassShrub,
@@ -180,9 +225,27 @@ ES2_function_period <- function(ALL, model) {
     complete(id, Year, fill = list(CutBiomassAdultTree = 0, CutBiomassSaplingTree = 0, CutBiomassShrub = 0,
                                    CutBiomassStructure = 0, CutBiomassAdultFirewood = 0))|>
     mutate(Period = as.character(cut(Year, 
-                                     breaks = c(2000,2020,2040,2060,2080,2100), 
-                                     labels = c("P1", "P2", "P3", "P4", "P5")
-    ))) |>
+                                     breaks = seq(2000,2100, by=20), 
+                                     labels = c("P1", "P2", "P3", "P4", "P5")))) |>
+    group_by(Climate, Management, Province, id, Period) |>
+    summarise(CutBiomassAdultTree = mean(CutBiomassAdultTree, na.rm=TRUE),
+              CutBiomassSaplingTree = mean(CutBiomassSaplingTree, na.rm=TRUE),
+              CutBiomassShrub = mean(CutBiomassShrub, na.rm=TRUE),
+              CutBiomassStructure = mean(CutBiomassStructure, na.rm=TRUE),
+              CutBiomassAdultFirewood = mean(CutBiomassAdultFirewood, na.rm=TRUE),
+              .groups = "drop") 
+
+  CutBiomass_10 <- ALL1 |>
+    ungroup() |>
+    filter(Year!=2000) |>
+    select(Climate, Management, Province, id, Year, CutBiomassAdultTree, CutBiomassSaplingTree, CutBiomassShrub,
+           CutBiomassStructure, CutBiomassAdultFirewood) |>
+    group_by(Climate, Management, Province) |>
+    complete(id, Year, fill = list(CutBiomassAdultTree = 0, CutBiomassSaplingTree = 0, CutBiomassShrub = 0,
+                                   CutBiomassStructure = 0, CutBiomassAdultFirewood = 0))|>
+    mutate(Period = as.character(cut(Year, 
+                                     breaks = seq(2000,2100, by=10), 
+                                     labels = c("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10")))) |>
     group_by(Climate, Management, Province, id, Period) |>
     summarise(CutBiomassAdultTree = mean(CutBiomassAdultTree, na.rm=TRUE),
               CutBiomassSaplingTree = mean(CutBiomassSaplingTree, na.rm=TRUE),
@@ -191,11 +254,36 @@ ES2_function_period <- function(ALL, model) {
               CutBiomassAdultFirewood = mean(CutBiomassAdultFirewood, na.rm=TRUE),
               .groups = "drop") 
   
+  ES2_20 <- CutBiomass_20 |>
+    left_join(BATC_20, by=c("Climate", "Management", "Province", "id", "Period")) |>
+    left_join(BSTC_20, by=c("Climate", "Management", "Province", "id", "Period")) |>
+    left_join(BSC_20, by=c("Climate", "Management", "Province", "id", "Period")) |>
+    tidyr::replace_na(list(AdultTreeBiomassChange = 0, CutBiomassAdultTree = 0, CutBiomassStructure = 0, CutBiomassAdultFirewood = 0, 
+                           SaplingTreeBiomassChange = 0, CutBiomassSaplingTree = 0, 
+                           ShrubBiomassChange = 0, CutBiomassShrub = 0)) |>
+    mutate(ES2_AdultTreeBiomassChange = AdultTreeBiomassChange,
+           ES2_CutBiomassStructure = CutBiomassStructure,
+           ES2_AdultTreeBiomassSequestr = AdultTreeBiomassChange + CutBiomassStructure, ## Assumes only trees cut for structure involve C sequestration
+           ES2_SaplingTreeBiomassSequestr = SaplingTreeBiomassChange,
+           ES2_ShrubBiomassSequestr = ShrubBiomassChange,
+           ES2_LiveBiomassSequestr = ES2_AdultTreeBiomassSequestr+ES2_SaplingTreeBiomassSequestr+ES2_ShrubBiomassSequestr) |>
+    select(-c(6:13))
+
+  ES2_20$Period[ES2_20$Period=="P1"] <- "2001-2020"
+  ES2_20$Period[ES2_20$Period=="P2"] <- "2021-2040"
+  ES2_20$Period[ES2_20$Period=="P3"] <- "2041-2060"
+  ES2_20$Period[ES2_20$Period=="P4"] <- "2061-2080"
+  ES2_20$Period[ES2_20$Period=="P5"] <- "2081-2100"
   
-  ES2 <- CutBiomass |>
-    left_join(BATC, by=c("Climate", "Management", "Province", "id", "Period")) |>
-    left_join(BSTC, by=c("Climate", "Management", "Province", "id", "Period")) |>
-    left_join(BSC, by=c("Climate", "Management", "Province", "id", "Period")) |>
+  ES2_20 <- ES2_20 |> 
+    dplyr::mutate(Climate = toupper(Climate))|>
+    mutate(Model = model) |>
+    relocate(Model, .after = Period)
+  
+  ES2_10 <- CutBiomass_10 |>
+    left_join(BATC_10, by=c("Climate", "Management", "Province", "id", "Period")) |>
+    left_join(BSTC_10, by=c("Climate", "Management", "Province", "id", "Period")) |>
+    left_join(BSC_10, by=c("Climate", "Management", "Province", "id", "Period")) |>
     tidyr::replace_na(list(AdultTreeBiomassChange = 0, CutBiomassAdultTree = 0, CutBiomassStructure = 0, CutBiomassAdultFirewood = 0, 
                            SaplingTreeBiomassChange = 0, CutBiomassSaplingTree = 0, 
                            ShrubBiomassChange = 0, CutBiomassShrub = 0)) |>
@@ -207,15 +295,23 @@ ES2_function_period <- function(ALL, model) {
            ES2_LiveBiomassSequestr = ES2_AdultTreeBiomassSequestr+ES2_SaplingTreeBiomassSequestr+ES2_ShrubBiomassSequestr) |>
     select(-c(6:13))
   
-  ES2$Period[ES2$Period=="P1"] <- "2001-2020"
-  ES2$Period[ES2$Period=="P2"] <- "2021-2040"
-  ES2$Period[ES2$Period=="P3"] <- "2041-2060"
-  ES2$Period[ES2$Period=="P4"] <- "2061-2080"
-  ES2$Period[ES2$Period=="P5"] <- "2081-2100"
-  ES2 <- ES2 |> 
+  ES2_10$Period[ES2_10$Period=="P1"] <- "2001-2010"
+  ES2_10$Period[ES2_10$Period=="P2"] <- "2011-2020"
+  ES2_10$Period[ES2_10$Period=="P3"] <- "2021-2030"
+  ES2_10$Period[ES2_10$Period=="P4"] <- "2031-2040"
+  ES2_10$Period[ES2_10$Period=="P5"] <- "2041-2050"
+  ES2_10$Period[ES2_10$Period=="P6"] <- "2051-2060"
+  ES2_10$Period[ES2_10$Period=="P7"] <- "2061-2070"
+  ES2_10$Period[ES2_10$Period=="P8"] <- "2071-2080"
+  ES2_10$Period[ES2_10$Period=="P9"] <- "2081-2090"
+  ES2_10$Period[ES2_10$Period=="P10"] <- "2091-2100"
+  
+  ES2_10 <- ES2_10 |> 
     dplyr::mutate(Climate = toupper(Climate))|>
     mutate(Model = model) |>
     relocate(Model, .after = Period)
+  
+  ES2 <- bind_rows(ES2_10, ES2_20)
   return(ES2)
 }
 
@@ -445,7 +541,6 @@ ES6_function_period <- function(ALL, model) {
   } 
   ES6_10 <- ALL1 |>
     ungroup() |>
-    filter(Year!=2000) |>
     select(Climate, Management, Province, id, Year, SFP, CFP) |>
     group_by(Climate, Management, Province) |>
     complete(id, Year, fill = list(SFP = 0, CFP = 0))|>
@@ -463,7 +558,6 @@ ES6_function_period <- function(ALL, model) {
     dplyr::mutate(Climate = toupper(Climate))
   ES6_20 <- ALL1 |>
     ungroup() |>
-    filter(Year!=2000) |>
     select(Climate, Management, Province, id, Year, SFP, CFP) |>
     group_by(Climate, Management, Province) |>
     complete(id, Year, fill = list(SFP = 0, CFP = 0))|>
@@ -503,10 +597,13 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "MEDFATE") 
     } else {
       ES1s <- ES1_function_state(ALL, model)
       ES2s <- ES2_function_state(ALL, model)
-      ES5s <- ES5_function_state(ALL, model)
       ES <- ES1s |>
-        left_join(ES2s, by=c("Climate", "Management", "Province", "id", "Year","Model"))|>
-        left_join(ES5s, by=c("Climate", "Management", "Province", "id", "Year","Model"))
+        left_join(ES2s, by=c("Climate", "Management", "Province", "id", "Year","Model"))
+      if(model=="MEDFATE") {
+        ES5s <- ES5_function_state(ALL, model)
+        ES <- ES |>
+          left_join(ES5s, by=c("Climate", "Management", "Province", "id", "Year","Model"))
+      }
     }
     return(ES)
   }

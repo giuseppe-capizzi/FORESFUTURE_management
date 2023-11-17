@@ -18,14 +18,19 @@ ES_state_MEDFATE  <- readRDS("Rdata/ES_state_MEDFATE.rds")|>
   mutate(id = as.character(as.numeric(substr(id, 1,6))))|>
   filter(id %in% ids_formes)
 ES_state <- dplyr::bind_rows(ES_state_MEDFATE, ES_state_FORMES) 
+rm(ES_state_MEDFATE)
+rm(ES_state_FORMES)
 
 ES_period_MEDFATE  <- readRDS("Rdata/ES_period_MEDFATE.rds")|>
   mutate(id = as.character(as.numeric(substr(id, 1,6)))) |>
   filter(id %in% ids_formes)
 ES_period_FORMES <- readRDS("Rdata/ES_period_FORMES.rds")
 ES_period <- dplyr::bind_rows(ES_period_MEDFATE, ES_period_FORMES) 
+rm(ES_period_MEDFATE)
+rm(ES_period_FORMES)
+gc()
 
-# Functions to generate plots/maps --------------------------------------------------------
+# Functions to generate plots --------------------------------------------------------
 plot_ES_state <- function(ES_state, var, ylab, ylim, outlier = Inf, add_formes = FALSE) {
   ES_sum <- ES_state |>
     filter(!(Management %in% c("NOG", "NOGEST"))) |>
@@ -101,7 +106,7 @@ plot_ES_period <- function(ES_all, var, ylab, ylim, outlier = Inf, add_formes = 
     geom_vline(xintercept = 2020, linetype="dashed")+
     annotate("rect", xmin = 2000, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
     scale_x_continuous("",breaks = unique(ES_sum$MidYear),
-                       labels = unique(ES_sum$Period), expand = c(0,0))+    
+                       labels = unique(ES_sum$Period), limits = c(2000,2101), expand = c(0,0))+    
     scale_fill_discrete("Escenari")+
     scale_color_discrete("Escenari")+
     ylab(ylab)+ ylim(ylim)+labs(title = "MEDFATE / RCP 4.5")+theme_bw()+
@@ -114,7 +119,7 @@ plot_ES_period <- function(ES_all, var, ylab, ylim, outlier = Inf, add_formes = 
     geom_vline(xintercept = 2020, linetype="dashed")+
     annotate("rect", xmin = 2000, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
     scale_x_continuous("",breaks = unique(ES_sum$MidYear),
-                       labels = unique(ES_sum$Period), expand = c(0,0))+
+                       labels = unique(ES_sum$Period), limits = c(2000,2101), expand = c(0,0))+
     ylab("")+ ylim(ylim)+labs(title = "MEDFATE / RCP 8.5")+ theme_bw()+
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
   pA <- plot_grid(p1 + theme(legend.position = "none"), 
@@ -127,7 +132,7 @@ plot_ES_period <- function(ES_all, var, ylab, ylim, outlier = Inf, add_formes = 
       geom_vline(xintercept = 2020, linetype="dashed")+
       annotate("rect", xmin = 2000, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
       scale_x_continuous("",breaks = unique(ES_sum$MidYear),
-                         labels = unique(ES_sum$Period), expand = c(0,0))+
+                         labels = unique(ES_sum$Period), limits = c(2000,2101), expand = c(0,0))+
       ylab(ylab)+ ylim(ylim)+labs(title = "FORMES / RCP 4.5")+theme_bw()+
       theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
     l <- get_legend(p1)
@@ -137,7 +142,7 @@ plot_ES_period <- function(ES_all, var, ylab, ylim, outlier = Inf, add_formes = 
       geom_line(aes(x = MidYear, y = ES, col = Management))+
       geom_vline(xintercept = 2020, linetype="dashed")+
       annotate("rect", xmin = 2000, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
-      scale_x_continuous("",breaks = unique(ES_sum$MidYear, expand = c(0,0)),
+      scale_x_continuous("",breaks = unique(ES_sum$MidYear, limits = c(2000,2101), expand = c(0,0)),
                          labels = unique(ES_sum$Period))+
       ylab("")+ ylim(ylim)+labs(title = "FORMES / RCP 8.5")+ theme_bw()+
       theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
@@ -150,6 +155,7 @@ plot_ES_period <- function(ES_all, var, ylab, ylim, outlier = Inf, add_formes = 
   return(plot_grid(pALL, l, rel_widths = c(1,0.2)))
 }
 
+# Functions to generate maps --------------------------------------------------------
 sf::st_bbox(nfiplot)
 xmin <- 260000
 xmax <- 520000
@@ -311,19 +317,21 @@ map_scenario_state<-function(sf_ALL, var, model, climate_scen, breaks, breaks_di
   return(g)
 }
 
-map_scenario_states<-function(ES_state, var, breaks, breaks_diff, units, type = "div", palette = "YlGnBu") {
+map_scenario_states<-function(ES_state, var, breaks, breaks_diff, units, type = "div", palette = "YlGnBu", draw_formes = TRUE) {
   m_ES <- map_scenario_state(ES_state[ES_state$Model=="MEDFATE",], model = "MEDFATE", var = var, climate_scen = "RCP45", 
                              breaks = breaks, breaks_diff = breaks_diff, units = units, type = type, palette = palette)
   ggsave2(paste0("Plots/ES_maps/", var, "_medfate_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
-  m_ES <- map_scenario_state(ES_state[ES_state$Model=="FORMES",], model = "FORMES",var = var, climate_scen = "RCP45",
-                             breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
-  ggsave2(paste0("Plots/ES_maps/",var,"_formes_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
   m_ES <- map_scenario_state(ES_state[ES_state$Model=="MEDFATE",], model = "MEDFATE",var = var, climate_scen = "RCP85", 
                              breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
   ggsave2(paste0("Plots/ES_maps/",var,"_medfate_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
-  m_ES <- map_scenario_state(ES_state[ES_state$Model=="FORMES",], model = "FORMES", var = var, climate_scen = "RCP85",
-                             breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
-  ggsave2(paste0("Plots/ES_maps/",var,"_formes_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
+  if(draw_formes) {
+    m_ES <- map_scenario_state(ES_state[ES_state$Model=="FORMES",], model = "FORMES",var = var, climate_scen = "RCP45",
+                               breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+    ggsave2(paste0("Plots/ES_maps/",var,"_formes_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
+    m_ES <- map_scenario_state(ES_state[ES_state$Model=="FORMES",], model = "FORMES", var = var, climate_scen = "RCP85",
+                               breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+    ggsave2(paste0("Plots/ES_maps/",var,"_formes_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
+  }
 }
 
 map_scenario_period<-function(sf_ALL, var, model, climate_scen, breaks, breaks_diff, units, type = "div", palette = "YlGnBu") {
@@ -480,20 +488,23 @@ map_scenario_period<-function(sf_ALL, var, model, climate_scen, breaks, breaks_d
                nrow = 5, ncol = 3)
   return(g)
 }
-map_scenario_periods<-function(ES_period, var, breaks, breaks_diff, units, type = "div", palette = "YlGnBu") {
+map_scenario_periods<-function(ES_period, var, breaks, breaks_diff, units, type = "div", palette = "YlGnBu", draw_formes = TRUE) {
   m_ES <- map_scenario_period(ES_period[ES_period$Model=="MEDFATE",], model = "MEDFATE", var = var, climate_scen = "RCP45", 
                              breaks = breaks, breaks_diff = breaks_diff, units = units, type = type, palette = palette)
   ggsave2(paste0("Plots/ES_maps/", var, "_medfate_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
-  m_ES <- map_scenario_period(ES_period[ES_period$Model=="FORMES",], model = "FORMES",var = var, climate_scen = "RCP45",
-                             breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
-  ggsave2(paste0("Plots/ES_maps/",var,"_formes_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
   m_ES <- map_scenario_period(ES_period[ES_period$Model=="MEDFATE",], model = "MEDFATE",var = var, climate_scen = "RCP85", 
                              breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
   ggsave2(paste0("Plots/ES_maps/",var,"_medfate_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
-  m_ES <- map_scenario_period(ES_period[ES_period$Model=="FORMES",], model = "FORMES", var = var, climate_scen = "RCP85",
-                             breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
-  ggsave2(paste0("Plots/ES_maps/",var,"_formes_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
+  if(draw_formes) {
+    m_ES <- map_scenario_period(ES_period[ES_period$Model=="FORMES",], model = "FORMES",var = var, climate_scen = "RCP45",
+                                breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+    ggsave2(paste0("Plots/ES_maps/",var,"_formes_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
+    m_ES <- map_scenario_period(ES_period[ES_period$Model=="FORMES",], model = "FORMES", var = var, climate_scen = "RCP85",
+                                breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+    ggsave2(paste0("Plots/ES_maps/",var,"_formes_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
+  }
 }
+
 
 # ES1_VolumeStructure -----------------------------------------------------
 d_ES <- plot_ES_state(ES_state, ES1_VolumeStructure, "Stock fusta estructural (m3/ha)", c(0,250), add_formes = TRUE)
@@ -628,86 +639,60 @@ ggsave2("Plots/ES_maps/ES2_LiveBiomassSequestr_medfate_rcp85.png",m_ES, width = 
 
 
 # ES3_BlueWater -----------------------------------------------------------
-d_ES <- plot_ES(ES_ALL, ES3_BlueWater, ylab = "Aigua blava (mm/any)", ylim = c(150,300), add_formes = FALSE)
+d_ES <- plot_ES_period(ES_period, ES3_BlueWater, ylab = "Aigua blava (mm/any)", ylim = c(100,300), add_formes = FALSE)
 ggsave2("Plots/ES_dynamics/ES3_BlueWater.png",d_ES, width = 10, height = 4, bg = "white")
-summary(ES_ALL_MEDFATE_sf$ES3_BlueWater)
+summary(ES_period$ES3_BlueWater)
 breaks = seq(0,320, by=40)
 breaks_diff = seq(-200,200, by = 40)
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES3_BlueWater", climate_scen = "RCP45", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "mm/any")
-ggsave2("Plots/ES_maps/ES3_BlueWater_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES3_BlueWater", climate_scen = "RCP85", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "mm/any")
-ggsave2("Plots/ES_maps/ES3_BlueWater_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
-
+map_scenario_periods(ES_period, var = "ES3_BlueWater", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "mm/any", draw_formes = FALSE)
 
 # ES3_RunoffCoefficient ---------------------------------------------------
-d_ES <- plot_ES(ES_ALL, ES3_RunoffCoefficient, ylab = "Coeficient d'escolament [%]", ylim = c(23,40), add_formes = FALSE)
+d_ES <- plot_ES_period(ES_period, ES3_RunoffCoefficient, ylab = "Coeficient d'escolament [%]", ylim = c(20,40), add_formes = FALSE)
 ggsave2("Plots/ES_dynamics/ES3_RunoffCoefficient.png",d_ES, width = 10, height = 4, bg = "white")
-summary(ES_ALL_MEDFATE_sf$ES3_RunoffCoefficient)
+summary(ES_period$ES3_RunoffCoefficient)
 breaks = c(0,5,10,20,40,60,80, 100)
 breaks_diff = c(-50,-10,-20,-5, -2,2,5,10,20,50)
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES3_RunoffCoefficient", climate_scen = "RCP45", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "%")
-ggsave2("Plots/ES_maps/ES3_RunoffCoefficient_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES3_RunoffCoefficient", climate_scen = "RCP85", 
-             breaks = breaks, breaks_diff = breaks_diff, units = "%")
-ggsave2("Plots/ES_maps/ES3_RunoffCoefficient_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
-
+map_scenario_periods(ES_period, var = "ES3_RunoffCoefficient", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "%", draw_formes = FALSE)
 
 # ES4_ErosionMitigation ---------------------------------------------------
-d_ES <- plot_ES(ES_ALL, ES4_ErosionMitigation, ylab = "Mitigació de l'erosió (Mg/ha/any)", ylim = c(100,175), 
+d_ES <- plot_ES_period(ES_period, ES4_ErosionMitigation, ylab = "Mitigació de l'erosió (Mg/ha/any)", ylim = c(100,175), 
                 outlier = 3000, add_formes = FALSE)
 ggsave2("Plots/ES_dynamics/ES4_ErosionMitigation.png",d_ES, width = 10, height = 4, bg = "white")
-summary(ES_ALL_MEDFATE_sf$ES4_ErosionMitigation)
+summary(ES_period$ES4_ErosionMitigation)
 breaks = c(0,25, 50, 100, 150, 200, 300, 4000)
 breaks_diff = c(-100, -50,-10,-5, 5,10,50, 100)
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES4_ErosionMitigation", climate_scen = "RCP45", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "Mg/ha/any")
-ggsave2("Plots/ES_maps/ES4_ErosionMitigation_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES4_ErosionMitigation", climate_scen = "RCP85", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "Mg/ha/any")
-ggsave2("Plots/ES_maps/ES4_ErosionMitigation_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+map_scenario_periods(ES_period, var = "ES4_ErosionMitigation", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "Mg/ha/any", draw_formes = FALSE)
 
 
 # ES5_RecreationalValue ---------------------------------------------------
-d_ES <- plot_ES(ES_ALL, ES5_RecreationalValue, ylab = "Valor recreatiu [0-1]", ylim = c(0.4,0.60), add_formes = FALSE)
+d_ES <- plot_ES_state(ES_state, ES5_RecreationalValue, ylab = "Valor recreatiu [0-1]", ylim = c(0.4,0.60), add_formes = FALSE)
 ggsave2("Plots/ES_dynamics/ES5_RecreationalValue.png",d_ES, width = 10, height = 4, bg = "white")
-summary(ES_ALL_MEDFATE_sf$ES5_RecreationalValue)
+summary(ES_state$ES5_RecreationalValue)
 breaks = c(0,0.05,0.1,0.2,0.4,0.6,0.8, 1)
 breaks_diff = c(-0.5,-0.3, -0.2, -0.1, -0.05, 0.05, 0.1, 0.2, 0.5)
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES5_RecreationalValue", climate_scen = "RCP45", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]")
-ggsave2("Plots/ES_maps/ES5_RecreationalValue_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES5_RecreationalValue", climate_scen = "RCP85", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]")
-ggsave2("Plots/ES_maps/ES5_RecreationalValue_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+map_scenario_states(ES_state, var = "ES5_RecreationalValue", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]", draw_formes = FALSE)
 
 
 # ES6_SurfaceFirePotential  ---------------------------------------------------
-d_ES <- plot_ES(ES_ALL, ES6_SurfaceFirePotential, ylab = "Risk d'incendi de superficie [0-9]", ylim = c(7,9), add_formes = FALSE)
+d_ES <- plot_ES_period(ES_period, ES6_SurfaceFirePotential, ylab = "Risk d'incendi de superficie [0-9]", ylim = c(7,9), add_formes = FALSE)
 ggsave2("Plots/ES_dynamics/ES6_SurfaceFirePotential.png",d_ES, width = 10, height = 4, bg = "white")
-summary(ES_ALL_MEDFATE_sf$ES6_SurfaceFirePotential)
+summary(ES_period$ES6_SurfaceFirePotential)
 breaks = seq(0,9, by=1)
 breaks_diff = c(-5,-4,-3,-2,-1,1,2,3,4,5)
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES6_SurfaceFirePotential", climate_scen = "RCP45", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]")
-ggsave2("Plots/ES_maps/ES6_SurfaceFirePotential_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES6_SurfaceFirePotential", climate_scen = "RCP85", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]")
-ggsave2("Plots/ES_maps/ES6_SurfaceFirePotential_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+map_scenario_periods(ES_period, var = "ES6_SurfaceFirePotential", 
+                    breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]", draw_formes = FALSE)
 
 # ES6_CrownFirePotential  ---------------------------------------------------
-d_ES <- plot_ES(ES_ALL, ES6_CrownFirePotential, ylab = "Risk d'incendi de capçada [0-9]", ylim = c(4,7), add_formes = FALSE)
+d_ES <- plot_ES_period(ES_period, ES6_CrownFirePotential, ylab = "Risk d'incendi de capçada [0-9]", ylim = c(4,7), add_formes = FALSE)
 ggsave2("Plots/ES_dynamics/ES6_CrownFirePotential.png",d_ES, width = 10, height = 4, bg = "white")
-summary(ES_ALL_MEDFATE_sf$ES6_CrownFirePotential)
+summary(ES_period$ES6_CrownFirePotential)
 breaks = seq(0,9, by=1)
 breaks_diff = c(-5,-4,-3,-2,-1,1,2,3,4,5)
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES6_CrownFirePotential", climate_scen = "RCP45", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]")
-ggsave2("Plots/ES_maps/ES6_CrownFirePotential_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES6_CrownFirePotential", climate_scen = "RCP85", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]")
-ggsave2("Plots/ES_maps/ES6_CrownFirePotential_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+map_scenario_periods(ES_period, var = "ES6_CrownFirePotential", 
+                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]", draw_formes = FALSE)
 
 
