@@ -12,8 +12,8 @@ longitude_df <- sf::st_drop_geometry(lonlat)
 K_LS <- sf::read_sf("Data/ErosionData.gpkg")
 comarques <- sf::read_sf("Data/Comarques/comarques.shp")
 
-# ES1 - Annual timber extraction (m3/ha/yr) per 20-year periods -----------
-ES1_function <- function(ALL, model) {
+# ES1 - Annual timber extraction (m3/ha/yr) per 10-year and 20-year periods -----------
+ES1_function_period <- function(ALL, model) {
   if(model=="FORMES") {
     ALL$Management <- ALL$Management[ALL$Year=="2021-2030"][1]
     ALL$Year[ALL$Year=="2001-2010"] = "2005"
@@ -28,31 +28,76 @@ ES1_function <- function(ALL, model) {
     ALL$Year[ALL$Year=="2091-2100"] = "2095"
     ALL$Year <- as.numeric(ALL$Year)
   } 
-  ES1 <- ALL |>
+  ALL_COMPLETE <- ALL |>
     ungroup() |>
     filter(Year!=2000) |>
-    select(Climate, Management, Province, id, Year, VolumeStructure, VolumeAdultFirewood, VolumeSaplingFirewood, CutStructure, CutAdultFirewood, CutSaplingFirewood) |>
+    select(Climate, Management, Province, id, Year, CutStructure, CutAdultFirewood, CutSaplingFirewood) |>
     group_by(Climate, Management, Province) |>
-    complete(id, Year, fill = list(VolumeStructure = 0, VolumeAdultFirewood = 0, VolumeSaplingFirewood = 0, CutStructure = 0, CutAdultFirewood =0, CutSaplingFirewood = 0))|>
+    complete(id, Year, fill = list(CutStructure = 0, CutAdultFirewood =0, CutSaplingFirewood = 0))
+    
+  ES1_20 <- ALL_COMPLETE |>
     mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c("2001-2020", "2021-2040", "2041-2060", "2061-2080", "2081-2100"))),
            MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), 
                                                  labels = c(2010, 2030, 2050, 2070, 2090))))) |>
     group_by(Climate, Management, Province, id, Period, MidYear) |>
-    summarise(ES1_VolumeStructure = mean(VolumeStructure, na.rm=TRUE),
-              ES1_VolumeAdultFirewood = mean(VolumeAdultFirewood, na.rm=TRUE),
-              ES1_VolumeSaplingFirewood = mean(VolumeSaplingFirewood, na.rm=TRUE),
-              ES1_CutStructure = mean(CutStructure, na.rm=TRUE),
+    summarise(ES1_CutStructure = mean(CutStructure, na.rm=TRUE),
               ES1_CutAdultFirewood = mean(CutAdultFirewood, na.rm=TRUE),
               ES1_CutSaplingFirewood = mean(CutSaplingFirewood, na.rm=TRUE),
               .groups = "drop") |>
-    tidyr::replace_na(list(ES1_CutStructure = 0, ES1_VolumeAdultFirewood = 0, ES1_VolumeSaplingFirewood = 0,
-                           ES1_CutStructure = 0, ES1_CutAdultFirewood = 0, ES1_CutSaplingFirewood = 0)) |>
+    tidyr::replace_na(list(ES1_CutStructure = 0, ES1_CutAdultFirewood = 0, ES1_CutSaplingFirewood = 0)) |>
+    mutate(Model = model) |>
+    relocate(Model, .after = MidYear)|>
+    dplyr::mutate(Climate = toupper(Climate))
+  ES1_10 <- ALL_COMPLETE |>
+    mutate(Period = as.character(cut(Year, breaks = seq(2000,2100, by = 10), 
+                                     labels = paste0(seq(2001,2091, by=10), "-",seq(2010,2100, by=10)))),
+           MidYear = as.numeric(as.character(cut(Year, breaks = seq(2000,2100, by = 10), 
+                                                 labels = seq(2005, 2095, by=10))))) |>
+    group_by(Climate, Management, Province, id, Period, MidYear) |>
+    summarise(ES1_CutStructure = mean(CutStructure, na.rm=TRUE),
+              ES1_CutAdultFirewood = mean(CutAdultFirewood, na.rm=TRUE),
+              ES1_CutSaplingFirewood = mean(CutSaplingFirewood, na.rm=TRUE),
+              .groups = "drop") |>
+    tidyr::replace_na(list(ES1_CutStructure = 0, ES1_CutAdultFirewood = 0, ES1_CutSaplingFirewood = 0)) |>
+    mutate(Model = model) |>
+    relocate(Model, .after = MidYear)|>
+    dplyr::mutate(Climate = toupper(Climate))
+  ES1 <- bind_rows(ES1_10, ES1_20)
+  return(ES1)
+}
+# ES1 - Timber stocks (m3/ha/yr) per 10-year periods -----------
+ES1_function_state <- function(ALL, model) {
+  if(model=="FORMES") {
+    ALL$Management <- ALL$Management[ALL$Year=="2021-2030"][1]
+    ALL$Year[ALL$Year=="2001-2010"] = "2010"
+    ALL$Year[ALL$Year=="2011-2020"] = "2020"
+    ALL$Year[ALL$Year=="2021-2030"] = "2030"
+    ALL$Year[ALL$Year=="2031-2040"] = "2040"
+    ALL$Year[ALL$Year=="2041-2050"] = "2050"
+    ALL$Year[ALL$Year=="2051-2060"] = "2060"
+    ALL$Year[ALL$Year=="2061-2070"] = "2070"
+    ALL$Year[ALL$Year=="2071-2080"] = "2080"
+    ALL$Year[ALL$Year=="2081-2090"] = "2090"
+    ALL$Year[ALL$Year=="2091-2100"] = "2100"
+    ALL$Year <- as.numeric(ALL$Year)
+  } 
+  ES1 <- ALL |>
+    ungroup() |>
+    select(Climate, Management, Province, id, Year, VolumeStructure, VolumeAdultFirewood, VolumeSaplingFirewood) |>
+    group_by(Climate, Management, Province) |>
+    complete(id, Year, fill = list(VolumeStructure = 0, VolumeAdultFirewood = 0, VolumeSaplingFirewood = 0))|>
+    filter(Year %in% c(seq(2000,2100, by =10))) |>
+    rename(MidYear = Year)|>
+    mutate(Period = NA) |>
+    relocate(Period, .before = MidYear)|>
+    mutate(ES1_VolumeStructure = VolumeStructure,
+           ES1_VolumeAdultFirewood = VolumeAdultFirewood,
+           ES1_VolumeSaplingFirewood = VolumeSaplingFirewood) |>
     mutate(Model = model) |>
     relocate(Model, .after = MidYear)|>
     dplyr::mutate(Climate = toupper(Climate))
   return(ES1)
 }
-
 # ES2 - Carbon sequestration rate (Mg C/ha/yr) per 20-year periods -----------
 ES2_function <- function(ALL, model) {
   ALL1 <- ALL
@@ -337,12 +382,13 @@ ES6_function <- function(ALL, model) {
 }
 
 # ES - ALL ----------------------------------------------------------------
-generate_ES_table <- function(test = FALSE, model = "MEDFATE") {
+generate_ES_period_table <- function(test = FALSE, model = "MEDFATE") {
   ES_function<-function(ALL, model) {
-    ES1 <- ES1_function(ALL, model)
+    ES1 <- ES1_function_period(ALL, model)
     ES2 <- ES2_function(ALL, model)
     ES <- ES1 |>
       left_join(ES2, by=c("Climate", "Management", "Province", "id", "Period", "Model"))
+    
     if(model=="MEDFATE") {
       ES3 <- ES3_function(ALL, model)
       ES4 <- ES4_function(ALL, model)
@@ -443,23 +489,123 @@ generate_ES_table <- function(test = FALSE, model = "MEDFATE") {
                    RSB_rcp45, RSB_rcp85,
                    ASEA_rcp45, ASEA_rcp85,
                    ACG_rcp45, ACG_rcp85)
-                   # NOG_rcp45, NOG_rcp85)
+  # NOG_rcp45, NOG_rcp85)
+  return(ALL)
+}
+generate_ES_state_table <- function(test = FALSE, model = "MEDFATE") {
+  ES_function<-function(ALL, model) {
+    ES1s <- ES1_function_state(ALL, model)
+    return(ES1s)
+  }
+  if(model=="MEDFATE") {
+    if(test) {
+      cli::cli_progress_step("BAU/RCP45")
+      BAU_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_BAU_mpiesm_rca4_rcp45.rds"), model)
+      cli::cli_progress_step("BAU/RCP85")
+      BAU_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_BAU_mpiesm_rca4_rcp85.rds"), model)
+      cli::cli_progress_step("AMF/RCP45")
+      AMF_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_AMF_mpiesm_rca4_rcp45.rds"), model)
+      cli::cli_progress_step("AMF/RCP85")
+      AMF_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_AMF_mpiesm_rca4_rcp85.rds"), model)
+      cli::cli_progress_step("RSB/RCP45")
+      RSB_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_RSB_mpiesm_rca4_rcp45.rds"), model)
+      cli::cli_progress_step("RSB/RCP85")
+      RSB_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_RSB_mpiesm_rca4_rcp85.rds"), model)
+      cli::cli_progress_step("ASEA/RCP45")
+      ASEA_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_ASEA_mpiesm_rca4_rcp45.rds"), model)
+      cli::cli_progress_step("ASEA/RCP85")
+      ASEA_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_ASEA_mpiesm_rca4_rcp85.rds"), model)
+      cli::cli_progress_step("ACG/RCP45")
+      ACG_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_ACG_mpiesm_rca4_rcp45.rds"), model)
+      cli::cli_progress_step("ACG/RCP85")
+      ACG_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_ACG_mpiesm_rca4_rcp85.rds"), model)
+      # cli::cli_progress_step("NOG/RCP45")
+      # NOG_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp45.rds"), model)
+      # cli::cli_progress_step("NOG/RCP85")
+      # NOG_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp85.rds"), model)
+    } else {
+      cli::cli_progress_step("BAU/RCP45")
+      BAU_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/BAU_mpiesm_rca4_rcp45.rds"), model)
+      cli::cli_progress_step("BAU/RCP85")
+      BAU_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/BAU_mpiesm_rca4_rcp85.rds"), model)
+      cli::cli_progress_step("AMF/RCP45")
+      AMF_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/AMF_mpiesm_rca4_rcp45.rds"), model)
+      cli::cli_progress_step("AMF/RCP85")
+      AMF_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/AMF_mpiesm_rca4_rcp85.rds"), model)
+      cli::cli_progress_step("RSB/RCP45")
+      RSB_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/RSB_mpiesm_rca4_rcp45.rds"), model)
+      cli::cli_progress_step("RSB/RCP85")
+      RSB_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/RSB_mpiesm_rca4_rcp85.rds"), model)
+      cli::cli_progress_step("ASEA/RCP45")
+      ASEA_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/ASEA_mpiesm_rca4_rcp45.rds"), model)
+      cli::cli_progress_step("ASEA/RCP85")
+      ASEA_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/ASEA_mpiesm_rca4_rcp85.rds"), model)
+      cli::cli_progress_step("ACG/RCP45")
+      ACG_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/ACG_mpiesm_rca4_rcp45.rds"), model)
+      cli::cli_progress_step("ACG/RCP85")
+      ACG_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/ACG_mpiesm_rca4_rcp85.rds"), model)
+      # cli::cli_progress_step("NOG/RCP45")
+      # NOG_rcp45 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/NOG_mpiesm_rca4_rcp45.rds"), model)
+      # cli::cli_progress_step("NOG/RCP85")
+      # NOG_rcp85 <- ES_function(readRDS("Rdata/MEDFATE/annual_indicators/NOG_mpiesm_rca4_rcp85.rds"), model)
+    }
+  } else {
+    cli::cli_progress_step("BAU/RCP45")
+    BAU_rcp45 <- ES_function(readRDS("Rdata/FORMES/annual_indicators/BAU_mpiesm_rca4_rcp45.rds"), model)
+    cli::cli_progress_step("BAU/RCP85")
+    BAU_rcp85 <- ES_function(readRDS("Rdata/FORMES/annual_indicators/BAU_mpiesm_rca4_rcp85.rds"), model)
+    cli::cli_progress_step("AMF/RCP45")
+    AMF_rcp45 <- ES_function(readRDS("Rdata/FORMES/annual_indicators/AMF_mpiesm_rca4_rcp45.rds"), model)
+    cli::cli_progress_step("AMF/RCP85")
+    AMF_rcp85 <- ES_function(readRDS("Rdata/FORMES/annual_indicators/AMF_mpiesm_rca4_rcp85.rds"), model)
+    cli::cli_progress_step("RSB/RCP45")
+    RSB_rcp45 <- ES_function(readRDS("Rdata/FORMES/annual_indicators/RSB_mpiesm_rca4_rcp45.rds"), model)
+    cli::cli_progress_step("RSB/RCP85")
+    RSB_rcp85 <- ES_function(readRDS("Rdata/FORMES/annual_indicators/RSB_mpiesm_rca4_rcp85.rds"), model)
+    cli::cli_progress_step("ASEA/RCP45")
+    ASEA_rcp45 <- ES_function(readRDS("Rdata/FORMES/annual_indicators/ASEA_mpiesm_rca4_rcp45.rds"), model)
+    cli::cli_progress_step("ASEA/RCP85")
+    ASEA_rcp85 <- ES_function(readRDS("Rdata/FORMES/annual_indicators/ASEA_mpiesm_rca4_rcp85.rds"), model)
+    cli::cli_progress_step("ACG/RCP45")
+    ACG_rcp45 <- ES_function(readRDS("Rdata/FORMES/annual_indicators/ACG_mpiesm_rca4_rcp45.rds"), model)
+    cli::cli_progress_step("ACG/RCP85")
+    ACG_rcp85 <- ES_function(readRDS("Rdata/FORMES/annual_indicators/ACG_mpiesm_rca4_rcp85.rds"), model)
+    # cli::cli_progress_step("NOG/RCP45")
+    # NOG_rcp45 <- ES_function(readRDS("Rdata/FORMES/annual_indicators/NOG_mpiesm_rca4_rcp45.rds"), model)
+    # cli::cli_progress_step("NOG/RCP85")
+    # NOG_rcp85 <- ES_function(readRDS("Rdata/FORMES/annual_indicators/NOG_mpiesm_rca4_rcp85.rds"), model)
+  }
+  
+  cli::cli_progress_step("Binding")
+  ALL <- bind_rows(BAU_rcp45, BAU_rcp85,
+                   AMF_rcp45, AMF_rcp85,
+                   RSB_rcp45, RSB_rcp85,
+                   ASEA_rcp45, ASEA_rcp85,
+                   ACG_rcp45, ACG_rcp85)
+  # NOG_rcp45, NOG_rcp85)
   return(ALL)
 }
 
 
-# ES calculation ----------------------------------------------------------
-ES_ALL_MEDFATE_test <- generate_ES_table(TRUE, model = "MEDFATE")
-ES_ALL_MEDFATE_test_sf <- ES_ALL_MEDFATE_test |>
-  left_join(nfiplot[,c("id")], by="id") |>
-  sf::st_as_sf()
-saveRDS(ES_ALL_MEDFATE_test_sf, "Rdata/ES_MEDFATE_test.rds")
 
-ES_ALL_MEDFATE <- generate_ES_table(FALSE, model = "MEDFATE")
-ES_ALL_MEDFATE_sf <- ES_ALL_MEDFATE |>
+# ES calculation ----------------------------------------------------------
+ES_period_MEDFATE_test <- generate_ES_period_table(TRUE, model = "MEDFATE")
+ES_period_MEDFATE_test_sf <- ES_period_MEDFATE_test |>
   left_join(nfiplot[,c("id")], by="id") |>
   sf::st_as_sf()
-saveRDS(ES_ALL_MEDFATE_sf, "Rdata/ES_MEDFATE.rds")
+saveRDS(ES_period_MEDFATE_test_sf, "Rdata/ES_period_MEDFATE_test.rds")
+
+ES_state_MEDFATE_test <- generate_ES_state_table(TRUE, model = "MEDFATE")
+ES_state_MEDFATE_test_sf <- ES_state_MEDFATE_test |>
+  left_join(nfiplot[,c("id")], by="id") |>
+  sf::st_as_sf()
+saveRDS(ES_state_MEDFATE_test_sf, "Rdata/ES_state_MEDFATE_test.rds")
+
+ES_state_MEDFATE <- generate_ES_state_table(FALSE, model = "MEDFATE")
+ES_state_MEDFATE_sf <- ES_state_MEDFATE |>
+  left_join(nfiplot[,c("id")], by="id") |>
+  sf::st_as_sf()
+saveRDS(ES_state_MEDFATE_sf, "Rdata/ES_state_MEDFATE.rds")
 
 ES_ALL_FORMES <- generate_ES_table(FALSE, model = "FORMES")
 nfiplot_formes <- nfiplot |>

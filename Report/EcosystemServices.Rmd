@@ -2,9 +2,11 @@
 title: "Ecosystem Services"
 author: "Miquel De Cáceres, Núria Aquilué, Giuseppe Cappizzi"
 date: "2023-11-16"
-output: 
+output:
+  word_document:
+    toc: yes
   html_document:
-    toc: true
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
