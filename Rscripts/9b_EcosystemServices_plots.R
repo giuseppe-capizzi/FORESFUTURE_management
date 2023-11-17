@@ -142,7 +142,7 @@ plot_ES_period <- function(ES_all, var, ylab, ylim, outlier = Inf, add_formes = 
       geom_line(aes(x = MidYear, y = ES, col = Management))+
       geom_vline(xintercept = 2020, linetype="dashed")+
       annotate("rect", xmin = 2000, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
-      scale_x_continuous("",breaks = unique(ES_sum$MidYear, limits = c(2000,2101), expand = c(0,0)),
+      scale_x_continuous("",breaks = unique(ES_sum$MidYear), limits = c(2000,2101), expand = c(0,0),
                          labels = unique(ES_sum$Period))+
       ylab("")+ ylim(ylim)+labs(title = "FORMES / RCP 8.5")+ theme_bw()+
       theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
@@ -536,7 +536,7 @@ map_scenario_periods(ES_period, var = "ES1_CutStructure",
 
 # ES1_CutAdultFirewood ----------------------------------------------------
 d_ES <- plot_ES_period(ES_period, ES1_CutAdultFirewood, ylab= "Provisió de llenyes (m3/ha/any)", 
-                ylim = c(0,4), outlier = 20, add_formes = TRUE)
+                ylim = c(0,2), outlier = 20, add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES1_CutAdultFirewood.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES1_CutAdultFirewood)
 breaks = c(0,0.1,0.2, 0.5,1,2,5,20)
@@ -559,83 +559,46 @@ map_scenario_states(ES_state, var = "ES2_AdultTreeBiomass",
 
 # ES2_AdultTreeBiomassChange --------------------------------------------
 d_ES <- plot_ES_period(ES_period, ES2_AdultTreeBiomassChange, ylab = "Embornal de carboni arbres (Mg C/ha/any)", 
-                outlier = 50, ylim = c(-1,10), add_formes = TRUE)
+                outlier = 50, ylim = c(-2,6), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES2_AdultTreeBiomassChange.png",d_ES, width = 10, height = 8, bg = "white")
-summary(ES_ALL_MEDFATE_sf$ES2_AdultTreeBiomassChange)
-summary(ES_ALL_FORMES_sf$ES2_AdultTreeBiomassChange)
+summary(ES_period$ES2_AdultTreeBiomassChange)
 breaks = c(-10,-0.5, 0.5,1,2,5,10,50)
 breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20)
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_AdultTreeBiomassChange", climate_scen = "RCP45", 
+map_scenario_periods(ES_period, var = "ES2_AdultTreeBiomassChange",
                      breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassChange_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_AdultTreeBiomassChange", climate_scen = "RCP45",
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassChange_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_AdultTreeBiomassChange", climate_scen = "RCP85", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassChange_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_AdultTreeBiomassChange", climate_scen = "RCP85",
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassChange_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
 
 
 # ES2_CutBiomassStructure --------------------------------------------
-d_ES <- plot_ES(ES_ALL, ES2_CutBiomassStructure, ylab = "Embornal de carboni fusta estructural (Mg C/ha/any)", 
-                outlier = 80, ylim = c(0,20), add_formes = TRUE)
+d_ES <- plot_ES_period(ES_period, ES2_CutBiomassStructure, ylab = "Embornal de carboni fusta estructural (Mg C/ha/any)", 
+                outlier = 80, ylim = c(0,8), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES2_CutBiomassStructure.png",d_ES, width = 10, height = 8, bg = "white")
-summary(ES_ALL_MEDFATE_sf$ES2_CutBiomassStructure)
-summary(ES_ALL_FORMES_sf$ES2_CutBiomassStructure)
+summary(ES_period$ES2_CutBiomassStructure)
 breaks = c(-10,-0.5, 0.5,1,2,5,10,50)
 breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20)
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_CutBiomassStructure", climate_scen = "RCP45", 
+map_scenario_periods(ES_period, var = "ES2_CutBiomassStructure",
                      breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_CutBiomassStructure_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_CutBiomassStructure", climate_scen = "RCP45",
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_CutBiomassStructure_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_CutBiomassStructure", climate_scen = "RCP85", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_CutBiomassStructure_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_CutBiomassStructure", climate_scen = "RCP85",
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_CutBiomassStructure_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
 
 
 # ES2_AdultTreeBiomassSequestr --------------------------------------------
-d_ES <- plot_ES(ES_ALL, ES2_AdultTreeBiomassSequestr, ylab = "Embornal de carboni arbres+fusta (Mg C/ha/any)", 
-                outlier = 80, ylim = c(-5,30), add_formes = TRUE)
+d_ES <- plot_ES_period(ES_period, ES2_AdultTreeBiomassSequestr, ylab = "Embornal de carboni arbres+fusta (Mg C/ha/any)", 
+                outlier = 80, ylim = c(-1,10), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES2_AdultTreeBiomassSequestr.png",d_ES, width = 10, height = 8, bg = "white")
-summary(ES_ALL_MEDFATE_sf$ES2_AdultTreeBiomassSequestr)
-summary(ES_ALL_FORMES_sf$ES2_AdultTreeBiomassSequestr)
+summary(ES_period$ES2_AdultTreeBiomassSequestr)
 breaks = c(-10,-0.5, 0.5,1,2,5,10,50)
 breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20)
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_AdultTreeBiomassSequestr", climate_scen = "RCP45", 
+map_scenario_periods(ES_period, var = "ES2_AdultTreeBiomassSequestr",
                      breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassSequestr_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_AdultTreeBiomassSequestr", climate_scen = "RCP45",
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassSequestr_formes_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_AdultTreeBiomassSequestr", climate_scen = "RCP85", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassSequestr_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_FORMES_sf, var = "ES2_AdultTreeBiomassSequestr", climate_scen = "RCP85",
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_AdultTreeBiomassSequestr_formes_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
 
 
 # ES2_LiveBiomassSequestr --------------------------------------------
-d_ES <- plot_ES(ES_ALL, ES2_LiveBiomassSequestr, ylab = "Embornal de carboni total (Mg C/ha/any)", ylim = c(0,8), add_formes = FALSE)
+d_ES <- plot_ES_period(ES_period, ES2_LiveBiomassSequestr, ylab = "Embornal de carboni total (Mg C/ha/any)", 
+                       ylim = c(0,8), add_formes = FALSE)
 ggsave2("Plots/ES_dynamics/ES2_LiveBiomassSequestr.png",d_ES, width = 10, height = 4, bg = "white")
-summary(ES_ALL_MEDFATE_sf$ES2_LiveBiomassSequestr)
-summary(ES_ALL_FORMES_sf$ES2_LiveBiomassSequestr)
+summary(ES_period$ES2_LiveBiomassSequestr)
 breaks = c(-10,-0.5, 0.5,1,2,5,10,50)
 breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20)
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_LiveBiomassSequestr", climate_scen = "RCP45", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_LiveBiomassSequestr_medfate_rcp45.png",m_ES, width = 13, height = 22, bg = "white")
-m_ES <- map_scenario(ES_ALL_MEDFATE_sf, var = "ES2_LiveBiomassSequestr", climate_scen = "RCP85", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-ggsave2("Plots/ES_maps/ES2_LiveBiomassSequestr_medfate_rcp85.png",m_ES, width = 13, height = 22, bg = "white")
+map_scenario_periods(ES_period, var = "ES2_LiveBiomassSequestr",
+                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any", draw_formes = FALSE)
 
 
 # ES3_BlueWater -----------------------------------------------------------
