@@ -18,14 +18,12 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
 
   
   if(!formes) {
-    is_summary_available <- TRUE
     if(test) {
       bind_file <- paste0("Rdata/MEDFATE/Test_binded/Test_", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
     } else {
       bind_file <- paste0("Rdata/MEDFATE/binded/", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
     }
   } else {
-    is_summary_available <- FALSE
     bind_file <- paste0("Rdata/FORMES/binded/", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
   }
   if(!file.exists(bind_file)) return(data.frame())
@@ -38,6 +36,13 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
   dtt <- scen_list$dead_tree_table
   st <- scen_list$shrub_table
   dst <- scen_list$dead_shrub_table
+  summary_table <- NULL
+  if(!formes) {
+    summary_table <- scen_list$summary_table
+  } else {
+    bind_file <- paste0("Rdata/FORMES/wb_summary_binded/", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
+    if(file.exists(bind_file))   summary_table <- readRDS(file = bind_file)
+  }
   
   if(!formes) {
     tt_na <- tt |>
@@ -290,8 +295,8 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
   }
   
   
-  if(is_summary_available) {
-    summary_table <- scen_list$summary_table |>
+  if(!is.null(summary_table)) {
+    summary_table <- summary_table |>
       dplyr::mutate(PPET = Precipitation/PET,
                     WaterUseEfficiency = NetPrimaryProduction/Transpiration,
                     CarbonUseEfficiency = SynthesisRespiration/NetPrimaryProduction,
@@ -319,7 +324,7 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
   annual_vol_biom <- annual_vol_biom |>
     dplyr::full_join(biom_live, by=c("Climate", "Management", "Province", "id", "Year")) |>
     dplyr::full_join(biom_dead, by=c("Climate", "Management", "Province", "id", "Year")) 
-  if(is_summary_available) {
+  if(!is.null(summary_table)) {
     annual_vol_biom <- annual_vol_biom |>
       dplyr::full_join(summary_table, by=c("Climate", "Management", "Province", "id", "Year"))
   }
