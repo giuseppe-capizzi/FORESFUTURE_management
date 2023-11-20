@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ES_state_FORMES <- readRDS("../Rdata/ES_state_FORMES.rds")
 ids_formes <- unique(ES_state_FORMES$id)
-n_plots <- length(ids_formes)
+n_plots_state <- length(ids_formes)
 ES_state_MEDFATE  <- readRDS("../Rdata/ES_state_MEDFATE.rds")|>
   mutate(id = as.character(as.numeric(substr(id, 1,6))))|>
   filter(id %in% ids_formes)
@@ -25,15 +25,18 @@ ES_state <- dplyr::bind_rows(ES_state_MEDFATE, ES_state_FORMES) |>
 rm(ES_state_MEDFATE)
 rm(ES_state_FORMES)
 
+ES_period_FORMES <- readRDS("../Rdata/ES_period_FORMES.rds")
+ids_formes <- unique(ES_period_FORMES$id)
+n_plots_period <- length(ids_formes)
 ES_period_MEDFATE  <- readRDS("../Rdata/ES_period_MEDFATE.rds")|>
   mutate(id = as.character(as.numeric(substr(id, 1,6)))) |>
   filter(id %in% ids_formes)
-ES_period_FORMES <- readRDS("../Rdata/ES_period_FORMES.rds")
-ES_period <- dplyr::bind_rows(ES_period_MEDFATE, ES_period_FORMES)  |>
+ES_period <- dplyr::bind_rows(ES_period_MEDFATE, ES_period_FORMES) |>
   sf::st_drop_geometry()
 rm(ES_period_MEDFATE)
 rm(ES_period_FORMES)
 gc()
+
 ```
 
 
@@ -390,7 +393,7 @@ knitr::include_graphics("../Plots/ES_maps/ES2_LiveBiomassSequestr_medfate_rcp85.
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES_period(ES_period, ES3_BlueWater), digits = 0)
+knitr::kable(table_ES_period(ES_period, ES3_BlueWater, add_formes = TRUE), digits = 0)
 ```
 
 #### Dynamics 
@@ -409,12 +412,23 @@ knitr::include_graphics("../Plots/ES_maps/ES3_BlueWater_medfate_rcp45.png")
 knitr::include_graphics("../Plots/ES_maps/ES3_BlueWater_medfate_rcp85.png")
 ```
 
+
+#### FORMES / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES3_BlueWater_formes_rcp45.png")
+```
+
+#### FORMES / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES3_BlueWater_formes_rcp85.png")
+```
+
 ### ES3_RunoffCoefficient - Coeficient d'escolament (%)
 
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES_period(ES_period, ES3_RunoffCoefficient), digits = 1)
+knitr::kable(table_ES_period(ES_period, ES3_RunoffCoefficient, add_formes = TRUE), digits = 1)
 ```
 
 #### Dynamics 
@@ -431,6 +445,16 @@ knitr::include_graphics("../Plots/ES_maps/ES3_RunoffCoefficient_medfate_rcp45.pn
 #### MEDFATE / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
 knitr::include_graphics("../Plots/ES_maps/ES3_RunoffCoefficient_medfate_rcp85.png")
+```
+
+#### FORMES / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES3_RunoffCoefficient_formes_rcp45.png")
+```
+
+#### FORMES / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES3_RunoffCoefficient_formes_rcp85.png")
 ```
 
 ## ES4 - Mitigació de l'erosió
@@ -468,7 +492,7 @@ knitr::include_graphics("../Plots/ES_maps/ES4_ErosionMitigation_medfate_rcp85.pn
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES_state(ES_state, ES5_RecreationalValue), digits = 2)
+knitr::kable(table_ES_state(ES_state, ES5_RecreationalValue, add_formes = T), digits = 2)
 ```
 
 #### Dynamics 
@@ -487,6 +511,16 @@ knitr::include_graphics("../Plots/ES_maps/ES5_RecreationalValue_medfate_rcp45.pn
 knitr::include_graphics("../Plots/ES_maps/ES5_RecreationalValue_medfate_rcp85.png")
 ```
 
+#### FORMES / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES5_RecreationalValue_formes_rcp45.png")
+```
+
+#### FORMES / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES5_RecreationalValue_formes_rcp85.png")
+```
+
 ## ES6 - Risc d'incendi
 
 ### ES6_SurfaceFirePotential - Risc d'incendi de superfície [0-9]
@@ -494,7 +528,7 @@ knitr::include_graphics("../Plots/ES_maps/ES5_RecreationalValue_medfate_rcp85.pn
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES_period(ES_period, ES6_SurfaceFirePotential), digits = 2)
+knitr::kable(table_ES_period(ES_period, ES6_SurfaceFirePotential, add_formes = TRUE), digits = 2)
 ```
 
 #### Dynamics 
@@ -513,12 +547,22 @@ knitr::include_graphics("../Plots/ES_maps/ES6_SurfaceFirePotential_medfate_rcp45
 knitr::include_graphics("../Plots/ES_maps/ES6_SurfaceFirePotential_medfate_rcp85.png")
 ```
 
+#### FORMES / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES6_SurfaceFirePotential_formes_rcp45.png")
+```
+
+#### FORMES / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES6_SurfaceFirePotential_formes_rcp85.png")
+```
+
 ### ES6_CrownFirePotential - Risc d'incendi de capçades [0-9]
 
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES_period(ES_period, ES6_CrownFirePotential), digits = 2)
+knitr::kable(table_ES_period(ES_period, ES6_CrownFirePotential,add_formes = TRUE), digits = 2)
 ```
 
 #### Dynamics 
@@ -535,4 +579,14 @@ knitr::include_graphics("../Plots/ES_maps/ES6_CrownFirePotential_medfate_rcp45.p
 #### MEDFATE / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
 knitr::include_graphics("../Plots/ES_maps/ES6_CrownFirePotential_medfate_rcp85.png")
+```
+
+#### FORMES / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES6_CrownFirePotential_formes_rcp45.png")
+```
+
+#### FORMES / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES6_CrownFirePotential_formes_rcp85.png")
 ```

@@ -369,33 +369,33 @@ ES3_function_period <- function(ALL, model) {
   } 
   ES3_10 <- ALL1 |>
     filter(Year!=2000) |>
-    select(Climate, Management, Province, id, Year, BlueWater, Precipitation) |>
+    select(Climate, Management, Province, id, Year, LAI_max, BlueWater, Precipitation) |>
     mutate(Period = as.character(cut(Year, breaks = seq(2000,2100, by = 10), 
                                      labels = paste0(seq(2001,2091, by=10), "-",seq(2010,2100, by=10)))),
            MidYear = as.numeric(as.character(cut(Year, breaks = seq(2000,2100, by = 10), 
                                                  labels = seq(2005, 2095, by=10))))) |>
     group_by(Climate, Management, Province, id, Period, MidYear) |>
-    summarise(ES3_BlueWater = mean(BlueWater, na.rm=TRUE),
-              Precipitation = mean(Precipitation, na.rm=TRUE),
+    summarise(ES3_LAI = mean(LAI_max, na.rm=TRUE),
+              ES3_BlueWater = mean(BlueWater, na.rm=TRUE),
+              ES3_Precipitation = mean(Precipitation, na.rm=TRUE),
               .groups = "drop") |>
-    mutate(ES3_RunoffCoefficient = 100*(ES3_BlueWater/Precipitation)) |>
+    mutate(ES3_RunoffCoefficient = 100*(ES3_BlueWater/ES3_Precipitation)) |>
     mutate(Model = model)  |>
     relocate(Model, .after = MidYear) |>
-    select(-Precipitation)|>
     dplyr::mutate(Climate = toupper(Climate))
   ES3_20 <- ALL1 |>
     filter(Year!=2000) |>
-    select(Climate, Management, Province, id, Year, BlueWater, Precipitation) |>
+    select(Climate, Management, Province, id, Year, LAI_max, BlueWater, Precipitation) |>
     mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c("2001-2020", "2021-2040", "2041-2060", "2061-2080", "2081-2100"))),
            MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c(2010, 2030, 2050, 2070, 2090))))) |>
     group_by(Climate, Management, Province, id, Period, MidYear) |>
-    summarise(ES3_BlueWater = mean(BlueWater, na.rm=TRUE),
-              Precipitation = mean(Precipitation, na.rm=TRUE),
+    summarise(ES3_LAI = mean(LAI_max, na.rm=TRUE),
+              ES3_BlueWater = mean(BlueWater, na.rm=TRUE),
+              ES3_Precipitation = mean(Precipitation, na.rm=TRUE),
               .groups = "drop") |>
-    mutate(ES3_RunoffCoefficient = 100*(ES3_BlueWater/Precipitation)) |>
+    mutate(ES3_RunoffCoefficient = 100*(ES3_BlueWater/ES3_Precipitation)) |>
     mutate(Model = model)  |>
     relocate(Model, .after = MidYear) |>
-    select(-Precipitation)|>
     dplyr::mutate(Climate = toupper(Climate))
   ES3 <- bind_rows(ES3_10, ES3_20)
   return(ES3)
@@ -584,12 +584,17 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "MEDFATE") 
       ES <- ES1 |>
         left_join(ES2, by=c("Climate", "Management", "Province", "id", "Period", "Model"))
       
-      if(model=="MEDFATE") {
+      if("Precipitation" %in% names(ALL)) {
         ES3 <- ES3_function_period(ALL, model)
+        ES <- ES |>
+          left_join(ES3, by=c("Climate", "Management", "Province", "id", "Period", "MidYear","Model"))
+      }
+      if("Pdaymax" %in% names(ALL)) {
         ES4 <- ES4_function_period(ALL, model)
         ES <- ES |>
-          left_join(ES3, by=c("Climate", "Management", "Province", "id", "Period", "MidYear","Model"))|>
           left_join(ES4, by=c("Climate", "Management", "Province", "id", "Period", "MidYear","Model"))
+      }
+      if("SFP" %in% names(ALL)) {
         ES6 <- ES6_function_period(ALL, model)
         ES <- ES |>
           left_join(ES6, by=c("Climate", "Management", "Province", "id", "Period", "MidYear","Model"))
@@ -599,7 +604,7 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "MEDFATE") 
       ES2s <- ES2_function_state(ALL, model)
       ES <- ES1s |>
         left_join(ES2s, by=c("Climate", "Management", "Province", "id", "Year","Model"))
-      if(model=="MEDFATE") {
+      if("Precipitation" %in% names(ALL)) {
         ES5s <- ES5_function_state(ALL, model)
         ES <- ES |>
           left_join(ES5s, by=c("Climate", "Management", "Province", "id", "Year","Model"))
@@ -699,29 +704,29 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "MEDFATE") 
 
 
 # ES calculation ----------------------------------------------------------
-ES_period_MEDFATE_test <- generate_ES_table("period", TRUE, model = "MEDFATE")
-ES_period_MEDFATE_test <- ES_period_MEDFATE_test |>
-  left_join(nfiplot[,c("id")], by="id") |>
-  sf::st_as_sf()
-saveRDS(ES_period_MEDFATE_test, "Rdata/ES_period_MEDFATE_test.rds")
-
-ES_state_MEDFATE_test <- generate_ES_table("state", TRUE, model = "MEDFATE")
-ES_state_MEDFATE_test <- ES_state_MEDFATE_test |>
-  left_join(nfiplot[,c("id")], by="id") |>
-  sf::st_as_sf()
-saveRDS(ES_state_MEDFATE_test, "Rdata/ES_state_MEDFATE_test.rds")
-
-ES_period_MEDFATE <- generate_ES_table("period",FALSE, model = "MEDFATE")
-ES_period_MEDFATE <- ES_period_MEDFATE |>
-  left_join(nfiplot[,c("id")], by="id") |>
-  sf::st_as_sf()
-saveRDS(ES_period_MEDFATE, "Rdata/ES_period_MEDFATE.rds")
-
-ES_state_MEDFATE <- generate_ES_table("state", FALSE, model = "MEDFATE")
-ES_state_MEDFATE <- ES_state_MEDFATE |>
-  left_join(nfiplot[,c("id")], by="id") |>
-  sf::st_as_sf()
-saveRDS(ES_state_MEDFATE, "Rdata/ES_state_MEDFATE.rds")
+# ES_period_MEDFATE_test <- generate_ES_table("period", TRUE, model = "MEDFATE")
+# ES_period_MEDFATE_test <- ES_period_MEDFATE_test |>
+#   left_join(nfiplot[,c("id")], by="id") |>
+#   sf::st_as_sf()
+# saveRDS(ES_period_MEDFATE_test, "Rdata/ES_period_MEDFATE_test.rds")
+# 
+# ES_state_MEDFATE_test <- generate_ES_table("state", TRUE, model = "MEDFATE")
+# ES_state_MEDFATE_test <- ES_state_MEDFATE_test |>
+#   left_join(nfiplot[,c("id")], by="id") |>
+#   sf::st_as_sf()
+# saveRDS(ES_state_MEDFATE_test, "Rdata/ES_state_MEDFATE_test.rds")
+# 
+# ES_period_MEDFATE <- generate_ES_table("period",FALSE, model = "MEDFATE")
+# ES_period_MEDFATE <- ES_period_MEDFATE |>
+#   left_join(nfiplot[,c("id")], by="id") |>
+#   sf::st_as_sf()
+# saveRDS(ES_period_MEDFATE, "Rdata/ES_period_MEDFATE.rds")
+# 
+# ES_state_MEDFATE <- generate_ES_table("state", FALSE, model = "MEDFATE")
+# ES_state_MEDFATE <- ES_state_MEDFATE |>
+#   left_join(nfiplot[,c("id")], by="id") |>
+#   sf::st_as_sf()
+# saveRDS(ES_state_MEDFATE, "Rdata/ES_state_MEDFATE.rds")
 
 ES_period_FORMES <- generate_ES_table("period", FALSE, model = "FORMES")
 nfiplot_formes <- nfiplot |>

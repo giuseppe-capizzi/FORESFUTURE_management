@@ -53,15 +53,22 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
       tidyr::replace_na(list(Year = 2000))
   } else {
     tt_na <- tt
+    tt_na$Management <- management_scen
     ctt_na <- ctt[ctt$Year!="2000", ]
     dtt_na <- dtt[ctt$Year!="2000", ]
+    ctt_na$Management <- management_scen
+    dtt_na$Management <- management_scen
+    tt_na$Province[tt_na$Province=="LLeida"] <- "Lleida"
+    ctt_na$Province[ctt_na$Province=="LLeida"] <- "Lleida"
+    dtt_na$Province[dtt_na$Province=="LLeida"] <- "Lleida"
   }
   
   # Structure (all trees)
   struct_trees <- tt_na |>
     dplyr::select(-Step) |>
     dplyr::group_by(Climate, Management, Province, id, Year) |>
-    dplyr::summarise(TreeRichness = length(unique(Species)), .groups = "drop")
+    dplyr::summarise(TreeRichness = length(unique(Species)), .groups = "drop") 
+  
   
   wtd.var2 <-function(x, weights ) {
     if(sum((!is.na(x)) & (!is.na(weights)))>1 && sum(weights, na.rm = TRUE) >1) {
@@ -298,8 +305,6 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
   if(!is.null(summary_table)) {
     summary_table <- summary_table |>
       dplyr::mutate(PPET = Precipitation/PET,
-                    WaterUseEfficiency = NetPrimaryProduction/Transpiration,
-                    CarbonUseEfficiency = SynthesisRespiration/NetPrimaryProduction,
                     BlueWater = Runoff+DeepDrainage,
                     RunoffCoefficient = BlueWater/Precipitation,
                     RegulationCoefficient = DeepDrainage/BlueWater) |>
@@ -307,12 +312,25 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
       dplyr::mutate(CumulativeDeepDrainage = cumsum(DeepDrainage),
                     CumulativeBlueWater = cumsum(BlueWater),
                     CumulativePrecipitation = cumsum(Precipitation),
-                    CumulativePET = cumsum(PET)) |>
+                    CumulativePET = cumsum(PET))|>
       dplyr::ungroup() |>
       dplyr::mutate(CumulativeRunoffCoefficient = CumulativeBlueWater/CumulativePrecipitation,
                     CumulativeRegulation = CumulativeDeepDrainage/CumulativeBlueWater,
                     CumulativePPET = CumulativePrecipitation/CumulativePET,
                     Year = as.numeric(Year))
+    if(!formes) {
+      summary_table <- summary_table|>
+        mutate(WaterUseEfficiency = NetPrimaryProduction/Transpiration,
+               CarbonUseEfficiency = SynthesisRespiration/NetPrimaryProduction)
+    } else {
+      summary_table <- summary_table |>
+        mutate(id = as.character(as.numeric(substr(id,1,6))),
+               Year = as.character(cut(Year, breaks = seq(2000,2100, by = 10), 
+                                         labels = paste0(seq(2001,2091, by=10), "-",seq(2010,2100, by=10))))) |>
+        group_by(Climate, Management, Province, id, Year) |>
+        summarise_all(mean, na.rm = TRUE)
+        
+    }
   }
 
   annual_vol_biom <- struct |>
@@ -326,7 +344,7 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
     dplyr::full_join(biom_dead, by=c("Climate", "Management", "Province", "id", "Year")) 
   if(!is.null(summary_table)) {
     annual_vol_biom <- annual_vol_biom |>
-      dplyr::full_join(summary_table, by=c("Climate", "Management", "Province", "id", "Year"))
+      dplyr::left_join(summary_table, by=c("Climate", "Management", "Province", "id", "Year"))
   }
   annual_vol_biom <- annual_vol_biom |>
     tidyr::replace_na(list(CutAll = 0, CutAdultFirewood = 0, CutSaplingFirewood = 0, CutStructure = 0,
@@ -338,7 +356,9 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
                            DeadBiomass_starvation = 0, TreeDeadBiomass_starvation = 0, ShrubDeadBiomass_starvation = 0,
                            DeadBiomass_dessication = 0, TreeDeadBiomass_dessication = 0, ShrubDeadBiomass_dessication = 0,
                            DeadBiomass_other = 0, TreeDeadBiomass_other = 0, ShrubDeadBiomass_other = 0)) |>
-    dplyr::arrange(Climate, Management, Province, id, Year) |>
+    dplyr::arrange(Climate, Management, Province, id, Year) 
+  
+  annual_vol_biom <- annual_vol_biom |>
     dplyr::group_by(Climate, Management, Province, id) |>
     dplyr::mutate(CumulativeCutAdultFirewood = cumsum(CutAdultFirewood),
                   CumulativeCutSaplingFirewood = cumsum(CutSaplingFirewood),
@@ -440,52 +460,52 @@ scenario_species_abundance<-function(climate_model, climate_scen, management_sce
 
 
 # (1) BAU
-scenario_annual_indicators(climate_model, "rcp45", "BAU", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "BAU", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp45", "BAU", test = FALSE)
-scenario_annual_indicators(climate_model, "rcp85", "BAU", test = FALSE)
-scenario_annual_indicators(climate_model, "rcp45", "BAU", test = FALSE, formes = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "BAU", test = FALSE, formes = TRUE)
+# scenario_annual_indicators(climate_model, "rcp45", "BAU", test = TRUE)
+# scenario_annual_indicators(climate_model, "rcp85", "BAU", test = TRUE)
+# scenario_annual_indicators(climate_model, "rcp45", "BAU", test = FALSE)
+# scenario_annual_indicators(climate_model, "rcp85", "BAU", test = FALSE)
+# scenario_annual_indicators(climate_model, "rcp45", "BAU", test = FALSE, formes = TRUE)
+# scenario_annual_indicators(climate_model, "rcp85", "BAU", test = FALSE, formes = TRUE)
 # scenario_species_abundance(climate_model, "rcp45", "BAU", test = test)
 # scenario_species_abundance(climate_model, "rcp85", "BAU", test = test)
 
 # (2) AMF
-scenario_annual_indicators(climate_model, "rcp45", "AMF", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "AMF", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp45", "AMF", test = FALSE)
-scenario_annual_indicators(climate_model, "rcp85", "AMF", test = FALSE)
-scenario_annual_indicators(climate_model, "rcp45", "AMF", test = FALSE, formes = TRUE)
+# scenario_annual_indicators(climate_model, "rcp45", "AMF", test = TRUE)
+# scenario_annual_indicators(climate_model, "rcp85", "AMF", test = TRUE)
+# scenario_annual_indicators(climate_model, "rcp45", "AMF", test = FALSE)
+# scenario_annual_indicators(climate_model, "rcp85", "AMF", test = FALSE)
+# scenario_annual_indicators(climate_model, "rcp45", "AMF", test = FALSE, formes = TRUE)
 scenario_annual_indicators(climate_model, "rcp85", "AMF", test = FALSE, formes = TRUE)
 # scenario_species_abundance(climate_model, "rcp45", "AMF", test = test)
 # scenario_species_abundance(climate_model, "rcp85", "AMF", test = test)
 
 # (3) RSB
-scenario_annual_indicators(climate_model, "rcp45", "RSB", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "RSB", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp45", "RSB", test = FALSE)
-scenario_annual_indicators(climate_model, "rcp85", "RSB", test = FALSE)
+# scenario_annual_indicators(climate_model, "rcp45", "RSB", test = TRUE)
+# scenario_annual_indicators(climate_model, "rcp85", "RSB", test = TRUE)
+# scenario_annual_indicators(climate_model, "rcp45", "RSB", test = FALSE)
+# scenario_annual_indicators(climate_model, "rcp85", "RSB", test = FALSE)
 scenario_annual_indicators(climate_model, "rcp45", "RSB", test = FALSE, formes = TRUE)
 scenario_annual_indicators(climate_model, "rcp85", "RSB", test = FALSE, formes = TRUE)
 # scenario_species_abundance(climate_model, "rcp45", "RSB", test = test)
 # scenario_species_abundance(climate_model, "rcp85", "RSB", test = test)
 
 # (4) ASEA
-scenario_annual_indicators(climate_model, "rcp45", "ASEA", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "ASEA", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp45", "ASEA", test = FALSE)
-scenario_annual_indicators(climate_model, "rcp85", "ASEA", test = FALSE)
+# scenario_annual_indicators(climate_model, "rcp45", "ASEA", test = TRUE)
+# scenario_annual_indicators(climate_model, "rcp85", "ASEA", test = TRUE)
+# scenario_annual_indicators(climate_model, "rcp45", "ASEA", test = FALSE)
+# scenario_annual_indicators(climate_model, "rcp85", "ASEA", test = FALSE)
 scenario_annual_indicators(climate_model, "rcp45", "ASEA", test = FALSE, formes = TRUE)
 scenario_annual_indicators(climate_model, "rcp85", "ASEA", test = FALSE, formes = TRUE)
 # scenario_species_abundance(climate_model, "rcp45", "ASEA", test = test)
 # scenario_species_abundance(climate_model, "rcp85", "ASEA", test = test)
 
 # (5) ACG
-scenario_annual_indicators(climate_model, "rcp45", "ACG", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "ACG", test = TRUE)
-scenario_annual_indicators(climate_model, "rcp45", "ACG", test = FALSE)
-scenario_annual_indicators(climate_model, "rcp85", "ACG", test = FALSE)
-scenario_annual_indicators(climate_model, "rcp45", "ACG", test = FALSE, formes = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "ACG", test = FALSE, formes = TRUE)
+# scenario_annual_indicators(climate_model, "rcp45", "ACG", test = TRUE)
+# scenario_annual_indicators(climate_model, "rcp85", "ACG", test = TRUE)
+# scenario_annual_indicators(climate_model, "rcp45", "ACG", test = FALSE)
+# scenario_annual_indicators(climate_model, "rcp85", "ACG", test = FALSE)
+# scenario_annual_indicators(climate_model, "rcp45", "ACG", test = FALSE, formes = TRUE)
+# scenario_annual_indicators(climate_model, "rcp85", "ACG", test = FALSE, formes = TRUE)
 # scenario_species_abundance(climate_model, "rcp45", "ACG", test = test)
 # scenario_species_abundance(climate_model, "rcp85", "ACG", test = test)
 
