@@ -326,14 +326,14 @@ map_scenario_states<-function(ES_state, var, breaks, breaks_diff, units, type = 
                              breaks = breaks, breaks_diff = breaks_diff, units = units, type = type, palette = palette)
   ggsave2(paste0("Plots/ES_maps/", var, "_medfate_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
   m_ES <- map_scenario_state(ES_state[ES_state$Model=="MEDFATE",], model = "MEDFATE",var = var, climate_scen = "RCP85", 
-                             breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+                             breaks = breaks, breaks_diff = breaks_diff, units = units)
   ggsave2(paste0("Plots/ES_maps/",var,"_medfate_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
   if(draw_formes) {
     m_ES <- map_scenario_state(ES_state[ES_state$Model=="FORMES",], model = "FORMES",var = var, climate_scen = "RCP45",
-                               breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+                               breaks = breaks, breaks_diff = breaks_diff, units = units)
     ggsave2(paste0("Plots/ES_maps/",var,"_formes_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
     m_ES <- map_scenario_state(ES_state[ES_state$Model=="FORMES",], model = "FORMES", var = var, climate_scen = "RCP85",
-                               breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+                               breaks = breaks, breaks_diff = breaks_diff, units = units)
     ggsave2(paste0("Plots/ES_maps/",var,"_formes_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
   }
 }
@@ -497,14 +497,14 @@ map_scenario_periods<-function(ES_period, var, breaks, breaks_diff, units, type 
                              breaks = breaks, breaks_diff = breaks_diff, units = units, type = type, palette = palette)
   ggsave2(paste0("Plots/ES_maps/", var, "_medfate_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
   m_ES <- map_scenario_period(ES_period[ES_period$Model=="MEDFATE",], model = "MEDFATE",var = var, climate_scen = "RCP85", 
-                             breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+                             breaks = breaks, breaks_diff = breaks_diff, units = units)
   ggsave2(paste0("Plots/ES_maps/",var,"_medfate_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
   if(draw_formes) {
     m_ES <- map_scenario_period(ES_period[ES_period$Model=="FORMES",], model = "FORMES",var = var, climate_scen = "RCP45",
-                                breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+                                breaks = breaks, breaks_diff = breaks_diff, units = units)
     ggsave2(paste0("Plots/ES_maps/",var,"_formes_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
     m_ES <- map_scenario_period(ES_period[ES_period$Model=="FORMES",], model = "FORMES", var = var, climate_scen = "RCP85",
-                                breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+                                breaks = breaks, breaks_diff = breaks_diff, units = units)
     ggsave2(paste0("Plots/ES_maps/",var,"_formes_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
   }
 }
@@ -513,147 +513,138 @@ map_scenario_periods<-function(ES_period, var, breaks, breaks_diff, units, type 
 # ES1_VolumeStructure -----------------------------------------------------
 d_ES <- plot_ES_state(ES_state, ES1_VolumeStructure, "Stock fusta estructural (m3/ha)", c(0,250), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES1_VolumeStructure.png",d_ES, width = 10, height = 8, bg = "white")
-breaks = c(seq(0,200, by=25),500)
-breaks_diff = c(-200, -100,-50, -25, -5, 5, 25, 50, 100, 200)
+summary(ES_state$ES1_VolumeStructure)
 map_scenario_states(ES_state, var = "ES1_VolumeStructure", 
-                    breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
+                    breaks = c(0,10, 25,50,100,150, 200, 300,500, 1000), 
+                    breaks_diff = c(-500, -200, -100,-50, -25, -10, 10, 25, 50, 100, 200, 500), 
+                    units = "m3/ha")
 
 # ES1_VolumeAdultFirewood -------------------------------------------------
 d_ES <- plot_ES_state(ES_state, ES1_VolumeAdultFirewood, "Stock llenyes (m3/ha)", c(0,100), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES1_VolumeAdultFirewood.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_state$ES1_VolumeAdultFirewood)
-breaks = seq(0,200, by=25)
-breaks_diff = c(-100,-50, -25, -5, 5, 25, 50, 100)
 map_scenario_states(ES_state, var = "ES1_VolumeAdultFirewood", 
-                    breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha")
-
+                    breaks = c(0,5, 10, 25, 50, 75, 100, 125, 150, 200), 
+                    breaks_diff = c(-100,-75,-50, -25,-10, -5, 5, 10, 25, 50, 75, 100), 
+                    units = "m3/ha")
 
 # ES1_CutStructure --------------------------------------------------------
 d_ES <- plot_ES_period(ES_period, ES1_CutStructure, "Provisió de fusta estructural (m3/ha/any)", ylim = c(0,3), 
                        outliers = c(-1,25), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES1_CutStructure.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES1_CutStructure)
-breaks = c(0,0.1,0.5,1,2,5,10, 50)
-breaks_diff = c(-50, -10,-5, -2, -1,1, 2,5, 10, 50)
 map_scenario_periods(ES_period, var = "ES1_CutStructure", 
-                    breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha/any")
-
+                    breaks = c(0,0.1,0.5,1,2,5,10, 20, 50), 
+                    breaks_diff = c(-50, -20,-10,-5, -2, -1,1, 2,5, 10, 20, 50), 
+                    units = "m3/ha/any")
 
 # ES1_CutAdultFirewood ----------------------------------------------------
 d_ES <- plot_ES_period(ES_period, ES1_CutAdultFirewood, ylab= "Provisió de llenyes (m3/ha/any)", 
                 ylim = c(0,2), outliers = c(-2,20), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES1_CutAdultFirewood.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES1_CutAdultFirewood)
-breaks = c(0,0.1,0.2, 0.5,1,2,5,20)
-breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20)
 map_scenario_periods(ES_period, var = "ES1_CutAdultFirewood", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "m3/ha/any")
+                     breaks = c(0,0.1,0.2, 0.5,1,2,5,10, 20), 
+                     breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20), 
+                     units = "m3/ha/any")
 
 # ES2_AdultTreeBiomass --------------------------------------------
 d_ES <- plot_ES_state(ES_state, ES2_AdultTreeBiomass, ylab = "Stock de carboni arbres (Mg C/ha)", ylim = c(0,700), 
                 outliers = c(-1, 1000), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES2_AdultTreeBiomass.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_state$ES2_AdultTreeBiomass)
-breaks = c(0,25,50,100,200, 500, 1000, 3000)
-breaks_diff = c(-1000, -500, -200, -100, -50, -25, 25, 50, 100 ,200, 500, 1000)
 map_scenario_states(ES_state, var = "ES2_AdultTreeBiomass", 
-                    breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha")
-
-
-
+                    breaks = c(0,10,20, 50,100,200, 500, 1000, 2000), 
+                    breaks_diff = c(-1000, -500, -200, -100, -50, -10, 10, 50, 100 ,200, 500, 1000), 
+                    units = "MgC/ha")
 
 # ES2_AdultTreeBiomassChange --------------------------------------------
 d_ES <- plot_ES_period(ES_period, ES2_AdultTreeBiomassChange, ylab = "Embornal de carboni arbres (Mg C/ha/any)", 
                 outliers = c(-10,10), ylim = c(-1,6), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES2_AdultTreeBiomassChange.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES2_AdultTreeBiomassChange)
-breaks = c(-10,-0.5, 0.5,1,2,5,10,50)
-breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20)
 map_scenario_periods(ES_period, var = "ES2_AdultTreeBiomassChange",
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-
+                     breaks = c(-10,-0.5, 0.5,1,2,5,10,20, 50), 
+                     breaks_diff = c(-20, -10, -5, -2, -1,-0.5, 0.5, 1, 2,5, 10, 20), 
+                     units = "MgC/ha/any")
 
 # ES2_CutBiomassStructure --------------------------------------------
 d_ES <- plot_ES_period(ES_period, ES2_CutBiomassStructure, ylab = "Embornal de carboni fusta estructural (Mg C/ha/any)", 
                 outlier = c(-1,50), ylim = c(0,5), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES2_CutBiomassStructure.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES2_CutBiomassStructure)
-breaks = c(0.0,0.1, 0.2, 0.5,1,2,5,10,20, 50)
-breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20)
 map_scenario_periods(ES_period, var = "ES2_CutBiomassStructure",
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-
+                     breaks = c(0.0,0.1, 0.2, 0.5,1,2,5,10,20, 50), 
+                     breaks_diff = c(-50, -20, -5, -2, -1,-0.5, 0.5, 1, 2,5, 20,50), 
+                     units = "MgC/ha/any")
 
 # ES2_AdultTreeBiomassSequestr --------------------------------------------
 d_ES <- plot_ES_period(ES_period, ES2_AdultTreeBiomassSequestr, ylab = "Embornal de carboni arbres+fusta (Mg C/ha/any)", 
                 outlier = c(-50,50), ylim = c(-1,8), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES2_AdultTreeBiomassSequestr.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES2_AdultTreeBiomassSequestr)
-breaks = c(-10,-0.5, 0.5,1,2,5,10,50)
-breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20)
 map_scenario_periods(ES_period, var = "ES2_AdultTreeBiomassSequestr",
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any")
-
+                     breaks = c(-10,-0.5, 0.5,1,2,5,10,20,50), 
+                     breaks_diff = c(-50, -20, -5, -2, -1,-0.5, 0.5, 1, 2,5, 20,50), 
+                     units = "MgC/ha/any")
 
 # ES2_LiveBiomassSequestr --------------------------------------------
 d_ES <- plot_ES_period(ES_period, ES2_LiveBiomassSequestr, ylab = "Embornal de carboni total (Mg C/ha/any)", 
                        outliers = c(-50,50), ylim = c(-1,6), add_formes = FALSE)
 ggsave2("Plots/ES_dynamics/ES2_LiveBiomassSequestr.png",d_ES, width = 10, height = 4, bg = "white")
 summary(ES_period$ES2_LiveBiomassSequestr)
-breaks = c(-10,-0.5, 0.5,1,2,5,10,50)
-breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20)
 map_scenario_periods(ES_period, var = "ES2_LiveBiomassSequestr",
-                     breaks = breaks, breaks_diff = breaks_diff, units = "MgC/ha/any", draw_formes = FALSE)
-
-
+                     breaks = c(-10,-0.5, 0.5,1,2,5,10,20,50), 
+                     breaks_diff = c(-20, -5, -2, -1,-0.5, -0.2, 0.2, 0.5, 1, 2,5, 20), 
+                     units = "MgC/ha/any", draw_formes = FALSE)
 
 # ES3_LAI -------------------------------------------------------
 d_ES <- plot_ES_period(ES_period, ES3_LAI, ylab = "LAI", ylim = c(2,4.5), add_formes = T)
 ggsave2("Plots/ES_dynamics/ES3_LAI.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES3_LAI)
-breaks = seq(0,4.5, by=0.5)
-breaks_diff = c(-2,-1.5,-1.0,-0.5,-0.25,0.25,0.5,1.0,1.5,2)
 map_scenario_periods(ES_period, var = "ES3_LAI", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "m2/m2", draw_formes = TRUE)
+                     breaks = seq(0,4.5, by=0.5), 
+                     breaks_diff = c(-2,-1.5,-1.0,-0.5,-0.25,0.25,0.5,1.0,1.5,2), 
+                     units = "m2/m2", draw_formes = TRUE)
 
 # ES3_BlueWater -----------------------------------------------------------
 # d_ES <- plot_ES_period(ES_period, ES3_Precipitation, ylab = "Precipitacio (mm/any)", ylim = c(0,1200), add_formes = T)
 d_ES <- plot_ES_period(ES_period, ES3_BlueWater, ylab = "Aigua blava (mm/any)", ylim = c(80,300), add_formes = T)
 ggsave2("Plots/ES_dynamics/ES3_BlueWater.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES3_BlueWater)
-breaks = seq(0,320, by=40)
-breaks_diff = seq(-200,200, by = 40)
 map_scenario_periods(ES_period, var = "ES3_BlueWater", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "mm/any", draw_formes = TRUE)
+                     breaks = seq(0,320, by=40), 
+                     breaks_diff = seq(-200,200, by = 40), 
+                     units = "mm/any", draw_formes = TRUE)
 
 # ES3_RunoffCoefficient ---------------------------------------------------
 d_ES <- plot_ES_period(ES_period, ES3_RunoffCoefficient, ylab = "Coeficient d'escolament [%]", ylim = c(10,40), add_formes = T)
 ggsave2("Plots/ES_dynamics/ES3_RunoffCoefficient.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES3_RunoffCoefficient)
-breaks = c(0,5,10,20,40,60,80, 100)
-breaks_diff = c(-50,-10,-20,-5, -2,2,5,10,20,50)
 map_scenario_periods(ES_period, var = "ES3_RunoffCoefficient", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "%", draw_formes = TRUE)
+                     breaks = c(0,5,10,20,40,60,80, 100), 
+                     breaks_diff = c(-50,-10,-20,-5, -2,2,5,10,20,50), 
+                     units = "%", draw_formes = TRUE)
 
 # ES4_ErosionMitigation ---------------------------------------------------
 d_ES <- plot_ES_period(ES_period, ES4_ErosionMitigation, ylab = "Mitigació de l'erosió (Mg/ha/any)", ylim = c(100,175), 
                 outlier = 3000, add_formes = FALSE)
 ggsave2("Plots/ES_dynamics/ES4_ErosionMitigation.png",d_ES, width = 10, height = 4, bg = "white")
 summary(ES_period$ES4_ErosionMitigation)
-breaks = c(0,25, 50, 100, 150, 200, 300, 4000)
-breaks_diff = c(-100, -50,-10,-5, 5,10,50, 100)
 map_scenario_periods(ES_period, var = "ES4_ErosionMitigation", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "Mg/ha/any", draw_formes = FALSE)
+                     breaks = c(0,25, 50, 100, 150, 200, 300, 1000, 4000), 
+                     breaks_diff = c(-100, -50,-20, -10,-5, 5,10,20, 50, 100), 
+                     units = "Mg/ha/any", draw_formes = FALSE)
 
 
 # ES5_RecreationalValue ---------------------------------------------------
 d_ES <- plot_ES_state(ES_state, ES5_RecreationalValue, ylab = "Valor recreatiu [0-1]", ylim = c(0.0,1), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES5_RecreationalValue.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_state$ES5_RecreationalValue)
-breaks = c(0.1,0.2,0.4,0.5,0.6,0.7,0.8, 0.9, 1)
-breaks_diff = c(-0.5,-0.3, -0.2, -0.1, -0.05, 0.05, 0.1, 0.2, 0.3, 0.5)
 map_scenario_states(ES_state, var = "ES5_RecreationalValue", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]", draw_formes = TRUE)
+                     breaks = c(0.1,0.2,0.4,0.5,0.6,0.7,0.8, 0.9, 1), 
+                    breaks_diff = c(-0.5,-0.3, -0.2, -0.1, -0.05, 0.05, 0.1, 0.2, 0.3, 0.5),
+                    units = "[0-1]", draw_formes = TRUE)
 
 
 # ES6_SurfaceFirePotential  ---------------------------------------------------
@@ -661,19 +652,19 @@ d_ES <- plot_ES_period(ES_period, ES6_SurfaceFirePotential, ylab = "Risk d'incen
                        add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES6_SurfaceFirePotential.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES6_SurfaceFirePotential)
-breaks = seq(0,9, by=1)
-breaks_diff = c(-5,-4,-3,-2,-1,1,2,3,4,5)
 map_scenario_periods(ES_period, var = "ES6_SurfaceFirePotential", 
-                    breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]", draw_formes = TRUE)
+                    breaks = seq(0,9, by=1), 
+                    breaks_diff = c(-5,-4,-3,-2,-1,1,2,3,4,5), 
+                    units = "[0-1]", draw_formes = TRUE)
 
 # ES6_CrownFirePotential  ---------------------------------------------------
 d_ES <- plot_ES_period(ES_period, ES6_CrownFirePotential, ylab = "Risk d'incendi de capçada [0-9]", ylim = c(2,7), 
                        add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES6_CrownFirePotential.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES6_CrownFirePotential)
-breaks = seq(0,9, by=1)
-breaks_diff = c(-5,-4,-3,-2,-1,1,2,3,4,5)
 map_scenario_periods(ES_period, var = "ES6_CrownFirePotential", 
-                     breaks = breaks, breaks_diff = breaks_diff, units = "[0-1]", draw_formes = TRUE)
+                     breaks = seq(0,9, by=1), 
+                     breaks_diff = c(-5,-4,-3,-2,-1,1,2,3,4,5), 
+                     units = "[0-1]", draw_formes = TRUE)
 
 
