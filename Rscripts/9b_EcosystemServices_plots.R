@@ -628,7 +628,7 @@ map_scenario_periods(ES_period, var = "ES3_RunoffCoefficient",
 
 # ES4_ErosionMitigation ---------------------------------------------------
 d_ES <- plot_ES_period(ES_period, ES4_ErosionMitigation, ylab = "Mitigació de l'erosió (Mg/ha/any)", ylim = c(100,175), 
-                outlier = 3000, add_formes = FALSE)
+                outlier = 3000, add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES4_ErosionMitigation.png",d_ES, width = 10, height = 4, bg = "white")
 summary(ES_period$ES4_ErosionMitigation)
 map_scenario_periods(ES_period, var = "ES4_ErosionMitigation", 

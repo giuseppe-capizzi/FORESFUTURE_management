@@ -10,7 +10,6 @@ lonlat <- sf::st_transform(nfiplot[,"id"], crs = 4326)
 lonlat$longitude <- sf::st_coordinates(lonlat)[,1]
 longitude_df <- sf::st_drop_geometry(lonlat)
 K_LS <- sf::read_sf("Data/ErosionData.gpkg")
-comarques <- sf::read_sf("Data/Comarques/comarques.shp")
 
 # ES1 - Annual timber extraction (m3/ha/yr) per 10-year and 20-year periods -----------
 ES1_function_period <- function(ALL, model) {
@@ -402,53 +401,143 @@ ES3_function_period <- function(ALL, model) {
 }
 
 # ES4 - Erosion control (Mg/ha/yr) -----------------------------------------------
-ES4_function_period <- function(ALL, model) {
-  
+ES4_function_period <- function(ALL, model, ALL_MF = NULL) {
+  ALL1 <- ALL
+  if(model=="FORMES") {
+    ALL1$Management <- ALL1$Management[ALL1$Year=="2021-2030"][1]
+    ALL1$Year[ALL1$Year=="2001-2010"] = "2005"
+    ALL1$Year[ALL1$Year=="2011-2020"] = "2015"
+    ALL1$Year[ALL1$Year=="2021-2030"] = "2025"
+    ALL1$Year[ALL1$Year=="2031-2040"] = "2035"
+    ALL1$Year[ALL1$Year=="2041-2050"] = "2045"
+    ALL1$Year[ALL1$Year=="2051-2060"] = "2055"
+    ALL1$Year[ALL1$Year=="2061-2070"] = "2065"
+    ALL1$Year[ALL1$Year=="2071-2080"] = "2075"
+    ALL1$Year[ALL1$Year=="2081-2090"] = "2085"
+    ALL1$Year[ALL1$Year=="2091-2100"] = "2095"
+    ALL1$Year <- as.numeric(ALL1$Year)
+    ALL_MF$Management <- ALL1$Management[1] 
+  } 
   # constants
   a = 2
   b0 = 0.117
   b1 = -0.015
 
-  ALL_SEL <- ALL |>
-    filter(Year!=2000) |>
-    select(Climate, Management, Province, id, Year, Pdaymax, Precipitation, PARground)|>
-    mutate(idparcela = as.character(as.numeric(substr(id, 1,6)))) |>
-    left_join(longitude_df, by="id") |>
-    mutate(RainfallErosivity = b0*Precipitation*sqrt(Pdaymax)*(a+b1*longitude),
-           C = PARground/100)
+  if(model=="MEDFATE") {
+    ALL_SEL <- ALL1 |>
+      filter(Year!=2000) |>
+      select(Climate, Management, Province, id, Year, Pdaymax, Precipitation, PARground)|>
+      mutate(idparcela = as.character(as.numeric(substr(id, 1,6)))) |>
+      left_join(longitude_df, by="id") |>
+      mutate(RainfallErosivity = b0*Precipitation*sqrt(Pdaymax)*(a+b1*longitude),
+             C = PARground/100)
+    
+    ES4_10 <- ALL_SEL |>
+      mutate(Period = as.character(cut(Year, breaks = seq(2000,2100, by = 10), 
+                                       labels = paste0(seq(2001,2091, by=10), "-",seq(2010,2100, by=10)))),
+             MidYear = as.numeric(as.character(cut(Year, breaks = seq(2000,2100, by = 10), 
+                                                   labels = seq(2005, 2095, by=10))))) |>
+      group_by(Climate, Management, Province, id, Period, MidYear) |>
+      summarise(ES4_RainfallErosivity = mean(RainfallErosivity, na.rm = TRUE),  
+                C = mean(C, na.rm=TRUE), 
+                .groups = "drop") |>
+      left_join(sf::st_drop_geometry(K_LS), by="id") |>
+      mutate(ES4_StructuralImpact = Kst*LS*ES4_RainfallErosivity,
+             ES4_ErosionMitigation = ES4_StructuralImpact*(1-C)) |>
+      select(-c(C, LS, K, Kst)) |>
+      mutate(Model = model) |>
+      relocate(Model, .after = MidYear) |>
+      dplyr::mutate(Climate = toupper(Climate))
+    
+    ES4_20 <- ALL_SEL |>
+      mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c("2001-2020", "2021-2040", "2041-2060", "2061-2080", "2081-2100"))),
+             MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c(2010, 2030, 2050, 2070, 2090))))) |>
+      group_by(Climate, Management, Province, id, Period, MidYear) |>
+      summarise(ES4_RainfallErosivity = mean(RainfallErosivity, na.rm = TRUE),  
+                C = mean(C, na.rm=TRUE), 
+                .groups = "drop") |>
+      left_join(sf::st_drop_geometry(K_LS), by="id") |>
+      mutate(ES4_StructuralImpact = Kst*LS*ES4_RainfallErosivity,
+             ES4_ErosionMitigation = ES4_StructuralImpact*(1-C)) |>
+      select(-c(C, LS, K, Kst)) |>
+      mutate(Model = model) |>
+      relocate(Model, .after = MidYear) |>
+      dplyr::mutate(Climate = toupper(Climate))
+    
+  } else {
+    longitude_df2 <- longitude_df |>
+      mutate(idparcela = as.character(as.numeric(substr(id, 1,6))))
+    ALL_SEL <- ALL1 |>
+      filter(Year!=2000) |>
+      select(Climate, Management, Province, id, Year, Precipitation, PARground)
+    
+    ALL_SEL_10 <- ALL_SEL |>
+      mutate(Period = as.character(cut(Year, breaks = seq(2000,2100, by = 10), 
+                                       labels = paste0(seq(2001,2091, by=10), "-",seq(2010,2100, by=10))))) |>
+      relocate(Period, .before = "Year")|>
+      rename(idparcela = id) |>
+      left_join(longitude_df2, by="idparcela")
+    
+    ALL_SEL_20 <- ALL_SEL |>
+      mutate(Period = as.character(cut(Year, breaks = seq(2000,2100, by = 20), 
+                                       labels = paste0(seq(2001,2081, by=20), "-",seq(2020,2100, by=20))))) |>
+      relocate(Period, .before = "Year") |>
+      group_by(Climate, Management, Province, id, Period) |>
+      summarise(Year = mean(Year, na.rm=TRUE),
+                Precipitation = mean(Precipitation, na.rm=TRUE),
+                PARground = mean(PARground, na.rm=TRUE), .groups = "drop")|>
+      rename(idparcela = id) |>
+      left_join(longitude_df2, by="idparcela")
+    
+    ALL_SEL_MF_10 <- ALL_MF |>
+      filter(Year!=2000) |>
+      select(Climate, Management, Province, id, Year, Pdaymax) |>
+      mutate(Period = as.character(cut(Year, breaks = seq(2000,2100, by = 10), 
+                                       labels = paste0(seq(2001,2091, by=10), "-",seq(2010,2100, by=10))))) |>
+      group_by(Climate, Management, Province, id, Period) |>
+      summarise(Pdaymax = mean(Pdaymax, na.rm = TRUE), .groups = "drop")
+    ALL_SEL_MF_20 <- ALL_MF |>
+      filter(Year!=2000) |>
+      select(Climate, Management, Province, id, Year, Pdaymax) |>
+      mutate(Period = as.character(cut(Year, breaks = seq(2000,2100, by = 20), 
+                                     labels = paste0(seq(2001,2081, by=20), "-",seq(2020,2100, by=20))))) |>
+      group_by(Climate, Management, Province, id, Period) |>
+      summarise(Pdaymax = mean(Pdaymax, na.rm = TRUE), .groups = "drop")
+    
+    ES4_10<- ALL_SEL_10 |>
+      left_join(ALL_SEL_MF_10, by=c("Climate", "Management", "Province", "id", "Period"))|>
+      mutate(RainfallErosivity = b0*Precipitation*sqrt(Pdaymax)*(a+b1*longitude),
+             C = PARground/100) |>
+      rename(ES4_RainfallErosivity = RainfallErosivity,
+             MidYear = Year) |>
+      left_join(sf::st_drop_geometry(K_LS), by="id") |>
+      mutate(ES4_StructuralImpact = Kst*LS*ES4_RainfallErosivity,
+             ES4_ErosionMitigation = ES4_StructuralImpact*(1-C)) |>
+      select(-c(longitude, Pdaymax, Precipitation, PARground, C, LS, K, Kst)) |>
+      mutate(Model = model) |>
+      relocate(id, .before = idparcela) |>
+      relocate(Model, .after = MidYear) |>
+      dplyr::mutate(Climate = toupper(Climate))
+    
+    
+    ES4_20<- ALL_SEL_20 |>
+      left_join(ALL_SEL_MF_20, by=c("Climate", "Management", "Province", "id", "Period"))|>
+      mutate(RainfallErosivity = b0*Precipitation*sqrt(Pdaymax)*(a+b1*longitude),
+             C = PARground/100) |>
+      rename(ES4_RainfallErosivity = RainfallErosivity,
+             MidYear = Year) |>
+      left_join(sf::st_drop_geometry(K_LS), by="id") |>
+      mutate(ES4_StructuralImpact = Kst*LS*ES4_RainfallErosivity,
+             ES4_ErosionMitigation = ES4_StructuralImpact*(1-C)) |>
+      select(-c(longitude, Pdaymax, Precipitation, PARground, C, LS, K, Kst)) |>
+      mutate(Model = model) |>
+      relocate(id, .before = idparcela) |>
+      relocate(Model, .after = MidYear) |>
+      dplyr::mutate(Climate = toupper(Climate))
+      
+  }
 
-  ES4_10 <- ALL_SEL |>
-    mutate(Period = as.character(cut(Year, breaks = seq(2000,2100, by = 10), 
-                                     labels = paste0(seq(2001,2091, by=10), "-",seq(2010,2100, by=10)))),
-           MidYear = as.numeric(as.character(cut(Year, breaks = seq(2000,2100, by = 10), 
-                                                 labels = seq(2005, 2095, by=10))))) |>
-    group_by(Climate, Management, Province, id, Period, MidYear) |>
-    summarise(ES4_RainfallErosivity = mean(RainfallErosivity, na.rm = TRUE),  
-              C = mean(C, na.rm=TRUE), 
-              .groups = "drop") |>
-    left_join(sf::st_drop_geometry(K_LS), by="id") |>
-    mutate(ES4_StructuralImpact = Kst*LS*ES4_RainfallErosivity,
-           ES4_ErosionMitigation = ES4_StructuralImpact*(1-C)) |>
-    select(-c(C, LS, K, Kst)) |>
-    mutate(Model = model) |>
-    relocate(Model, .after = MidYear) |>
-    dplyr::mutate(Climate = toupper(Climate))
-  
-  ES4_20 <- ALL_SEL |>
-    mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c("2001-2020", "2021-2040", "2041-2060", "2061-2080", "2081-2100"))),
-         MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c(2010, 2030, 2050, 2070, 2090))))) |>
-    group_by(Climate, Management, Province, id, Period, MidYear) |>
-    summarise(ES4_RainfallErosivity = mean(RainfallErosivity, na.rm = TRUE),  
-              C = mean(C, na.rm=TRUE), 
-              .groups = "drop") |>
-    left_join(sf::st_drop_geometry(K_LS), by="id") |>
-    mutate(ES4_StructuralImpact = Kst*LS*ES4_RainfallErosivity,
-           ES4_ErosionMitigation = ES4_StructuralImpact*(1-C)) |>
-    select(-c(C, LS, K, Kst)) |>
-    mutate(Model = model) |>
-    relocate(Model, .after = MidYear) |>
-    dplyr::mutate(Climate = toupper(Climate))
-  
+
   ES4 <- bind_rows(ES4_10, ES4_20)
   return(ES4)
 }
@@ -577,7 +666,7 @@ ES6_function_period <- function(ALL, model) {
 
 # ES - ALL ----------------------------------------------------------------
 generate_ES_table <- function(type = "period", test = FALSE, model = "MEDFATE") {
-  ES_function<-function(type = "state", ALL, model) {
+  ES_function<-function(type = "state", ALL, model, ALL_MF = NULL) {
     if(type=="period") {
       ES1 <- ES1_function_period(ALL, model)
       ES2 <- ES2_function_period(ALL, model)
@@ -589,8 +678,8 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "MEDFATE") 
         ES <- ES |>
           left_join(ES3, by=c("Climate", "Management", "Province", "id", "Period", "MidYear","Model"))
       }
-      if("Pdaymax" %in% names(ALL)) {
-        ES4 <- ES4_function_period(ALL, model)
+      if("Pdaymax" %in% names(ALL) || ("PARground" %in% names(ALL) && (!is.null(ALL_MF)))) {
+        ES4 <- ES4_function_period(ALL, model, ALL_MF)
         ES <- ES |>
           left_join(ES4, by=c("Climate", "Management", "Province", "id", "Period", "MidYear","Model"))
       }
@@ -665,26 +754,31 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "MEDFATE") 
       # NOG_rcp85 <- ES_function(type, readRDS("Rdata/MEDFATE/annual_indicators/NOG_mpiesm_rca4_rcp85.rds"), model)
     }
   } else {
+    cli::cli_progress_step("Read BAU/RCP45/MEDFATE")
+    BAU_rcp45_MF <- readRDS("Rdata/MEDFATE/annual_indicators/BAU_mpiesm_rca4_rcp45.rds")
+    cli::cli_progress_step("Read BAU/RCP85/MEDFATE")
+    BAU_rcp85_MF <- readRDS("Rdata/MEDFATE/annual_indicators/BAU_mpiesm_rca4_rcp85.rds")
+    
     cli::cli_progress_step("BAU/RCP45")
-    BAU_rcp45 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/BAU_mpiesm_rca4_rcp45.rds"), model)
+    BAU_rcp45 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/BAU_mpiesm_rca4_rcp45.rds"), model, BAU_rcp45_MF)
     cli::cli_progress_step("BAU/RCP85")
-    BAU_rcp85 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/BAU_mpiesm_rca4_rcp85.rds"), model)
+    BAU_rcp85 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/BAU_mpiesm_rca4_rcp85.rds"), model, BAU_rcp85_MF)
     cli::cli_progress_step("AMF/RCP45")
-    AMF_rcp45 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/AMF_mpiesm_rca4_rcp45.rds"), model)
+    AMF_rcp45 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/AMF_mpiesm_rca4_rcp45.rds"), model, BAU_rcp45_MF)
     cli::cli_progress_step("AMF/RCP85")
-    AMF_rcp85 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/AMF_mpiesm_rca4_rcp85.rds"), model)
+    AMF_rcp85 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/AMF_mpiesm_rca4_rcp85.rds"), model, BAU_rcp85_MF)
     cli::cli_progress_step("RSB/RCP45")
-    RSB_rcp45 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/RSB_mpiesm_rca4_rcp45.rds"), model)
+    RSB_rcp45 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/RSB_mpiesm_rca4_rcp45.rds"), model, BAU_rcp45_MF)
     cli::cli_progress_step("RSB/RCP85")
-    RSB_rcp85 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/RSB_mpiesm_rca4_rcp85.rds"), model)
+    RSB_rcp85 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/RSB_mpiesm_rca4_rcp85.rds"), model, BAU_rcp85_MF)
     cli::cli_progress_step("ASEA/RCP45")
-    ASEA_rcp45 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/ASEA_mpiesm_rca4_rcp45.rds"), model)
+    ASEA_rcp45 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/ASEA_mpiesm_rca4_rcp45.rds"), model, BAU_rcp45_MF)
     cli::cli_progress_step("ASEA/RCP85")
-    ASEA_rcp85 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/ASEA_mpiesm_rca4_rcp85.rds"), model)
+    ASEA_rcp85 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/ASEA_mpiesm_rca4_rcp85.rds"), model, BAU_rcp85_MF)
     cli::cli_progress_step("ACG/RCP45")
-    ACG_rcp45 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/ACG_mpiesm_rca4_rcp45.rds"), model)
+    ACG_rcp45 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/ACG_mpiesm_rca4_rcp45.rds"), model, BAU_rcp45_MF)
     cli::cli_progress_step("ACG/RCP85")
-    ACG_rcp85 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/ACG_mpiesm_rca4_rcp85.rds"), model)
+    ACG_rcp85 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/ACG_mpiesm_rca4_rcp85.rds"), model, BAU_rcp85_MF)
     # cli::cli_progress_step("NOG/RCP45")
     # NOG_rcp45 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators/NOG_mpiesm_rca4_rcp45.rds"), model)
     # cli::cli_progress_step("NOG/RCP85")

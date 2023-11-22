@@ -475,7 +475,7 @@ scenario_species_abundance<-function(climate_model, climate_scen, management_sce
 # scenario_annual_indicators(climate_model, "rcp45", "AMF", test = FALSE)
 # scenario_annual_indicators(climate_model, "rcp85", "AMF", test = FALSE)
 # scenario_annual_indicators(climate_model, "rcp45", "AMF", test = FALSE, formes = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "AMF", test = FALSE, formes = TRUE)
+# scenario_annual_indicators(climate_model, "rcp85", "AMF", test = FALSE, formes = TRUE)
 # scenario_species_abundance(climate_model, "rcp45", "AMF", test = test)
 # scenario_species_abundance(climate_model, "rcp85", "AMF", test = test)
 
