@@ -404,7 +404,6 @@ ES3_function_period <- function(ALL, model) {
 ES4_function_period <- function(ALL, model, ALL_MF = NULL) {
   ALL1 <- ALL
   if(model=="FORMES") {
-    ALL1$Management <- ALL1$Management[ALL1$Year=="2021-2030"][1]
     ALL1$Year[ALL1$Year=="2001-2010"] = "2005"
     ALL1$Year[ALL1$Year=="2011-2020"] = "2015"
     ALL1$Year[ALL1$Year=="2021-2030"] = "2025"
@@ -517,7 +516,9 @@ ES4_function_period <- function(ALL, model, ALL_MF = NULL) {
       mutate(Model = model) |>
       relocate(id, .before = idparcela) |>
       relocate(Model, .after = MidYear) |>
-      dplyr::mutate(Climate = toupper(Climate))
+      dplyr::mutate(Climate = toupper(Climate)) |>
+      select(-id) |>
+      rename(id = idparcela)
     
     
     ES4_20<- ALL_SEL_20 |>
@@ -533,7 +534,10 @@ ES4_function_period <- function(ALL, model, ALL_MF = NULL) {
       mutate(Model = model) |>
       relocate(id, .before = idparcela) |>
       relocate(Model, .after = MidYear) |>
-      dplyr::mutate(Climate = toupper(Climate))
+      dplyr::mutate(Climate = toupper(Climate)) |>
+      select(-id) |>
+      rename(id = idparcela)
+    
       
   }
 

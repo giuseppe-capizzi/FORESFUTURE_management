@@ -464,7 +464,7 @@ knitr::include_graphics("../Plots/ES_maps/ES3_RunoffCoefficient_formes_rcp85.png
 #### Summary table
 
 ```{r, echo = FALSE}
-knitr::kable(table_ES_period(ES_period, ES4_ErosionMitigation), digits = 1)
+knitr::kable(table_ES_period(ES_period, ES4_ErosionMitigation, add_formes = TRUE), digits = 1)
 ```
 
 #### Dynamics 
@@ -481,6 +481,16 @@ knitr::include_graphics("../Plots/ES_maps/ES4_ErosionMitigation_medfate_rcp45.pn
 #### MEDFATE / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
 knitr::include_graphics("../Plots/ES_maps/ES4_ErosionMitigation_medfate_rcp85.png")
+```
+
+#### FORMES / RCP 4.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES4_ErosionMitigation_formes_rcp45.png")
+```
+
+#### FORMES / RCP 8.5
+```{r, echo=FALSE, fig.width=8}
+knitr::include_graphics("../Plots/ES_maps/ES4_ErosionMitigation_formes_rcp85.png")
 ```
 
 

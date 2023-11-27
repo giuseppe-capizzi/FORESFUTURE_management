@@ -614,7 +614,7 @@ ggsave2("Plots/ES_dynamics/ES3_BlueWater.png",d_ES, width = 10, height = 8, bg =
 summary(ES_period$ES3_BlueWater)
 map_scenario_periods(ES_period, var = "ES3_BlueWater", 
                      breaks = seq(0,320, by=40), 
-                     breaks_diff = seq(-200,200, by = 40), 
+                     breaks_diff = c(-200, -160, -120, -80, -40, -20, 20, 40, 80, 120, 160, 200), 
                      units = "mm/any", draw_formes = TRUE)
 
 # ES3_RunoffCoefficient ---------------------------------------------------
@@ -627,18 +627,18 @@ map_scenario_periods(ES_period, var = "ES3_RunoffCoefficient",
                      units = "%", draw_formes = TRUE)
 
 # ES4_ErosionMitigation ---------------------------------------------------
-d_ES <- plot_ES_period(ES_period, ES4_ErosionMitigation, ylab = "Mitigació de l'erosió (Mg/ha/any)", ylim = c(100,175), 
-                outlier = 3000, add_formes = TRUE)
-ggsave2("Plots/ES_dynamics/ES4_ErosionMitigation.png",d_ES, width = 10, height = 4, bg = "white")
+d_ES <- plot_ES_period(ES_period, ES4_ErosionMitigation, ylab = "Mitigació de l'erosió (Mg/ha/any)", ylim = c(100,170), 
+                outliers = c(-1,3000), add_formes = TRUE)
+ggsave2("Plots/ES_dynamics/ES4_ErosionMitigation.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES4_ErosionMitigation)
 map_scenario_periods(ES_period, var = "ES4_ErosionMitigation", 
                      breaks = c(0,25, 50, 100, 150, 200, 300, 1000, 4000), 
                      breaks_diff = c(-100, -50,-20, -10,-5, 5,10,20, 50, 100), 
-                     units = "Mg/ha/any", draw_formes = FALSE)
+                     units = "Mg/ha/any", draw_formes = TRUE)
 
 
 # ES5_RecreationalValue ---------------------------------------------------
-d_ES <- plot_ES_state(ES_state, ES5_RecreationalValue, ylab = "Valor recreatiu [0-1]", ylim = c(0.0,1), add_formes = TRUE)
+d_ES <- plot_ES_state(ES_state, ES5_RecreationalValue, ylab = "Valor recreatiu [0-1]", ylim = c(0.30,0.6), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES5_RecreationalValue.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_state$ES5_RecreationalValue)
 map_scenario_states(ES_state, var = "ES5_RecreationalValue", 

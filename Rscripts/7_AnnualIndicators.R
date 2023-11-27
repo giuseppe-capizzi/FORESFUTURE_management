@@ -466,8 +466,6 @@ scenario_species_abundance<-function(climate_model, climate_scen, management_sce
 # scenario_annual_indicators(climate_model, "rcp85", "BAU", test = FALSE)
 # scenario_annual_indicators(climate_model, "rcp45", "BAU", test = FALSE, formes = TRUE)
 # scenario_annual_indicators(climate_model, "rcp85", "BAU", test = FALSE, formes = TRUE)
-# scenario_species_abundance(climate_model, "rcp45", "BAU", test = test)
-# scenario_species_abundance(climate_model, "rcp85", "BAU", test = test)
 
 # (2) AMF
 # scenario_annual_indicators(climate_model, "rcp45", "AMF", test = TRUE)
@@ -476,28 +474,22 @@ scenario_species_abundance<-function(climate_model, climate_scen, management_sce
 # scenario_annual_indicators(climate_model, "rcp85", "AMF", test = FALSE)
 # scenario_annual_indicators(climate_model, "rcp45", "AMF", test = FALSE, formes = TRUE)
 # scenario_annual_indicators(climate_model, "rcp85", "AMF", test = FALSE, formes = TRUE)
-# scenario_species_abundance(climate_model, "rcp45", "AMF", test = test)
-# scenario_species_abundance(climate_model, "rcp85", "AMF", test = test)
 
 # (3) RSB
 # scenario_annual_indicators(climate_model, "rcp45", "RSB", test = TRUE)
 # scenario_annual_indicators(climate_model, "rcp85", "RSB", test = TRUE)
 # scenario_annual_indicators(climate_model, "rcp45", "RSB", test = FALSE)
 # scenario_annual_indicators(climate_model, "rcp85", "RSB", test = FALSE)
-scenario_annual_indicators(climate_model, "rcp45", "RSB", test = FALSE, formes = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "RSB", test = FALSE, formes = TRUE)
-# scenario_species_abundance(climate_model, "rcp45", "RSB", test = test)
-# scenario_species_abundance(climate_model, "rcp85", "RSB", test = test)
+# scenario_annual_indicators(climate_model, "rcp45", "RSB", test = FALSE, formes = TRUE)
+# scenario_annual_indicators(climate_model, "rcp85", "RSB", test = FALSE, formes = TRUE)
 
 # (4) ASEA
 # scenario_annual_indicators(climate_model, "rcp45", "ASEA", test = TRUE)
 # scenario_annual_indicators(climate_model, "rcp85", "ASEA", test = TRUE)
 # scenario_annual_indicators(climate_model, "rcp45", "ASEA", test = FALSE)
 # scenario_annual_indicators(climate_model, "rcp85", "ASEA", test = FALSE)
-scenario_annual_indicators(climate_model, "rcp45", "ASEA", test = FALSE, formes = TRUE)
-scenario_annual_indicators(climate_model, "rcp85", "ASEA", test = FALSE, formes = TRUE)
-# scenario_species_abundance(climate_model, "rcp45", "ASEA", test = test)
-# scenario_species_abundance(climate_model, "rcp85", "ASEA", test = test)
+# scenario_annual_indicators(climate_model, "rcp45", "ASEA", test = FALSE, formes = TRUE)
+# scenario_annual_indicators(climate_model, "rcp85", "ASEA", test = FALSE, formes = TRUE)
 
 # (5) ACG
 # scenario_annual_indicators(climate_model, "rcp45", "ACG", test = TRUE)
@@ -506,8 +498,6 @@ scenario_annual_indicators(climate_model, "rcp85", "ASEA", test = FALSE, formes 
 # scenario_annual_indicators(climate_model, "rcp85", "ACG", test = FALSE)
 # scenario_annual_indicators(climate_model, "rcp45", "ACG", test = FALSE, formes = TRUE)
 # scenario_annual_indicators(climate_model, "rcp85", "ACG", test = FALSE, formes = TRUE)
-# scenario_species_abundance(climate_model, "rcp45", "ACG", test = test)
-# scenario_species_abundance(climate_model, "rcp85", "ACG", test = test)
 
 # (6) NOG
 # scenario_annual_indicators(climate_model, "rcp45", "NOG", test = TRUE)
@@ -516,7 +506,3 @@ scenario_annual_indicators(climate_model, "rcp85", "ASEA", test = FALSE, formes 
 # scenario_annual_indicators(climate_model, "rcp85", "NOG", test = FALSE)
 # scenario_annual_indicators(climate_model, "rcp45", "NOG", test = FALSE, formes = TRUE)
 # scenario_annual_indicators(climate_model, "rcp85", "NOG", test = FALSE, formes = TRUE)
-
-# scenario_species_abundance(climate_model, "rcp45", "NOG", test = test)
-# scenario_species_abundance(climate_model, "rcp85", "NOG", test = test)
-

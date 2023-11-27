@@ -81,14 +81,14 @@ bind_scenario_summary_table <- function(iprov, climate_model, climate_scen, mana
 # bind_scenario_summary_table(4, climate_model, "85", "BAU")
 
 # (2) AMF
-bind_scenario_summary_table(1, climate_model, "45", "AMF")
-bind_scenario_summary_table(2, climate_model, "45", "AMF")
-bind_scenario_summary_table(3, climate_model, "45", "AMF")
-bind_scenario_summary_table(4, climate_model, "45", "AMF")
-bind_scenario_summary_table(1, climate_model, "85", "AMF")
-bind_scenario_summary_table(2, climate_model, "85", "AMF")
-bind_scenario_summary_table(3, climate_model, "85", "AMF")
-bind_scenario_summary_table(4, climate_model, "85", "AMF")
+# bind_scenario_summary_table(1, climate_model, "45", "AMF")
+# bind_scenario_summary_table(2, climate_model, "45", "AMF")
+# bind_scenario_summary_table(3, climate_model, "45", "AMF")
+# bind_scenario_summary_table(4, climate_model, "45", "AMF")
+# bind_scenario_summary_table(1, climate_model, "85", "AMF")
+# bind_scenario_summary_table(2, climate_model, "85", "AMF")
+# bind_scenario_summary_table(3, climate_model, "85", "AMF")
+# bind_scenario_summary_table(4, climate_model, "85", "AMF")
 
 # (3) RSB
 # bind_scenario_summary_table(1, climate_model, "45", "RSB")
@@ -111,14 +111,14 @@ bind_scenario_summary_table(4, climate_model, "85", "AMF")
 # bind_scenario_summary_table(4, climate_model, "85", "ASEA")
 
 # (5) ACG
-bind_scenario_summary_table(1, climate_model, "45", "ACG")
-bind_scenario_summary_table(2, climate_model, "45", "ACG")
-bind_scenario_summary_table(3, climate_model, "45", "ACG")
-bind_scenario_summary_table(4, climate_model, "45", "ACG")
-bind_scenario_summary_table(1, climate_model, "85", "ACG")
-bind_scenario_summary_table(2, climate_model, "85", "ACG")
-bind_scenario_summary_table(3, climate_model, "85", "ACG")
-bind_scenario_summary_table(4, climate_model, "85", "ACG")
+# bind_scenario_summary_table(1, climate_model, "45", "ACG")
+# bind_scenario_summary_table(2, climate_model, "45", "ACG")
+# bind_scenario_summary_table(3, climate_model, "45", "ACG")
+# bind_scenario_summary_table(4, climate_model, "45", "ACG")
+# bind_scenario_summary_table(1, climate_model, "85", "ACG")
+# bind_scenario_summary_table(2, climate_model, "85", "ACG")
+# bind_scenario_summary_table(3, climate_model, "85", "ACG")
+# bind_scenario_summary_table(4, climate_model, "85", "ACG")
 
 # (6) NOG
 # bind_scenario_summary_table(1, climate_model, "45", "NOG")
