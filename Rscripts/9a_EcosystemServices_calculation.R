@@ -422,7 +422,7 @@ ES4_function_period <- function(ALL, model, ALL_MF = NULL) {
   b0 = 0.117
   b1 = -0.015
 
-  if(model=="MEDFATE") {
+  if(model=="FORDYN") {
     ALL_SEL <- ALL1 |>
       filter(Year!=2000) |>
       select(Climate, Management, Province, id, Year, Pdaymax, Precipitation, PARground)|>
@@ -691,7 +691,7 @@ ES6_function_period <- function(ALL, model) {
 }
 
 # ES - ALL ----------------------------------------------------------------
-generate_ES_table <- function(type = "period", test = FALSE, model = "MEDFATE") {
+generate_ES_table <- function(type = "period", test = FALSE, model = "FORDYN") {
   ES_function<-function(type = "state", ALL, model, ALL_MF = NULL) {
     if(type=="period") {
       ES1 <- ES1_function_period(ALL, model)
@@ -727,7 +727,7 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "MEDFATE") 
     }
     return(ES)
   }
-  if(model=="MEDFATE") {
+  if(model=="FORDYN") {
     if(test) {
       cli::cli_progress_step("BAU/RCP45")
       BAU_rcp45 <- ES_function(type, readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_BAU_mpiesm_rca4_rcp45.rds"), model)
@@ -824,25 +824,25 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "MEDFATE") 
 
 
 # ES calculation ----------------------------------------------------------
-# ES_period_MEDFATE_test <- generate_ES_table("period", TRUE, model = "MEDFATE")
+# ES_period_MEDFATE_test <- generate_ES_table("period", TRUE, model = "FORDYN")
 # ES_period_MEDFATE_test <- ES_period_MEDFATE_test |>
 #   left_join(nfiplot[,c("id")], by="id") |>
 #   sf::st_as_sf()
 # saveRDS(ES_period_MEDFATE_test, "Rdata/ES_period_MEDFATE_test.rds")
 # 
-# ES_state_MEDFATE_test <- generate_ES_table("state", TRUE, model = "MEDFATE")
+# ES_state_MEDFATE_test <- generate_ES_table("state", TRUE, model = "FORDYN")
 # ES_state_MEDFATE_test <- ES_state_MEDFATE_test |>
 #   left_join(nfiplot[,c("id")], by="id") |>
 #   sf::st_as_sf()
-# saveRDS(ES_state_MEDFATE_test, "Rdata/ES_state_MEDFATE_test.rds")
+# saveRDS(ES_state_MEDFATE_test, "Rdata/ES_state_FORDYN_test.rds")
 
-# ES_period_MEDFATE <- generate_ES_table("period",FALSE, model = "MEDFATE")
+# ES_period_MEDFATE <- generate_ES_table("period",FALSE, model = "FORDYN")
 # ES_period_MEDFATE <- ES_period_MEDFATE |>
 #   left_join(nfiplot[,c("id")], by="id") |>
 #   sf::st_as_sf()
 # saveRDS(ES_period_MEDFATE, "Rdata/ES_period_MEDFATE.rds")
 # 
-# ES_state_MEDFATE <- generate_ES_table("state", FALSE, model = "MEDFATE")
+# ES_state_MEDFATE <- generate_ES_table("state", FALSE, model = "FORDYN")
 # ES_state_MEDFATE <- ES_state_MEDFATE |>
 #   left_join(nfiplot[,c("id")], by="id") |>
 #   sf::st_as_sf()

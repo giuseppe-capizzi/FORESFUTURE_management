@@ -44,7 +44,7 @@ plot_ES_state <- function(ES_state, var, ylab, ylim, outliers = c(-Inf,Inf), add
               ES_q25 = quantile({{var}}, probs=0.25, na.rm = TRUE),
               ES_q75 = quantile({{var}}, probs=0.75, na.rm = TRUE),
               .groups = "drop")
-  p1<-ggplot(ES_sum[ES_sum$Climate=="RCP45" & ES_sum$Model =="MEDFATE",])+
+  p1<-ggplot(ES_sum[ES_sum$Climate=="RCP45" & ES_sum$Model =="FORDYN",])+
     geom_point(aes(x = Year, y = ES, col = Management))+
     geom_ribbon(aes(x = Year, ymin = ES - ES_se*1.96, ymax = ES + ES_se*1.96, fill = Management), alpha = 0.3)+
     geom_line(aes(x = Year, y = ES, col = Management))+
@@ -53,16 +53,16 @@ plot_ES_state <- function(ES_state, var, ylab, ylim, outliers = c(-Inf,Inf), add
     scale_x_continuous("",limits = c(1995,2105), expand = c(0,0))+
     scale_fill_discrete("Escenari")+
     scale_color_discrete("Escenari")+
-    ylab(ylab)+ ylim(ylim)+labs(title = "MEDFATE / RCP 4.5")+theme_bw()
+    ylab(ylab)+ ylim(ylim)+labs(title = "FORDYN / RCP 4.5")+theme_bw()
   l <- get_legend(p1)
-  p2<-ggplot(ES_sum[ES_sum$Climate=="RCP85" & ES_sum$Model =="MEDFATE",])+
+  p2<-ggplot(ES_sum[ES_sum$Climate=="RCP85" & ES_sum$Model =="FORDYN",])+
     geom_point(aes(x = Year, y = ES, col = Management))+
     geom_ribbon(aes(x = Year, ymin = ES - ES_se*1.96, ymax = ES + ES_se*1.96, fill = Management), alpha = 0.3)+
     geom_line(aes(x = Year, y = ES, col = Management))+
     geom_vline(xintercept = 2020, linetype="dashed")+
     annotate("rect", xmin = 1995, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
     scale_x_continuous("",limits = c(1995,2105), expand = c(0,0))+
-    ylab("")+ ylim(ylim)+labs(title = "MEDFATE / RCP 8.5")+ theme_bw()
+    ylab("")+ ylim(ylim)+labs(title = "FORDYN / RCP 8.5")+ theme_bw()
   pA <- plot_grid(p1 + theme(legend.position = "none"), 
                   p2+ theme(legend.position = "none"), nrow = 1)
   if(add_formes) {
@@ -103,7 +103,7 @@ plot_ES_period <- function(ES_period, var, ylab, ylim, outliers = c(-Inf,Inf), a
               ES_q25 = quantile({{var}}, probs=0.25, na.rm = TRUE),
               ES_q75 = quantile({{var}}, probs=0.75, na.rm = TRUE),
               .groups = "drop")
-  p1<-ggplot(ES_sum[ES_sum$Climate=="RCP45" & ES_sum$Model =="MEDFATE",])+
+  p1<-ggplot(ES_sum[ES_sum$Climate=="RCP45" & ES_sum$Model =="FORDYN",])+
     geom_point(aes(x = MidYear, y = ES, col = Management))+
     geom_ribbon(aes(x = MidYear, ymin = ES - ES_se*1.96, ymax = ES + ES_se*1.96, fill = Management), alpha = 0.3)+
     geom_line(aes(x = MidYear, y = ES, col = Management))+
@@ -113,10 +113,10 @@ plot_ES_period <- function(ES_period, var, ylab, ylim, outliers = c(-Inf,Inf), a
                        labels = unique(ES_sum$Period), limits = c(2000,2101), expand = c(0,0))+    
     scale_fill_discrete("Escenari")+
     scale_color_discrete("Escenari")+
-    ylab(ylab)+ ylim(ylim)+labs(title = "MEDFATE / RCP 4.5")+theme_bw()+
+    ylab(ylab)+ ylim(ylim)+labs(title = "FORDYN / RCP 4.5")+theme_bw()+
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
   l <- get_legend(p1)
-  p2<-ggplot(ES_sum[ES_sum$Climate=="RCP85" & ES_sum$Model =="MEDFATE",])+
+  p2<-ggplot(ES_sum[ES_sum$Climate=="RCP85" & ES_sum$Model =="FORDYN",])+
     geom_point(aes(x = MidYear, y = ES, col = Management))+
     geom_ribbon(aes(x = MidYear, ymin = ES - ES_se*1.96, ymax = ES + ES_se*1.96, fill = Management), alpha = 0.3)+
     geom_line(aes(x = MidYear, y = ES, col = Management))+
@@ -124,7 +124,7 @@ plot_ES_period <- function(ES_period, var, ylab, ylim, outliers = c(-Inf,Inf), a
     annotate("rect", xmin = 2000, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
     scale_x_continuous("",breaks = unique(ES_sum$MidYear),
                        labels = unique(ES_sum$Period), limits = c(2000,2101), expand = c(0,0))+
-    ylab("")+ ylim(ylim)+labs(title = "MEDFATE / RCP 8.5")+ theme_bw()+
+    ylab("")+ ylim(ylim)+labs(title = "FORDYN / RCP 8.5")+ theme_bw()+
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
   pA <- plot_grid(p1 + theme(legend.position = "none"), 
                   p2+ theme(legend.position = "none"), nrow = 1)
@@ -322,10 +322,10 @@ map_scenario_state<-function(sf_ALL, var, model, climate_scen, breaks, breaks_di
 }
 
 map_scenario_states<-function(ES_state, var, breaks, breaks_diff, units, type = "div", palette = "YlGnBu", draw_formes = TRUE) {
-  m_ES <- map_scenario_state(ES_state[ES_state$Model=="MEDFATE",], model = "MEDFATE", var = var, climate_scen = "RCP45", 
+  m_ES <- map_scenario_state(ES_state[ES_state$Model=="FORDYN",], model = "FORDYN", var = var, climate_scen = "RCP45", 
                              breaks = breaks, breaks_diff = breaks_diff, units = units, type = type, palette = palette)
   ggsave2(paste0("Plots/ES_maps/", var, "_medfate_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
-  m_ES <- map_scenario_state(ES_state[ES_state$Model=="MEDFATE",], model = "MEDFATE",var = var, climate_scen = "RCP85", 
+  m_ES <- map_scenario_state(ES_state[ES_state$Model=="FORDYN",], model = "FORDYN",var = var, climate_scen = "RCP85", 
                              breaks = breaks, breaks_diff = breaks_diff, units = units)
   ggsave2(paste0("Plots/ES_maps/",var,"_medfate_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
   if(draw_formes) {
@@ -493,10 +493,10 @@ map_scenario_period<-function(sf_ALL, var, model, climate_scen, breaks, breaks_d
   return(g)
 }
 map_scenario_periods<-function(ES_period, var, breaks, breaks_diff, units, type = "div", palette = "YlGnBu", draw_formes = TRUE) {
-  m_ES <- map_scenario_period(ES_period[ES_period$Model=="MEDFATE",], model = "MEDFATE", var = var, climate_scen = "RCP45", 
+  m_ES <- map_scenario_period(ES_period[ES_period$Model=="FORDYN",], model = "FORDYN", var = var, climate_scen = "RCP45", 
                              breaks = breaks, breaks_diff = breaks_diff, units = units, type = type, palette = palette)
   ggsave2(paste0("Plots/ES_maps/", var, "_medfate_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
-  m_ES <- map_scenario_period(ES_period[ES_period$Model=="MEDFATE",], model = "MEDFATE",var = var, climate_scen = "RCP85", 
+  m_ES <- map_scenario_period(ES_period[ES_period$Model=="FORDYN",], model = "FORDYN",var = var, climate_scen = "RCP85", 
                              breaks = breaks, breaks_diff = breaks_diff, units = units)
   ggsave2(paste0("Plots/ES_maps/",var,"_medfate_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
   if(draw_formes) {
