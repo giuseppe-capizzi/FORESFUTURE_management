@@ -824,29 +824,29 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "FORDYN") {
 
 
 # ES calculation ----------------------------------------------------------
-# ES_period_MEDFATE_test <- generate_ES_table("period", TRUE, model = "FORDYN")
-# ES_period_MEDFATE_test <- ES_period_MEDFATE_test |>
+# ES_period_FORDYN_test <- generate_ES_table("period", TRUE, model = "FORDYN")
+# ES_period_FORDYN_test <- ES_period_FORDYN_test |>
 #   left_join(nfiplot[,c("id")], by="id") |>
 #   sf::st_as_sf()
-# saveRDS(ES_period_MEDFATE_test, "Rdata/ES_period_MEDFATE_test.rds")
+# saveRDS(ES_period_FORDYN_test, "Rdata/ES_period_FORDYN_test.rds")
 # 
-# ES_state_MEDFATE_test <- generate_ES_table("state", TRUE, model = "FORDYN")
-# ES_state_MEDFATE_test <- ES_state_MEDFATE_test |>
+# ES_state_FORDYN_test <- generate_ES_table("state", TRUE, model = "FORDYN")
+# ES_state_FORDYN_test <- ES_state_FORDYN_test |>
 #   left_join(nfiplot[,c("id")], by="id") |>
 #   sf::st_as_sf()
-# saveRDS(ES_state_MEDFATE_test, "Rdata/ES_state_FORDYN_test.rds")
+# saveRDS(ES_state_FORDYN_test, "Rdata/ES_state_FORDYN_test.rds")
 
-# ES_period_MEDFATE <- generate_ES_table("period",FALSE, model = "FORDYN")
-# ES_period_MEDFATE <- ES_period_MEDFATE |>
+# ES_period_FORDYN <- generate_ES_table("period",FALSE, model = "FORDYN")
+# ES_period_FORDYN <- ES_period_FORDYN |>
 #   left_join(nfiplot[,c("id")], by="id") |>
 #   sf::st_as_sf()
-# saveRDS(ES_period_MEDFATE, "Rdata/ES_period_MEDFATE.rds")
+# saveRDS(ES_period_FORDYN, "Rdata/ES_period_FORDYN.rds")
 # 
-# ES_state_MEDFATE <- generate_ES_table("state", FALSE, model = "FORDYN")
-# ES_state_MEDFATE <- ES_state_MEDFATE |>
+# ES_state_FORDYN <- generate_ES_table("state", FALSE, model = "FORDYN")
+# ES_state_FORDYN <- ES_state_FORDYN |>
 #   left_join(nfiplot[,c("id")], by="id") |>
 #   sf::st_as_sf()
-# saveRDS(ES_state_MEDFATE, "Rdata/ES_state_MEDFATE.rds")
+# saveRDS(ES_state_FORDYN, "Rdata/ES_state_FORDYN.rds")
 
 # ES_period_FORMES <- generate_ES_table("period", FALSE, model = "FORMES")
 # nfiplot_formes <- nfiplot |>

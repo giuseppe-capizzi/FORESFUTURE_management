@@ -14,21 +14,21 @@ cat <- sf::st_union(comarques)
 ES_state_FORMES <- readRDS("Rdata/ES_state_FORMES.rds")
 ids_formes <- unique(ES_state_FORMES$id)
 n_plots_state <- length(ids_formes)
-ES_state_MEDFATE  <- readRDS("Rdata/ES_state_MEDFATE.rds")|>
+ES_state_FORDYN  <- readRDS("Rdata/ES_state_FORDYN.rds")|>
   mutate(id = as.character(as.numeric(substr(id, 1,6))))|>
   filter(id %in% ids_formes)
-ES_state <- dplyr::bind_rows(ES_state_MEDFATE, ES_state_FORMES) 
-rm(ES_state_MEDFATE)
+ES_state <- dplyr::bind_rows(ES_state_FORDYN, ES_state_FORMES) 
+rm(ES_state_FORDYN)
 rm(ES_state_FORMES)
 
 ES_period_FORMES <- readRDS("Rdata/ES_period_FORMES.rds")
 ids_formes <- unique(ES_period_FORMES$id)
 n_plots_period <- length(ids_formes)
-ES_period_MEDFATE  <- readRDS("Rdata/ES_period_MEDFATE.rds")|>
+ES_period_FORDYN  <- readRDS("Rdata/ES_period_FORDYN.rds")|>
   mutate(id = as.character(as.numeric(substr(id, 1,6)))) |>
   filter(id %in% ids_formes)
-ES_period <- dplyr::bind_rows(ES_period_MEDFATE, ES_period_FORMES) 
-rm(ES_period_MEDFATE)
+ES_period <- dplyr::bind_rows(ES_period_FORDYN, ES_period_FORMES) 
+rm(ES_period_FORDYN)
 rm(ES_period_FORMES)
 gc()
 
@@ -324,10 +324,10 @@ map_scenario_state<-function(sf_ALL, var, model, climate_scen, breaks, breaks_di
 map_scenario_states<-function(ES_state, var, breaks, breaks_diff, units, type = "div", palette = "YlGnBu", draw_formes = TRUE) {
   m_ES <- map_scenario_state(ES_state[ES_state$Model=="FORDYN",], model = "FORDYN", var = var, climate_scen = "RCP45", 
                              breaks = breaks, breaks_diff = breaks_diff, units = units, type = type, palette = palette)
-  ggsave2(paste0("Plots/ES_maps/", var, "_medfate_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
+  ggsave2(paste0("Plots/ES_maps/", var, "_fordyn_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
   m_ES <- map_scenario_state(ES_state[ES_state$Model=="FORDYN",], model = "FORDYN",var = var, climate_scen = "RCP85", 
                              breaks = breaks, breaks_diff = breaks_diff, units = units)
-  ggsave2(paste0("Plots/ES_maps/",var,"_medfate_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
+  ggsave2(paste0("Plots/ES_maps/",var,"_fordyn_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
   if(draw_formes) {
     m_ES <- map_scenario_state(ES_state[ES_state$Model=="FORMES",], model = "FORMES",var = var, climate_scen = "RCP45",
                                breaks = breaks, breaks_diff = breaks_diff, units = units)
@@ -495,10 +495,10 @@ map_scenario_period<-function(sf_ALL, var, model, climate_scen, breaks, breaks_d
 map_scenario_periods<-function(ES_period, var, breaks, breaks_diff, units, type = "div", palette = "YlGnBu", draw_formes = TRUE) {
   m_ES <- map_scenario_period(ES_period[ES_period$Model=="FORDYN",], model = "FORDYN", var = var, climate_scen = "RCP45", 
                              breaks = breaks, breaks_diff = breaks_diff, units = units, type = type, palette = palette)
-  ggsave2(paste0("Plots/ES_maps/", var, "_medfate_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
+  ggsave2(paste0("Plots/ES_maps/", var, "_fordyn_rcp45.png"),m_ES, width = 13, height = 22, bg = "white")
   m_ES <- map_scenario_period(ES_period[ES_period$Model=="FORDYN",], model = "FORDYN",var = var, climate_scen = "RCP85", 
                              breaks = breaks, breaks_diff = breaks_diff, units = units)
-  ggsave2(paste0("Plots/ES_maps/",var,"_medfate_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
+  ggsave2(paste0("Plots/ES_maps/",var,"_fordyn_rcp85.png"),m_ES, width = 13, height = 22, bg = "white")
   if(draw_formes) {
     m_ES <- map_scenario_period(ES_period[ES_period$Model=="FORMES",], model = "FORMES",var = var, climate_scen = "RCP45",
                                 breaks = breaks, breaks_diff = breaks_diff, units = units)
