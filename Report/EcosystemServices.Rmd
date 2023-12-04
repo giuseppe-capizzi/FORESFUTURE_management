@@ -17,23 +17,23 @@ knitr::opts_chunk$set(echo = TRUE)
 ES_state_FORMES <- readRDS("../Rdata/ES_state_FORMES.rds")
 ids_formes <- unique(ES_state_FORMES$id)
 n_plots_state <- length(ids_formes)
-ES_state_MEDFATE  <- readRDS("../Rdata/ES_state_MEDFATE.rds")|>
+ES_state_FORDYN  <- readRDS("../Rdata/ES_state_FORDYN.rds")|>
   mutate(id = as.character(as.numeric(substr(id, 1,6))))|>
   filter(id %in% ids_formes)
-ES_state <- dplyr::bind_rows(ES_state_MEDFATE, ES_state_FORMES) |>
+ES_state <- dplyr::bind_rows(ES_state_FORDYN, ES_state_FORMES) |>
   sf::st_drop_geometry()
-rm(ES_state_MEDFATE)
+rm(ES_state_FORDYN)
 rm(ES_state_FORMES)
 
 ES_period_FORMES <- readRDS("../Rdata/ES_period_FORMES.rds")
 ids_formes <- unique(ES_period_FORMES$id)
 n_plots_period <- length(ids_formes)
-ES_period_MEDFATE  <- readRDS("../Rdata/ES_period_MEDFATE.rds")|>
+ES_period_FORDYN  <- readRDS("../Rdata/ES_period_FORDYN.rds")|>
   mutate(id = as.character(as.numeric(substr(id, 1,6)))) |>
   filter(id %in% ids_formes)
-ES_period <- dplyr::bind_rows(ES_period_MEDFATE, ES_period_FORMES) |>
+ES_period <- dplyr::bind_rows(ES_period_FORDYN, ES_period_FORMES) |>
   sf::st_drop_geometry()
-rm(ES_period_MEDFATE)
+rm(ES_period_FORDYN)
 rm(ES_period_FORMES)
 gc()
 
@@ -97,7 +97,7 @@ knitr::include_graphics("../Plots/ES_dynamics/ES1_VolumeStructure.png")
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES1_VolumeStructure_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES1_VolumeStructure_fordyn_rcp45.png")
 ```
 
 #### FORMES / RCP 4.5
@@ -107,7 +107,7 @@ knitr::include_graphics("../Plots/ES_maps/ES1_VolumeStructure_formes_rcp45.png")
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES1_VolumeStructure_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES1_VolumeStructure_fordyn_rcp85.png")
 ```
 
 #### FORMES / RCP 8.5
@@ -132,7 +132,7 @@ knitr::include_graphics("../Plots/ES_dynamics/ES1_VolumeAdultFirewood.png")
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES1_VolumeAdultFirewood_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES1_VolumeAdultFirewood_fordyn_rcp45.png")
 ```
 
 #### FORMES / RCP 4.5
@@ -142,7 +142,7 @@ knitr::include_graphics("../Plots/ES_maps/ES1_VolumeAdultFirewood_formes_rcp45.p
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES1_VolumeAdultFirewood_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES1_VolumeAdultFirewood_fordyn_rcp85.png")
 ```
 
 #### FORMES / RCP 8.5
@@ -167,7 +167,7 @@ knitr::include_graphics("../Plots/ES_dynamics/ES1_CutStructure.png")
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES1_CutStructure_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES1_CutStructure_fordyn_rcp45.png")
 ```
 
 #### FORMES / RCP 4.5
@@ -177,7 +177,7 @@ knitr::include_graphics("../Plots/ES_maps/ES1_CutStructure_formes_rcp45.png")
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES1_CutStructure_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES1_CutStructure_fordyn_rcp85.png")
 ```
 
 #### FORMES / RCP 8.5
@@ -202,7 +202,7 @@ knitr::include_graphics("../Plots/ES_dynamics/ES1_CutAdultFirewood.png")
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES1_CutAdultFirewood_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES1_CutAdultFirewood_fordyn_rcp45.png")
 ```
 
 #### FORMES / RCP 4.5
@@ -212,7 +212,7 @@ knitr::include_graphics("../Plots/ES_maps/ES1_CutAdultFirewood_formes_rcp45.png"
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES1_CutAdultFirewood_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES1_CutAdultFirewood_fordyn_rcp85.png")
 ```
 
 #### FORMES / RCP 8.5
@@ -239,7 +239,7 @@ knitr::include_graphics("../Plots/ES_dynamics/ES2_AdultTreeBiomass.png")
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomass_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomass_fordyn_rcp45.png")
 ```
 
 #### FORMES / RCP 4.5
@@ -249,7 +249,7 @@ knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomass_formes_rcp45.png"
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomass_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomass_fordyn_rcp85.png")
 ```
 
 #### FORMES / RCP 8.5
@@ -273,7 +273,7 @@ knitr::include_graphics("../Plots/ES_dynamics/ES2_AdultTreeBiomassChange.png")
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassChange_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassChange_fordyn_rcp45.png")
 ```
 
 #### FORMES / RCP 4.5
@@ -283,7 +283,7 @@ knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassChange_formes_rcp4
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassChange_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassChange_fordyn_rcp85.png")
 ```
 
 #### FORMES / RCP 8.5
@@ -308,7 +308,7 @@ knitr::include_graphics("../Plots/ES_dynamics/ES2_CutBiomassStructure.png")
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES2_CutBiomassStructure_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES2_CutBiomassStructure_fordyn_rcp45.png")
 ```
 
 #### FORMES / RCP 4.5
@@ -318,7 +318,7 @@ knitr::include_graphics("../Plots/ES_maps/ES2_CutBiomassStructure_formes_rcp45.p
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES2_CutBiomassStructure_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES2_CutBiomassStructure_fordyn_rcp85.png")
 ```
 
 #### FORMES / RCP 8.5
@@ -342,7 +342,7 @@ knitr::include_graphics("../Plots/ES_dynamics/ES2_AdultTreeBiomassSequestr.png")
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassSequestr_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassSequestr_fordyn_rcp45.png")
 ```
 
 #### FORMES / RCP 4.5
@@ -352,7 +352,7 @@ knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassSequestr_formes_rc
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassSequestr_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES2_AdultTreeBiomassSequestr_fordyn_rcp85.png")
 ```
 
 #### FORMES / RCP 8.5
@@ -377,12 +377,12 @@ knitr::include_graphics("../Plots/ES_dynamics/ES2_LiveBiomassSequestr.png")
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES2_LiveBiomassSequestr_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES2_LiveBiomassSequestr_fordyn_rcp45.png")
 ```
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES2_LiveBiomassSequestr_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES2_LiveBiomassSequestr_fordyn_rcp85.png")
 ```
 
 
@@ -404,12 +404,12 @@ knitr::include_graphics("../Plots/ES_dynamics/ES3_BlueWater.png")
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES3_BlueWater_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES3_BlueWater_fordyn_rcp45.png")
 ```
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES3_BlueWater_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES3_BlueWater_fordyn_rcp85.png")
 ```
 
 
@@ -439,12 +439,12 @@ knitr::include_graphics("../Plots/ES_dynamics/ES3_RunoffCoefficient.png")
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES3_RunoffCoefficient_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES3_RunoffCoefficient_fordyn_rcp45.png")
 ```
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES3_RunoffCoefficient_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES3_RunoffCoefficient_fordyn_rcp85.png")
 ```
 
 #### FORMES / RCP 4.5
@@ -475,12 +475,12 @@ knitr::include_graphics("../Plots/ES_dynamics/ES4_ErosionMitigation.png")
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES4_ErosionMitigation_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES4_ErosionMitigation_fordyn_rcp45.png")
 ```
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES4_ErosionMitigation_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES4_ErosionMitigation_fordyn_rcp85.png")
 ```
 
 #### FORMES / RCP 4.5
@@ -513,12 +513,12 @@ knitr::include_graphics("../Plots/ES_dynamics/ES5_RecreationalValue.png")
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES5_RecreationalValue_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES5_RecreationalValue_fordyn_rcp45.png")
 ```
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES5_RecreationalValue_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES5_RecreationalValue_fordyn_rcp85.png")
 ```
 
 #### FORMES / RCP 4.5
@@ -549,12 +549,12 @@ knitr::kable(table_ES_period(ES_period, ES6_SurfaceFirePotential, add_formes = T
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES6_SurfaceFirePotential_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES6_SurfaceFirePotential_fordyn_rcp45.png")
 ```
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES6_SurfaceFirePotential_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES6_SurfaceFirePotential_fordyn_rcp85.png")
 ```
 
 #### FORMES / RCP 4.5
@@ -583,12 +583,12 @@ knitr::kable(table_ES_period(ES_period, ES6_CrownFirePotential,add_formes = TRUE
 
 #### FORDYN / RCP 4.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES6_CrownFirePotential_medfate_rcp45.png")
+knitr::include_graphics("../Plots/ES_maps/ES6_CrownFirePotential_fordyn_rcp45.png")
 ```
 
 #### FORDYN / RCP 8.5
 ```{r, echo=FALSE, fig.width=8}
-knitr::include_graphics("../Plots/ES_maps/ES6_CrownFirePotential_medfate_rcp85.png")
+knitr::include_graphics("../Plots/ES_maps/ES6_CrownFirePotential_fordyn_rcp85.png")
 ```
 
 #### FORMES / RCP 4.5
