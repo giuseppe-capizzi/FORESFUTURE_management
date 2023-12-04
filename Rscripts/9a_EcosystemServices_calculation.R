@@ -563,51 +563,73 @@ ES5_function_state <- function(ALL, model) {
     ALL1$Year[ALL1$Year=="2091-2100"] = "2100"
     ALL1$Year <- as.numeric(ALL1$Year)
   } 
-  recr_fun<- function(maxDBH, cvDBH, LAI, maxShrubCover, treeRichness, shrubRichness) {
+  recr_fun<- function(maxDBH, cvDBH, LAIt, shrubCover, treeRichness) {
     n <- length(maxDBH)
     # Individual functions
-    val_maxdbh <- 1/(1 + exp((5/25)*(50 - maxDBH)))
-    val_lai <- 1/(1 + exp((60/25)*(2 - LAI)))
-    val_treerich <- 1/(1 + exp((40/25)*(4 - treeRichness)))
-    val_shrubrich <- 1/(1 + exp((40/25)*(4 - shrubRichness)))
-    val_maxcov <- dnorm(maxShrubCover, 50, 20)/dnorm(50,50,20)
-    val_cvdbh <-  1/(1 + exp((200/25)*(0.5 - cvDBH)))
-
-    # Initial weights
-    w_maxdbh <- rep(0.2, n)
-    w_cvdbh <- rep(0.1, n)
-    w_lai <- rep(0.3, n)
-    w_maxcov <- rep(0.1,n)
-    w_treerich <- rep(0.2,n)
-    w_shrubrich <- rep(0.1,n)
+    tree_size_f <- function(maxDBH) {
+      val_maxdbh <- pmin(1, pmax(0, (maxDBH - 30)/(80 - 30)))
+      return(val_maxdbh)
+    }
+    thickness_cover_f <- function(LAIt) {
+      val_lait <- pmin(1, pmax(0, LAIt/4))
+      return(val_lait)
+    }
+    treerichness_f <- function(treeRichness) {
+      val_treerich <- pmin(1, pmax(0, treeRichness/6))
+      return(val_treerich)
+    }
+    tree_size_var_f <- function(cvDBH) {
+      val_cvdbh1 <- pmin(1, pmax(0.5, 0.5 + 0.5*cvDBH))
+      val_cvdbh2 <- pmin(1, pmax(0.6, 1 - 0.4*(cvDBH-1)/(1.5 -1)))
+      val_cvdbh <- val_cvdbh1
+      val_cvdbh[which(cvDBH>1)] <- val_cvdbh2[which(cvDBH>1)]
+      return(val_cvdbh)
+    }
+    ground_vegetation_f <- function(shrubCover) {
+      val_totcov1 <- pmin(1, pmax(0.8, 0.8 + 0.2*(shrubCover/30)))
+      val_totcov2 <- pmin(1, pmax(0, 1 - (shrubCover-30)/(90 - 30)))
+      val_totcov <- val_totcov1
+      val_totcov[which(shrubCover>30)] <- val_totcov2[which(shrubCover>30)]
+      return(val_totcov)
+    }
     
+    val_maxdbh <- tree_size_f(maxDBH)
+    val_cvdbh <- tree_size_var_f(cvDBH)
+    val_lai <- thickness_cover_f(LAIt)
+    val_treerich <- treerichness_f(treeRichness)
+    val_totcov <- ground_vegetation_f(shrubCover)
+    
+    # Initial weights
+    w_maxdbh <- rep(1/1.8, n)
+    w_cvdbh <- rep(1/5, n)
+    w_lai <- rep(1/4, n)
+    w_totcov <- rep(1/5.2,n)
+    w_treerich <- rep(1/1.6,n)
+
     # Avoid missing
     w_maxdbh[is.na(maxDBH)] <- 0
     w_cvdbh[is.na(cvDBH)] <- 0
-    w_lai[is.na(LAI)] <- 0
-    w_maxcov[is.na(maxShrubCover)] <- 0
+    w_lai[is.na(LAIt)] <- 0
+    w_totcov[is.na(shrubCover)] <- 0
     w_treerich[is.na(treeRichness)] <- 0
-    w_shrubrich[is.na(shrubRichness)] <- 0
     val_maxdbh[is.na(maxDBH)] <- 0
     val_cvdbh[is.na(cvDBH)] <- 0
-    val_lai[is.na(LAI)] <- 0
-    val_maxcov[is.na(maxShrubCover)] <- 0
+    val_lai[is.na(LAIt)] <- 0
+    val_totcov[is.na(shrubCover)] <- 0
     val_treerich[is.na(treeRichness)] <- 0
-    val_shrubrich[is.na(shrubRichness)] <- 0
-    
-    val_sum <- w_maxdbh*val_maxdbh + w_cvdbh*val_cvdbh +w_lai*val_lai + w_maxcov*val_maxcov + w_treerich*val_treerich + w_shrubrich*val_shrubrich
-    w_sum <- w_maxdbh + w_cvdbh +w_lai + w_maxcov + w_treerich + w_shrubrich
+
+    val_sum <- w_maxdbh*val_maxdbh + w_cvdbh*val_cvdbh +w_lai*val_lai + w_totcov*val_totcov + w_treerich*val_treerich
+    w_sum <- w_maxdbh + w_cvdbh +w_lai + w_totcov + w_treerich
     return(val_sum/w_sum)
   }
   ES5 <- ALL1 |>
     ungroup() |>
     filter(Year %in% c(seq(2000,2100, by =10))) |>
-    select(Climate, Management, Province, id, Year, cvDBH, maxDBH, MaxShrubCover, LAI_max, TreeRichness, ShrubRichness)|>
+    select(Climate, Management, Province, id, Year, cvDBH, maxDBH, LAI_max, ShrubCover, TreeRichness)|>
     group_by(Climate, Management, Province) |>
-    complete(id, Year, fill = list(cvDBH = NA, maxDBH = 0, MaxShrubCover = 0,
-                                   LAI_max = 0, TreeRichness = 0, ShrubRichness = 0)) |>
+    complete(id, Year, fill = list(cvDBH = NA, maxDBH = 0, LAI_max = 0, TreeRichness = 0)) |>
     ungroup() |>
-    mutate(ES5_RecreationalValue = recr_fun(maxDBH, cvDBH, LAI_max, MaxShrubCover, TreeRichness, ShrubRichness))|>
+    mutate(ES5_RecreationalValue = recr_fun(maxDBH, cvDBH, LAI_max, ShrubCover, TreeRichness))|>
     select(Climate, Management, Province, id, Year, ES5_RecreationalValue)|>
     mutate(Model = model)  |>
     relocate(Model, .after = Year) |>
@@ -813,7 +835,7 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "MEDFATE") 
 #   left_join(nfiplot[,c("id")], by="id") |>
 #   sf::st_as_sf()
 # saveRDS(ES_state_MEDFATE_test, "Rdata/ES_state_MEDFATE_test.rds")
-# 
+
 # ES_period_MEDFATE <- generate_ES_table("period",FALSE, model = "MEDFATE")
 # ES_period_MEDFATE <- ES_period_MEDFATE |>
 #   left_join(nfiplot[,c("id")], by="id") |>
@@ -826,18 +848,18 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "MEDFATE") 
 #   sf::st_as_sf()
 # saveRDS(ES_state_MEDFATE, "Rdata/ES_state_MEDFATE.rds")
 
-ES_period_FORMES <- generate_ES_table("period", FALSE, model = "FORMES")
-nfiplot_formes <- nfiplot |>
-  mutate(id = as.character(as.numeric(IDPARCELA)))
-ES_period_FORMES <- ES_period_FORMES |>
-  left_join(nfiplot_formes[,c("id")], by="id") |>
-  sf::st_as_sf()
-saveRDS(ES_period_FORMES, "Rdata/ES_period_FORMES.rds")
-
-ES_state_FORMES <- generate_ES_table("state",FALSE, model = "FORMES")
-nfiplot_formes <- nfiplot |>
-  mutate(id = as.character(as.numeric(IDPARCELA)))
-ES_state_FORMES <- ES_state_FORMES |>
-  left_join(nfiplot_formes[,c("id")], by="id") |>
-  sf::st_as_sf()
-saveRDS(ES_state_FORMES, "Rdata/ES_state_FORMES.rds")
+# ES_period_FORMES <- generate_ES_table("period", FALSE, model = "FORMES")
+# nfiplot_formes <- nfiplot |>
+#   mutate(id = as.character(as.numeric(IDPARCELA)))
+# ES_period_FORMES <- ES_period_FORMES |>
+#   left_join(nfiplot_formes[,c("id")], by="id") |>
+#   sf::st_as_sf()
+# saveRDS(ES_period_FORMES, "Rdata/ES_period_FORMES.rds")
+# 
+# ES_state_FORMES <- generate_ES_table("state",FALSE, model = "FORMES")
+# nfiplot_formes <- nfiplot |>
+#   mutate(id = as.character(as.numeric(IDPARCELA)))
+# ES_state_FORMES <- ES_state_FORMES |>
+#   left_join(nfiplot_formes[,c("id")], by="id") |>
+#   sf::st_as_sf()
+# saveRDS(ES_state_FORMES, "Rdata/ES_state_FORMES.rds")

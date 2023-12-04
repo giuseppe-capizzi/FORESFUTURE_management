@@ -638,7 +638,7 @@ map_scenario_periods(ES_period, var = "ES4_ErosionMitigation",
 
 
 # ES5_RecreationalValue ---------------------------------------------------
-d_ES <- plot_ES_state(ES_state, ES5_RecreationalValue, ylab = "Valor recreatiu [0-1]", ylim = c(0.30,0.6), add_formes = TRUE)
+d_ES <- plot_ES_state(ES_state, ES5_RecreationalValue, ylab = "Valor recreatiu [0-1]", ylim = c(0.4,0.65), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES5_RecreationalValue.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_state$ES5_RecreationalValue)
 map_scenario_states(ES_state, var = "ES5_RecreationalValue", 
