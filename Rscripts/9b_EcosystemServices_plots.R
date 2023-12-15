@@ -50,10 +50,18 @@ plot_ES_state <- function(ES_state, var, ylab, ylim, outliers = c(-Inf,Inf), add
     geom_line(aes(x = Year, y = ES, col = Management))+
     geom_vline(xintercept = 2020, linetype="dashed")+
     annotate("rect", xmin = 1995, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
-    scale_x_continuous("",limits = c(1995,2105), expand = c(0,0))+
-    scale_fill_discrete("Escenari")+
-    scale_color_discrete("Escenari")+
-    ylab(ylab)+ ylim(ylim)+labs(title = "FORDYN / RCP 4.5")+theme_bw()
+    scale_x_continuous("",limits = c(1995,2105), expand = c(0,0), n.breaks = 10)+
+    scale_fill_brewer("Escenaris de\ngestió", palette = "Set1")+
+    scale_color_brewer("Escenaris de\ngestió", palette = "Set1")+
+    ylab(ylab)+ ylim(ylim)+labs(title = "FORDYN", subtitle = "RCP 4.5")+theme_bw()+
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 10),
+          axis.title.y = element_text(size = 15),
+          plot.title = element_text(size=22),
+          axis.text.y = element_text(size=12),
+          plot.subtitle=element_text(size=18),
+          legend.text = element_text(size=12),
+          legend.title = element_text(size=15),
+          legend.key.size = unit(0.6, 'cm'))
   l <- get_legend(p1)
   p2<-ggplot(ES_sum[ES_sum$Climate=="RCP85" & ES_sum$Model =="FORDYN",])+
     geom_point(aes(x = Year, y = ES, col = Management))+
@@ -61,8 +69,18 @@ plot_ES_state <- function(ES_state, var, ylab, ylim, outliers = c(-Inf,Inf), add
     geom_line(aes(x = Year, y = ES, col = Management))+
     geom_vline(xintercept = 2020, linetype="dashed")+
     annotate("rect", xmin = 1995, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
-    scale_x_continuous("",limits = c(1995,2105), expand = c(0,0))+
-    ylab("")+ ylim(ylim)+labs(title = "FORDYN / RCP 8.5")+ theme_bw()
+    scale_x_continuous("",limits = c(1995,2105), expand = c(0,0), n.breaks = 10)+
+    scale_fill_brewer(palette = "Set1")+
+    scale_color_brewer(palette = "Set1")+
+    ylab("")+ ylim(ylim)+labs(title = "", subtitle = "RCP 8.5")+ theme_bw()+
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 10),
+          axis.title.y = element_text(size = 15),
+          plot.title = element_text(size=22),
+          axis.text.y = element_text(size=12),
+          plot.subtitle=element_text(size=18),
+          legend.text = element_text(size=12),
+          legend.title = element_text(size=15),
+          legend.key.size = unit(0.6, 'cm'))
   pA <- plot_grid(p1 + theme(legend.position = "none"), 
                   p2+ theme(legend.position = "none"), nrow = 1)
   if(add_formes) {
@@ -72,8 +90,18 @@ plot_ES_state <- function(ES_state, var, ylab, ylim, outliers = c(-Inf,Inf), add
       geom_line(aes(x = Year, y = ES, col = Management))+
       geom_vline(xintercept = 2020, linetype="dashed")+
       annotate("rect", xmin = 1995, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
-      scale_x_continuous("",limits = c(1995,2105), expand = c(0,0))+
-      ylab(ylab)+ ylim(ylim)+labs(title = "FORMES / RCP 4.5")+theme_bw()
+      scale_x_continuous("",limits = c(1995,2105), expand = c(0,0), n.breaks = 10)+
+      scale_fill_brewer(palette = "Set1")+
+      scale_color_brewer(palette = "Set1")+
+      ylab(ylab)+ ylim(ylim)+labs(title = "FORMES", subtitle = "RCP 4.5")+theme_bw()+
+      theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 10),
+            axis.title.y = element_text(size = 15),
+            plot.title = element_text(size=22),
+            axis.text.y = element_text(size=12),
+            plot.subtitle=element_text(size=18),
+            legend.text = element_text(size=12),
+            legend.title = element_text(size=15),
+            legend.key.size = unit(0.6, 'cm'))
     l <- get_legend(p1)
     p4<-ggplot(ES_sum[ES_sum$Climate=="RCP85"& ES_sum$Model =="FORMES",])+
       geom_point(aes(x = Year, y = ES, col = Management))+
@@ -81,8 +109,18 @@ plot_ES_state <- function(ES_state, var, ylab, ylim, outliers = c(-Inf,Inf), add
       geom_line(aes(x = Year, y = ES, col = Management))+
       geom_vline(xintercept = 2020, linetype="dashed")+
       annotate("rect", xmin = 1995, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
-      scale_x_continuous("",limits = c(1995,2105), expand = c(0,0))+
-      ylab("")+ ylim(ylim)+labs(title = "FORMES / RCP 8.5")+ theme_bw()
+      scale_x_continuous("",limits = c(1995,2105), expand = c(0,0), n.breaks = 10)+
+      scale_fill_brewer(palette = "Set1")+
+      scale_color_brewer(palette = "Set1")+
+      ylab("")+ ylim(ylim)+labs(title = "", subtitle = "RCP 8.5")+ theme_bw()+
+      theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 10),
+            axis.title.y = element_text(size = 15),
+            plot.title = element_text(size=22),
+            axis.text.y = element_text(size=12),
+            plot.subtitle=element_text(size=18),
+            legend.text = element_text(size=12),
+            legend.title = element_text(size=15),
+            legend.key.size = unit(0.6, 'cm'))
     pB <- plot_grid(p3 + theme(legend.position = "none"), 
                     p4+ theme(legend.position = "none"), nrow = 1)
     pALL <- plot_grid(pA,pB, nrow = 2)
@@ -111,10 +149,17 @@ plot_ES_period <- function(ES_period, var, ylab, ylim, outliers = c(-Inf,Inf), a
     annotate("rect", xmin = 2000, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
     scale_x_continuous("",breaks = unique(ES_sum$MidYear),
                        labels = unique(ES_sum$Period), limits = c(2000,2101), expand = c(0,0))+    
-    scale_fill_discrete("Escenari")+
-    scale_color_discrete("Escenari")+
-    ylab(ylab)+ ylim(ylim)+labs(title = "FORDYN / RCP 4.5")+theme_bw()+
-    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+    scale_fill_brewer("Escenaris de\ngestió", palette = "Set1")+
+    scale_color_brewer("Escenaris de\ngestió", palette = "Set1")+
+    ylab(ylab)+ ylim(ylim)+labs(title = "FORDYN" , subtitle="RCP 4.5")+theme_bw()+
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size=10),
+          axis.title.y = element_text(size = 15),
+          plot.title = element_text(size=22),
+          axis.text.y = element_text(size=12),
+          plot.subtitle=element_text(size=18),
+          legend.text = element_text(size=12),
+          legend.title = element_text(size=15),
+          legend.key.size = unit(0.6, 'cm'))
   l <- get_legend(p1)
   p2<-ggplot(ES_sum[ES_sum$Climate=="RCP85" & ES_sum$Model =="FORDYN",])+
     geom_point(aes(x = MidYear, y = ES, col = Management))+
@@ -124,8 +169,17 @@ plot_ES_period <- function(ES_period, var, ylab, ylim, outliers = c(-Inf,Inf), a
     annotate("rect", xmin = 2000, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
     scale_x_continuous("",breaks = unique(ES_sum$MidYear),
                        labels = unique(ES_sum$Period), limits = c(2000,2101), expand = c(0,0))+
-    ylab("")+ ylim(ylim)+labs(title = "FORDYN / RCP 8.5")+ theme_bw()+
-    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+    scale_fill_brewer(palette = "Set1")+
+    scale_color_brewer(palette = "Set1")+
+    ylab("")+ ylim(ylim)+labs(title = "", subtitle = "RCP 8.5")+ theme_bw()+
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size=10),
+          axis.title.y = element_text(size = 15),
+          plot.title = element_text(size=22),
+          axis.text.y = element_text(size=12),
+          plot.subtitle=element_text(size=18),
+          legend.text = element_text(size=12),
+          legend.title = element_text(size=15),
+          legend.key.size = unit(0.6, 'cm'))
   pA <- plot_grid(p1 + theme(legend.position = "none"), 
                   p2+ theme(legend.position = "none"), nrow = 1)
   if(add_formes) {
@@ -137,8 +191,17 @@ plot_ES_period <- function(ES_period, var, ylab, ylim, outliers = c(-Inf,Inf), a
       annotate("rect", xmin = 2000, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
       scale_x_continuous("",breaks = unique(ES_sum$MidYear),
                          labels = unique(ES_sum$Period), limits = c(2000,2101), expand = c(0,0))+
-      ylab(ylab)+ ylim(ylim)+labs(title = "FORMES / RCP 4.5")+theme_bw()+
-      theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+      scale_fill_brewer(palette = "Set1")+
+      scale_color_brewer(palette = "Set1")+
+      ylab(ylab)+ ylim(ylim)+labs(title = "FORMES",  subtitle = "RCP 4.5")+theme_bw()+
+      theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size=10),
+            axis.title.y = element_text(size = 15),
+            plot.title = element_text(size=22),
+            axis.text.y = element_text(size=12),
+            plot.subtitle=element_text(size=18),
+            legend.text = element_text(size=12),
+            legend.title = element_text(size=15),
+            legend.key.size = unit(0.6, 'cm'))
     l <- get_legend(p1)
     p4<-ggplot(ES_sum[ES_sum$Climate=="RCP85"& ES_sum$Model =="FORMES",])+
       geom_point(aes(x = MidYear, y = ES, col = Management))+
@@ -148,8 +211,17 @@ plot_ES_period <- function(ES_period, var, ylab, ylim, outliers = c(-Inf,Inf), a
       annotate("rect", xmin = 2000, xmax = 2020, ymin = -Inf, ymax = Inf, alpha = 0.3)+
       scale_x_continuous("",breaks = unique(ES_sum$MidYear), limits = c(2000,2101), expand = c(0,0),
                          labels = unique(ES_sum$Period))+
-      ylab("")+ ylim(ylim)+labs(title = "FORMES / RCP 8.5")+ theme_bw()+
-      theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+      scale_fill_brewer(palette = "Set1")+
+      scale_color_brewer(palette = "Set1")+
+      ylab("")+ ylim(ylim)+labs(title = "", subtitle = "RCP 8.5")+ theme_bw()+
+      theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size=10),
+            axis.title.y = element_text(size = 15),
+            plot.title = element_text(size=22),
+            axis.text.y = element_text(size=12),
+            plot.subtitle=element_text(size=18),
+            legend.text = element_text(size=12),
+            legend.title = element_text(size=15),
+            legend.key.size = unit(0.6, 'cm'))
     pB <- plot_grid(p3 + theme(legend.position = "none"), 
                     p4+ theme(legend.position = "none"), nrow = 1)
     pALL <- plot_grid(pA,pB, nrow = 2)
@@ -529,7 +601,7 @@ map_scenario_states(ES_state, var = "ES1_VolumeAdultFirewood",
                     units = "m3/ha")
 
 # ES1_CutStructure --------------------------------------------------------
-d_ES <- plot_ES_period(ES_period, ES1_CutStructure, "Provisió de fusta estructural (m3/ha/any)", ylim = c(0,3), 
+d_ES <- plot_ES_period(ES_period, ES1_CutStructure, "Provisió de fusta\nestructural (m3/ha/any)", ylim = c(0,3), 
                        outliers = c(-1,25), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES1_CutStructure.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES1_CutStructure)
@@ -539,7 +611,7 @@ map_scenario_periods(ES_period, var = "ES1_CutStructure",
                     units = "m3/ha/any")
 
 # ES1_CutAdultFirewood ----------------------------------------------------
-d_ES <- plot_ES_period(ES_period, ES1_CutAdultFirewood, ylab= "Provisió de llenyes (m3/ha/any)", 
+d_ES <- plot_ES_period(ES_period, ES1_CutAdultFirewood, ylab= "Provisió de\nllenyes (m3/ha/any)", 
                 ylim = c(0,2), outliers = c(-2,20), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES1_CutAdultFirewood.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES1_CutAdultFirewood)
@@ -549,7 +621,7 @@ map_scenario_periods(ES_period, var = "ES1_CutAdultFirewood",
                      units = "m3/ha/any")
 
 # ES2_AdultTreeBiomass --------------------------------------------
-d_ES <- plot_ES_state(ES_state, ES2_AdultTreeBiomass, ylab = "Stock de carboni arbres (Mg C/ha)", ylim = c(0,700), 
+d_ES <- plot_ES_state(ES_state, ES2_AdultTreeBiomass, ylab = "Stock de carboni\narbres (Mg C/ha)", ylim = c(0,700), 
                 outliers = c(-1, 1000), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES2_AdultTreeBiomass.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_state$ES2_AdultTreeBiomass)
@@ -559,7 +631,7 @@ map_scenario_states(ES_state, var = "ES2_AdultTreeBiomass",
                     units = "MgC/ha")
 
 # ES2_AdultTreeBiomassChange --------------------------------------------
-d_ES <- plot_ES_period(ES_period, ES2_AdultTreeBiomassChange, ylab = "Embornal de carboni arbres (Mg C/ha/any)", 
+d_ES <- plot_ES_period(ES_period, ES2_AdultTreeBiomassChange, ylab = "Embornal de carboni\narbres (Mg C/ha/any)", 
                 outliers = c(-10,10), ylim = c(-1,6), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES2_AdultTreeBiomassChange.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES2_AdultTreeBiomassChange)
@@ -569,7 +641,7 @@ map_scenario_periods(ES_period, var = "ES2_AdultTreeBiomassChange",
                      units = "MgC/ha/any")
 
 # ES2_CutBiomassStructure --------------------------------------------
-d_ES <- plot_ES_period(ES_period, ES2_CutBiomassStructure, ylab = "Embornal de carboni fusta estructural (Mg C/ha/any)", 
+d_ES <- plot_ES_period(ES_period, ES2_CutBiomassStructure, ylab = "Embornal de carboni\nfusta estructural (Mg C/ha/any)", 
                 outlier = c(-1,50), ylim = c(0,5), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES2_CutBiomassStructure.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES2_CutBiomassStructure)
@@ -579,7 +651,7 @@ map_scenario_periods(ES_period, var = "ES2_CutBiomassStructure",
                      units = "MgC/ha/any")
 
 # ES2_AdultTreeBiomassSequestr --------------------------------------------
-d_ES <- plot_ES_period(ES_period, ES2_AdultTreeBiomassSequestr, ylab = "Embornal de carboni arbres+fusta (Mg C/ha/any)", 
+d_ES <- plot_ES_period(ES_period, ES2_AdultTreeBiomassSequestr, ylab = "Embornal de carboni\narbres+fusta (Mg C/ha/any)", 
                 outlier = c(-50,50), ylim = c(-1,8), add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES2_AdultTreeBiomassSequestr.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES2_AdultTreeBiomassSequestr)
@@ -589,7 +661,7 @@ map_scenario_periods(ES_period, var = "ES2_AdultTreeBiomassSequestr",
                      units = "MgC/ha/any")
 
 # ES2_LiveBiomassSequestr --------------------------------------------
-d_ES <- plot_ES_period(ES_period, ES2_LiveBiomassSequestr, ylab = "Embornal de carboni total (Mg C/ha/any)", 
+d_ES <- plot_ES_period(ES_period, ES2_LiveBiomassSequestr, ylab = "Embornal de carboni\ntotal (Mg C/ha/any)", 
                        outliers = c(-50,50), ylim = c(-1,6), add_formes = FALSE)
 ggsave2("Plots/ES_dynamics/ES2_LiveBiomassSequestr.png",d_ES, width = 10, height = 4, bg = "white")
 summary(ES_period$ES2_LiveBiomassSequestr)
@@ -599,7 +671,7 @@ map_scenario_periods(ES_period, var = "ES2_LiveBiomassSequestr",
                      units = "MgC/ha/any", draw_formes = FALSE)
 
 # ES3_LAI -------------------------------------------------------
-d_ES <- plot_ES_period(ES_period, ES3_LAI, ylab = "LAI", ylim = c(2,4.5), add_formes = T)
+d_ES <- plot_ES_period(ES_period, ES3_LAI, ylab = "Índex d'àrea foliar", ylim = c(2,4.5), add_formes = T)
 ggsave2("Plots/ES_dynamics/ES3_LAI.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES3_LAI)
 map_scenario_periods(ES_period, var = "ES3_LAI", 
@@ -607,8 +679,10 @@ map_scenario_periods(ES_period, var = "ES3_LAI",
                      breaks_diff = c(-2,-1.5,-1.0,-0.5,-0.25,0.25,0.5,1.0,1.5,2), 
                      units = "m2/m2", draw_formes = TRUE)
 
+d_ES <- plot_ES_period(ES_period, ES3_Precipitation, ylab = "Precipitacio (mm/any)", ylim = c(0,1200), add_formes = F)
+ggsave2("Plots/ES_dynamics/ES3_Precipitation.png",d_ES, width = 10, height = 8, bg = "white")
+
 # ES3_BlueWater -----------------------------------------------------------
-# d_ES <- plot_ES_period(ES_period, ES3_Precipitation, ylab = "Precipitacio (mm/any)", ylim = c(0,1200), add_formes = T)
 d_ES <- plot_ES_period(ES_period, ES3_BlueWater, ylab = "Aigua blava (mm/any)", ylim = c(80,300), add_formes = T)
 ggsave2("Plots/ES_dynamics/ES3_BlueWater.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES3_BlueWater)
@@ -648,7 +722,7 @@ map_scenario_states(ES_state, var = "ES5_RecreationalValue",
 
 
 # ES6_SurfaceFirePotential  ---------------------------------------------------
-d_ES <- plot_ES_period(ES_period, ES6_SurfaceFirePotential, ylab = "Risk d'incendi de superficie [0-9]", ylim = c(5,9), 
+d_ES <- plot_ES_period(ES_period, ES6_SurfaceFirePotential, ylab = "Risk d'incendi\nde superficie [0-9]", ylim = c(5,9), 
                        add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES6_SurfaceFirePotential.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES6_SurfaceFirePotential)
@@ -658,7 +732,7 @@ map_scenario_periods(ES_period, var = "ES6_SurfaceFirePotential",
                     units = "[0-1]", draw_formes = TRUE)
 
 # ES6_CrownFirePotential  ---------------------------------------------------
-d_ES <- plot_ES_period(ES_period, ES6_CrownFirePotential, ylab = "Risk d'incendi de capçada [0-9]", ylim = c(2,7), 
+d_ES <- plot_ES_period(ES_period, ES6_CrownFirePotential, ylab = "Risk d'incendi\nde capçada [0-9]", ylim = c(2,7), 
                        add_formes = TRUE)
 ggsave2("Plots/ES_dynamics/ES6_CrownFirePotential.png",d_ES, width = 10, height = 8, bg = "white")
 summary(ES_period$ES6_CrownFirePotential)
