@@ -16,10 +16,10 @@ overwrite = FALSE
 historic_2001_2010 = FALSE
 historic_2011_2020 = FALSE
 BAU_2021_2100 = TRUE
-AMF_2021_2100 = TRUE
-RSB_2021_2100 = TRUE 
-ASEA_2021_2100 = TRUE
-ACG_2021_2100 = FALSE
+AMF_2021_2100 = FALSE #TRUE
+RSB_2021_2100 = FALSE 
+ASEA_2021_2100 = FALSE #TRUE
+ACG_2021_2100 = FALSE #TRUE
 NOG_2021_2100 = FALSE
 
 local_control <- defaultControl()
@@ -164,7 +164,8 @@ if(historic_2011_2020) {
 
 if(BAU_2021_2100) {
   climate_models <- "mpiesm_rca4"
-  climate_scens <- c("rcp45", "rcp85")
+  # climate_scens <- c("rcp45", "rcp85")
+  climate_scens <- c("const")
   for(climate_model in climate_models) {
     for(climate_scen in climate_scens) {
       cli::cli_h1(paste0("SIMULATION 2021-2100 / BAU / ", climate_model, " / ", climate_scen))
@@ -173,7 +174,7 @@ if(BAU_2021_2100) {
         cli::cli_h2(paste0("PROVINCE: ", provinceStrings[iprov]))
         
         cli::cli_li(paste0("Recovering end of historical run"))
-        res <- readRDS(paste0("Rdata/historic/", provinceStrings[iprov], "_2011_2020.rds"))
+        res <- readRDS(paste0("Rdata/MEDFATE/historic/", provinceStrings[iprov], "_2011_2020.rds"))
         
         cli::cli_li(paste0("Re-assigning management units by dominant species and excluding plots from management"))
         next_sf <- res$next_sf
@@ -185,22 +186,48 @@ if(BAU_2021_2100) {
         yearsIni <- seq(2021 , 2091, by=10)
         yearsFin <- seq(2030, 2100, by=10)
         for(iy in 1:length(yearsIni)) {
-          res_file <- paste0("Rdata/BAU/BAU_", provinceStrings[iprov],"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
+          res_file <- paste0("Rdata/MEDFATE/BAU/BAU_", provinceStrings[iprov],"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
           if(!file.exists(res_file) || overwrite) {
-            cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
-            interpolator_file <- EMFdatautils::download_emfdata(climate_base,
-                                                                paste0("Products/InterpolationData/Catalunya/Projections/", 
-                                                                       climate_model, "_", climate_scen,"_daily_interpolator_", 
-                                                                       yearsIni[iy], "_", yearsFin[iy],".nc"))
-            interpolator <- meteoland::read_interpolator(interpolator_file)
-            file.remove(interpolator_file)
             
-            
-            cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
-            CO2ByYear <- CO2_ppm |> 
-              dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
-            CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
-            names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+            if(climate_scen %in% c("rcp45", "rcp85")) {
+              cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              interpolator_file <- EMFdatautils::download_emfdata(climate_base,
+                                                                  paste0("Products/InterpolationData/Catalunya/Projections/", 
+                                                                         climate_model, "_", climate_scen,"_daily_interpolator_", 
+                                                                         yearsIni[iy], "_", yearsFin[iy],".nc"))
+              interpolator <- meteoland::read_interpolator(interpolator_file)
+              file.remove(interpolator_file)
+              cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              CO2ByYear <- CO2_ppm |> 
+                dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
+              CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
+              names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+              
+            } else {
+              cli::cli_li(paste0("Loading (historic) interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              if(yearsIni[iy] %in% c(2021, 2041, 2061, 2081)) {# Historic 2001-2010
+                years_hist <- 2001:2010
+              } else {# Historic 2011-2020
+                years_hist <- 2011:2020
+              }
+              interpolators <- vector("list", length(years_hist))
+              for(iyh in 1:length(years_hist)) {
+                interpolator_file <- EMFdatautils::download_emfdata(climate_base,
+                                                                    paste0("Products/InterpolationData/Catalunya/Historic/calibrated_2.0/interpolator_", years_hist[iyh],"_calibrated.nc"))
+                interpolator_iyh <- load_interpolator(interpolator_file, years_hist[iyh])
+                foo <- stars::st_get_dimension_values(interpolator_iyh, "date")
+                foo2 <- seq(as.Date(paste0(yearsIni[iy]+iyh-1,"-01-01")), as.Date(paste0(yearsIni[iy]+iyh,"-01-01")), by = "day")
+                foo2 <- foo2[1:length(foo)]
+                interpolator_iyh <- stars::st_set_dimensions(interpolator_iyh, which = "date", values = as.POSIXct(foo2))
+                interpolators[[iyh]] <- interpolator_iyh
+              }
+              interpolator <- interpolators
+              cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              CO2ByYear <- CO2_ppm |> 
+                dplyr::filter(Year %in% years_hist[1]:years_hist[length(years_hist)]) 
+              CO2ByYear <- CO2ByYear[["RCP45"]]
+              names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+            }
             
             cli::cli_li(paste0("Defining management scenario (30% extraction rates)"))
             volumes <- aprofit_decade_prov_spp[,1:4] |>
@@ -242,7 +269,8 @@ if(BAU_2021_2100) {
 if(AMF_2021_2100) {
   
   climate_models <- "mpiesm_rca4"
-  climate_scens <- c("rcp45", "rcp85")
+  # climate_scens <- c("rcp45", "rcp85")
+  climate_scens <- c("const")
   for(climate_model in climate_models) {
     for(climate_scen in climate_scens) {
       cli::cli_h1(paste0("SIMULATION 2021-2100 / AMF / ", climate_model, " / ", climate_scen))
@@ -263,19 +291,41 @@ if(AMF_2021_2100) {
           res$next_sf <- next_sf
           
           # 2021-2030
-          cli::cli_li(paste0("CO2 levels for years 2021 to 2030"))
-          CO2ByYear <- CO2_ppm |> 
-            dplyr::filter(Year %in% 2021:2030) 
-          CO2ByYear <- CO2ByYear$RCP45
-          names(CO2ByYear) <- 2021:2030
-          
-          cli::cli_li(paste0("Loading interpolator for years ", 2021," to ", 2030))
-          interpolator_file <- EMFdatautils::download_emfdata(climate_base,
-                                                              paste0("Products/InterpolationData/Catalunya/Projections/", 
-                                                                     climate_model, "_", climate_scen,"_daily_interpolator_", 
-                                                                     2021, "_", 2030,".nc"))
-          interpolator <- meteoland::read_interpolator(interpolator_file)
-          file.remove(interpolator_file)
+          if(climate_scen %in% c("rcp45", "rcp85")) {
+            cli::cli_li(paste0("CO2 levels for years 2021 to 2030"))
+            CO2ByYear <- CO2_ppm |> 
+              dplyr::filter(Year %in% 2021:2030) 
+            CO2ByYear <- CO2ByYear$RCP45
+            names(CO2ByYear) <- 2021:2030
+            
+            cli::cli_li(paste0("Loading interpolator for years ", 2021," to ", 2030))
+            interpolator_file <- EMFdatautils::download_emfdata(climate_base,
+                                                                paste0("Products/InterpolationData/Catalunya/Projections/", 
+                                                                       climate_model, "_", climate_scen,"_daily_interpolator_", 
+                                                                       2021, "_", 2030,".nc"))
+            interpolator <- meteoland::read_interpolator(interpolator_file)
+            file.remove(interpolator_file)
+          } else {
+            cli::cli_li(paste0("Loading (historic) interpolator for years 2021 to 2030"))
+            years_hist <- 2001:2010
+            interpolators <- vector("list", length(years_hist))
+            for(iyh in 1:length(years_hist)) {
+              interpolator_file <- EMFdatautils::download_emfdata(climate_base,
+                                                                  paste0("Products/InterpolationData/Catalunya/Historic/calibrated_2.0/interpolator_", years_hist[iyh],"_calibrated.nc"))
+              interpolator_iyh <- load_interpolator(interpolator_file, years_hist[iyh])
+              foo <- stars::st_get_dimension_values(interpolator_iyh, "date")
+              foo2 <- seq(as.Date(paste0(2021+iyh-1,"-01-01")), as.Date(paste0(2021+iyh,"-01-01")), by = "day")
+              foo2 <- foo2[1:length(foo)]
+              interpolator_iyh <- stars::st_set_dimensions(interpolator_iyh, which = "date", values = as.POSIXct(foo2))
+              interpolators[[iyh]] <- interpolator_iyh
+            }
+            interpolator <- interpolators
+            cli::cli_li(paste0("CO2 levels for years 2021 to 2030"))
+            CO2ByYear <- CO2_ppm |> 
+              dplyr::filter(Year %in% years_hist[1]:years_hist[length(years_hist)]) 
+            CO2ByYear <- CO2ByYear[["RCP45"]]
+            names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+          }
           
           
           cli::cli_li(paste0("Defining management scenario (40% extraction rates)"))
@@ -312,19 +362,46 @@ if(AMF_2021_2100) {
           res_file <- paste0("Rdata/AMF/AMF_", provinceStrings[iprov], "_",climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
           
           if(!file.exists(res_file) || overwrite) {
-            cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
-            interpolator_file <- EMFdatautils::download_emfdata(climate_base,
-                                                                paste0("Products/InterpolationData/Catalunya/Projections/", 
-                                                                       climate_model, "_", climate_scen,"_daily_interpolator_", 
-                                                                       yearsIni[iy], "_", yearsFin[iy],".nc"))
-            interpolator <- meteoland::read_interpolator(interpolator_file)
-            file.remove(interpolator_file)
             
-            cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
-            CO2ByYear <- CO2_ppm |> 
-              dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
-            CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
-            names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+            if(climate_scen %in% c("rcp45", "rcp85")) {
+              cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              interpolator_file <- EMFdatautils::download_emfdata(climate_base,
+                                                                  paste0("Products/InterpolationData/Catalunya/Projections/", 
+                                                                         climate_model, "_", climate_scen,"_daily_interpolator_", 
+                                                                         yearsIni[iy], "_", yearsFin[iy],".nc"))
+              interpolator <- meteoland::read_interpolator(interpolator_file)
+              file.remove(interpolator_file)
+              
+              cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              CO2ByYear <- CO2_ppm |> 
+                dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
+              CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
+              names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+            } else {
+              cli::cli_li(paste0("Loading (historic) interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              if(yearsIni[iy] %in% c(2041, 2061, 2081)) {# Historic 2001-2010
+                years_hist <- 2001:2010
+              } else {# Historic 2011-2020
+                years_hist <- 2011:2020
+              }
+              interpolators <- vector("list", length(years_hist))
+              for(iyh in 1:length(years_hist)) {
+                interpolator_file <- EMFdatautils::download_emfdata(climate_base,
+                                                                    paste0("Products/InterpolationData/Catalunya/Historic/calibrated_2.0/interpolator_", years_hist[iyh],"_calibrated.nc"))
+                interpolator_iyh <- load_interpolator(interpolator_file, years_hist[iyh])
+                foo <- stars::st_get_dimension_values(interpolator_iyh, "date")
+                foo2 <- seq(as.Date(paste0(yearsIni[iy]+iyh-1,"-01-01")), as.Date(paste0(yearsIni[iy]+iyh,"-01-01")), by = "day")
+                foo2 <- foo2[1:length(foo)]
+                interpolator_iyh <- stars::st_set_dimensions(interpolator_iyh, which = "date", values = as.POSIXct(foo2))
+                interpolators[[iyh]] <- interpolator_iyh
+              }
+              interpolator <- interpolators
+              cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              CO2ByYear <- CO2_ppm |> 
+                dplyr::filter(Year %in% years_hist[1]:years_hist[length(years_hist)]) 
+              CO2ByYear <- CO2ByYear[["RCP45"]]
+              names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+            }
             
             cli::cli_li(paste0("Defining management scenario (70% extraction rates)"))
             volumes <- aprofit_decade_prov_spp[,1:4] |>
@@ -560,7 +637,8 @@ if(RSB_2021_2100) {
 
 if(ASEA_2021_2100) {
   climate_models <- "mpiesm_rca4"
-  climate_scens <- c("rcp45", "rcp85")
+  # climate_scens <- c("rcp45", "rcp85")
+  climate_scens <- c("const")
   for(climate_model in climate_models) {
     for(climate_scen in climate_scens) {
       cli::cli_h1(paste0("SIMULATION 2021-2100 / ASEA / ", climate_model, " / ", climate_scen))
@@ -586,19 +664,45 @@ if(ASEA_2021_2100) {
           res_file <- paste0("Rdata/ASEA/ASEA_",provinceStrings[iprov], "_",climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
           
           if(!file.exists(res_file) || overwrite) {
-            cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
-            interpolator_file <- EMFdatautils::download_emfdata(climate_base,
-                                                                paste0("Products/InterpolationData/Catalunya/Projections/", 
-                                                                       climate_model, "_", climate_scen,"_daily_interpolator_", 
-                                                                       yearsIni[iy], "_", yearsFin[iy],".nc"))
-            interpolator <- meteoland::read_interpolator(interpolator_file)
-            file.remove(interpolator_file)
-            
-            cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
-            CO2ByYear <- CO2_ppm |> 
-              dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
-            CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
-            names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+            if(climate_scen %in% c("rcp45", "rcp85")) {
+              cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              interpolator_file <- EMFdatautils::download_emfdata(climate_base,
+                                                                  paste0("Products/InterpolationData/Catalunya/Projections/", 
+                                                                         climate_model, "_", climate_scen,"_daily_interpolator_", 
+                                                                         yearsIni[iy], "_", yearsFin[iy],".nc"))
+              interpolator <- meteoland::read_interpolator(interpolator_file)
+              file.remove(interpolator_file)
+              
+              cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              CO2ByYear <- CO2_ppm |> 
+                dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
+              CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
+              names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+            } else {
+              cli::cli_li(paste0("Loading (historic) interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              if(yearsIni[iy] %in% c(2021, 2041, 2061, 2081)) {# Historic 2001-2010
+                years_hist <- 2001:2010
+              } else {# Historic 2011-2020
+                years_hist <- 2011:2020
+              }
+              interpolators <- vector("list", length(years_hist))
+              for(iyh in 1:length(years_hist)) {
+                interpolator_file <- EMFdatautils::download_emfdata(climate_base,
+                                                                    paste0("Products/InterpolationData/Catalunya/Historic/calibrated_2.0/interpolator_", years_hist[iyh],"_calibrated.nc"))
+                interpolator_iyh <- load_interpolator(interpolator_file, years_hist[iyh])
+                foo <- stars::st_get_dimension_values(interpolator_iyh, "date")
+                foo2 <- seq(as.Date(paste0(yearsIni[iy]+iyh-1,"-01-01")), as.Date(paste0(yearsIni[iy]+iyh,"-01-01")), by = "day")
+                foo2 <- foo2[1:length(foo)]
+                interpolator_iyh <- stars::st_set_dimensions(interpolator_iyh, which = "date", values = as.POSIXct(foo2))
+                interpolators[[iyh]] <- interpolator_iyh
+              }
+              interpolator <- interpolators
+              cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              CO2ByYear <- CO2_ppm |> 
+                dplyr::filter(Year %in% years_hist[1]:years_hist[length(years_hist)]) 
+              CO2ByYear <- CO2ByYear[["RCP45"]]
+              names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+            }
             
             
             cli::cli_li(paste0("Defining management scenario (30% extraction rates)"))
@@ -639,7 +743,8 @@ if(ASEA_2021_2100) {
 
 if(ACG_2021_2100) {
   climate_models <- "mpiesm_rca4"
-  climate_scens <- c("rcp45", "rcp85")
+  # climate_scens <- c("rcp45", "rcp85")
+  climate_scens <- c("const")
   for(climate_model in climate_models) {
     for(climate_scen in climate_scens) {
       cli::cli_h1(paste0("SIMULATION 2021-2100 / ACG / ", climate_model, " / ", climate_scen))
@@ -663,19 +768,45 @@ if(ACG_2021_2100) {
           
           res_file <- paste0("Rdata/ACG/ACG_", provinceStrings[iprov],"_",climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
           if(!file.exists(res_file) || overwrite) {
-            cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
-            interpolator_file <- EMFdatautils::download_emfdata(climate_base,
-                                                                paste0("Products/InterpolationData/Catalunya/Projections/", 
-                                                                       climate_model, "_", climate_scen,"_daily_interpolator_", 
-                                                                       yearsIni[iy], "_", yearsFin[iy],".nc"))
-            interpolator <- meteoland::read_interpolator(interpolator_file)
-            file.remove(interpolator_file)
-            
-            cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
-            CO2ByYear <- CO2_ppm |> 
-              dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
-            CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
-            names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+            if(climate_scen %in% c("rcp45", "rcp85")) {
+              cli::cli_li(paste0("Loading interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              interpolator_file <- EMFdatautils::download_emfdata(climate_base,
+                                                                  paste0("Products/InterpolationData/Catalunya/Projections/", 
+                                                                         climate_model, "_", climate_scen,"_daily_interpolator_", 
+                                                                         yearsIni[iy], "_", yearsFin[iy],".nc"))
+              interpolator <- meteoland::read_interpolator(interpolator_file)
+              file.remove(interpolator_file)
+              
+              cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              CO2ByYear <- CO2_ppm |> 
+                dplyr::filter(Year %in% yearsIni[iy]:yearsFin[iy]) 
+              CO2ByYear <- CO2ByYear[[toupper(climate_scen)]]
+              names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+            } else {
+              cli::cli_li(paste0("Loading (historic) interpolator for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              if(yearsIni[iy] %in% c(2021, 2041, 2061, 2081)) {# Historic 2001-2010
+                years_hist <- 2001:2010
+              } else {# Historic 2011-2020
+                years_hist <- 2011:2020
+              }
+              interpolators <- vector("list", length(years_hist))
+              for(iyh in 1:length(years_hist)) {
+                interpolator_file <- EMFdatautils::download_emfdata(climate_base,
+                                                                    paste0("Products/InterpolationData/Catalunya/Historic/calibrated_2.0/interpolator_", years_hist[iyh],"_calibrated.nc"))
+                interpolator_iyh <- load_interpolator(interpolator_file, years_hist[iyh])
+                foo <- stars::st_get_dimension_values(interpolator_iyh, "date")
+                foo2 <- seq(as.Date(paste0(yearsIni[iy]+iyh-1,"-01-01")), as.Date(paste0(yearsIni[iy]+iyh,"-01-01")), by = "day")
+                foo2 <- foo2[1:length(foo)]
+                interpolator_iyh <- stars::st_set_dimensions(interpolator_iyh, which = "date", values = as.POSIXct(foo2))
+                interpolators[[iyh]] <- interpolator_iyh
+              }
+              interpolator <- interpolators
+              cli::cli_li(paste0("CO2 levels for years ", yearsIni[iy]," to ", yearsFin[iy]))
+              CO2ByYear <- CO2_ppm |> 
+                dplyr::filter(Year %in% years_hist[1]:years_hist[length(years_hist)]) 
+              CO2ByYear <- CO2ByYear[["RCP45"]]
+              names(CO2ByYear) <- yearsIni[iy]:yearsFin[iy]
+            }
             
             
             cli::cli_li(paste0("Defining management scenario (no demand and adaptation prescriptions)"))
