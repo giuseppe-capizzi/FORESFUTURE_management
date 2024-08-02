@@ -1,4 +1,5 @@
-library(tidyverse)
+library(dplyr)
+library(tidyr)
 library(Hmisc)
 
 firewood_species <- c("Quercus ilex", "Quercus ilex ssp. ballota", 
@@ -478,8 +479,8 @@ scenario_species_abundance<-function(climate_model, climate_scen, management_sce
 # (3) RSB
 # scenario_annual_indicators(climate_model, "rcp45", "RSB", test = TRUE)
 # scenario_annual_indicators(climate_model, "rcp85", "RSB", test = TRUE)
-# scenario_annual_indicators(climate_model, "rcp45", "RSB", test = FALSE)
-# scenario_annual_indicators(climate_model, "rcp85", "RSB", test = FALSE)
+scenario_annual_indicators(climate_model, "rcp45", "RSB", test = FALSE)
+scenario_annual_indicators(climate_model, "rcp85", "RSB", test = FALSE)
 # scenario_annual_indicators(climate_model, "rcp45", "RSB", test = FALSE, formes = TRUE)
 # scenario_annual_indicators(climate_model, "rcp85", "RSB", test = FALSE, formes = TRUE)
 
