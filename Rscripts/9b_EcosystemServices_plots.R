@@ -27,10 +27,30 @@ n_plots_period <- length(ids_formes)
 ES_period_FORDYN  <- readRDS("Rdata/ES_period_FORDYN.rds")|>
   mutate(id = as.character(as.numeric(substr(id, 1,6)))) |>
   filter(id %in% ids_formes)
+
+# We put to NA the values of the land use change plots for scenario RSB (for the decades from 2021-2040)
+nfiplot$IDPARCELA <- sub("^0+", "", nfiplot$IDPARCELA)
+exclude <- st_drop_geometry(nfiplot[,c("IDPARCELA", "prior_agri", "prior_pasture")])
+exclude_1 <- exclude[(exclude$prior_agri>0 & exclude$prior_agri< 11) | (exclude$prior_pasture>0 & exclude$prior_pasture< 11),]$IDPARCELA
+exclude_2 <- exclude[exclude$prior_agri>10 | exclude$prior_pasture>10,]$IDPARCELA
+
+# table(ES_period_FORDYN$Period)
+# First filter (decade 2021-2030)
+es2 <- c("ES2_AdultTreeBiomassChange", "ES2_AdultTreeBiomassSequestr")
+ES_period_FORDYN[which((!ES_period_FORDYN$Period %in% c("2001-2010", "2001-2020", "2011-2020")) &
+                         (ES_period_FORDYN$Management == "RSB") &
+                         (ES_period_FORDYN$id %in% exclude_1)),es2] <- NA
+# First filter (decade 2031-2040)
+ES_period_FORDYN[which((!ES_period_FORDYN$Period %in% c("2001-2010", "2001-2020", "2011-2020","2021-2030")) &
+                         (ES_period_FORDYN$Management == "RSB") &
+                         (ES_period_FORDYN$id %in% exclude_2)),es2] <- NA
+
+
 ES_period <- dplyr::bind_rows(ES_period_FORDYN, ES_period_FORMES) 
 rm(ES_period_FORDYN)
 rm(ES_period_FORMES)
 gc()
+
 
 # Functions to generate plots --------------------------------------------------------
 plot_ES_state <- function(ES_state, var, ylab, ylim, outliers = c(-Inf,Inf), add_formes = FALSE) {
