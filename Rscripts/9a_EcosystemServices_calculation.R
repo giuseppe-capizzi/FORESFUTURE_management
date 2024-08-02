@@ -848,18 +848,18 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "FORDYN") {
 #   sf::st_as_sf()
 # saveRDS(ES_state_FORDYN, "Rdata/ES_state_FORDYN.rds")
 
-# ES_period_FORMES <- generate_ES_table("period", FALSE, model = "FORMES")
-# nfiplot_formes <- nfiplot |>
-#   mutate(id = as.character(as.numeric(IDPARCELA)))
-# ES_period_FORMES <- ES_period_FORMES |>
-#   left_join(nfiplot_formes[,c("id")], by="id") |>
-#   sf::st_as_sf()
-# saveRDS(ES_period_FORMES, "Rdata/ES_period_FORMES.rds")
-# 
-# ES_state_FORMES <- generate_ES_table("state",FALSE, model = "FORMES")
-# nfiplot_formes <- nfiplot |>
-#   mutate(id = as.character(as.numeric(IDPARCELA)))
-# ES_state_FORMES <- ES_state_FORMES |>
-#   left_join(nfiplot_formes[,c("id")], by="id") |>
-#   sf::st_as_sf()
-# saveRDS(ES_state_FORMES, "Rdata/ES_state_FORMES.rds")
+ES_period_FORMES <- generate_ES_table("period", FALSE, model = "FORMES")
+nfiplot_formes <- nfiplot |>
+  mutate(id = as.character(as.numeric(IDPARCELA)))
+ES_period_FORMES <- ES_period_FORMES |>
+  left_join(nfiplot_formes[,c("id")], by="id") |>
+  sf::st_as_sf()
+saveRDS(ES_period_FORMES, "Rdata/ES_period_FORMES.rds")
+
+ES_state_FORMES <- generate_ES_table("state",FALSE, model = "FORMES")
+nfiplot_formes <- nfiplot |>
+  mutate(id = as.character(as.numeric(IDPARCELA)))
+ES_state_FORMES <- ES_state_FORMES |>
+  left_join(nfiplot_formes[,c("id")], by="id") |>
+  sf::st_as_sf()
+saveRDS(ES_state_FORMES, "Rdata/ES_state_FORMES.rds")
