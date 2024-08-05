@@ -10,9 +10,9 @@ load_volume_table <- function(test = FALSE) {
       for(climate_model in c("mpiesm_rca4")) {
         for(climate_scen in c("rcp45", "rcp85")) {
           if(test) {
-            bind_file <- paste0("Rdata/Test_binded/Test_", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
+            bind_file <- paste0("Rdata/MEDFATE/Test_binded/Test_", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
           } else {
-            bind_file <- paste0("Rdata/binded/", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
+            bind_file <- paste0("Rdata/MEDFATE/binded/", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
           }
           if(file.exists(bind_file)) {
             scen_list <- readRDS(file = bind_file)
@@ -54,41 +54,41 @@ load_result_table <- function(test = FALSE) {
   }
   cli::cli_progress_step("Loading annual indicators")
   if(test) {
-    BAU_rcp45 <- readRDS("Rdata/Test_annual_indicators/Test_BAU_mpiesm_rca4_rcp45.rds")
-    BAU_rcp85 <- readRDS("Rdata/Test_annual_indicators/Test_BAU_mpiesm_rca4_rcp85.rds")
+    BAU_rcp45 <- readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_BAU_mpiesm_rca4_rcp45.rds")
+    BAU_rcp85 <- readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_BAU_mpiesm_rca4_rcp85.rds")
     
-    AMF_rcp45 <- readRDS("Rdata/Test_annual_indicators/Test_AMF_mpiesm_rca4_rcp45.rds")
-    AMF_rcp85 <- readRDS("Rdata/Test_annual_indicators/Test_AMF_mpiesm_rca4_rcp85.rds")
+    AMF_rcp45 <- readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_AMF_mpiesm_rca4_rcp45.rds")
+    AMF_rcp85 <- readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_AMF_mpiesm_rca4_rcp85.rds")
     
-    RSB_rcp45 <- readRDS("Rdata/Test_annual_indicators/Test_RSB_mpiesm_rca4_rcp45.rds")
-    RSB_rcp85 <- readRDS("Rdata/Test_annual_indicators/Test_RSB_mpiesm_rca4_rcp85.rds")
+    RSB_rcp45 <- readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_RSB_mpiesm_rca4_rcp45.rds")
+    RSB_rcp85 <- readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_RSB_mpiesm_rca4_rcp85.rds")
     
-    ASEA_rcp45 <- readRDS("Rdata/Test_annual_indicators/Test_ASEA_mpiesm_rca4_rcp45.rds")
-    ASEA_rcp85 <- readRDS("Rdata/Test_annual_indicators/Test_ASEA_mpiesm_rca4_rcp85.rds")
+    ASEA_rcp45 <- readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_ASEA_mpiesm_rca4_rcp45.rds")
+    ASEA_rcp85 <- readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_ASEA_mpiesm_rca4_rcp85.rds")
     
-    ACG_rcp45 <- readRDS("Rdata/Test_annual_indicators/Test_ACG_mpiesm_rca4_rcp45.rds")
-    ACG_rcp85 <- readRDS("Rdata/Test_annual_indicators/Test_ACG_mpiesm_rca4_rcp85.rds")
+    ACG_rcp45 <- readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_ACG_mpiesm_rca4_rcp45.rds")
+    ACG_rcp85 <- readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_ACG_mpiesm_rca4_rcp85.rds")
     
-    NOG_rcp45 <- readRDS("Rdata/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp45.rds")
-    NOG_rcp85 <- readRDS("Rdata/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp85.rds")
+    NOG_rcp45 <- readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp45.rds")
+    NOG_rcp85 <- readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp85.rds")
   } else {
-    BAU_rcp45 <- readRDS("Rdata/annual_indicators/BAU_mpiesm_rca4_rcp45.rds")
-    BAU_rcp85 <- readRDS("Rdata/annual_indicators/BAU_mpiesm_rca4_rcp85.rds")
+    BAU_rcp45 <- readRDS("Rdata/MEDFATE/annual_indicators/BAU_mpiesm_rca4_rcp45.rds")
+    BAU_rcp85 <- readRDS("Rdata/MEDFATE/annual_indicators/BAU_mpiesm_rca4_rcp85.rds")
     
-    AMF_rcp45 <- readRDS("Rdata/annual_indicators/AMF_mpiesm_rca4_rcp45.rds")
-    AMF_rcp85 <- readRDS("Rdata/annual_indicators/AMF_mpiesm_rca4_rcp85.rds")
+    AMF_rcp45 <- readRDS("Rdata/MEDFATE/annual_indicators/AMF_mpiesm_rca4_rcp45.rds")
+    AMF_rcp85 <- readRDS("Rdata/MEDFATE/annual_indicators/AMF_mpiesm_rca4_rcp85.rds")
     
-    RSB_rcp45 <- readRDS("Rdata/annual_indicators/RSB_mpiesm_rca4_rcp45.rds")
-    RSB_rcp85 <- readRDS("Rdata/annual_indicators/RSB_mpiesm_rca4_rcp85.rds")
+    RSB_rcp45 <- readRDS("Rdata/MEDFATE/annual_indicators/RSB_mpiesm_rca4_rcp45.rds")
+    RSB_rcp85 <- readRDS("Rdata/MEDFATE/annual_indicators/RSB_mpiesm_rca4_rcp85.rds")
     
-    ASEA_rcp45 <- readRDS("Rdata/annual_indicators/ASEA_mpiesm_rca4_rcp45.rds")
-    ASEA_rcp85 <- readRDS("Rdata/annual_indicators/ASEA_mpiesm_rca4_rcp85.rds")
+    ASEA_rcp45 <- readRDS("Rdata/MEDFATE/annual_indicators/ASEA_mpiesm_rca4_rcp45.rds")
+    ASEA_rcp85 <- readRDS("Rdata/MEDFATE/annual_indicators/ASEA_mpiesm_rca4_rcp85.rds")
     
-    ACG_rcp45 <- readRDS("Rdata/annual_indicators/ACG_mpiesm_rca4_rcp45.rds")
-    ACG_rcp85 <- readRDS("Rdata/annual_indicators/ACG_mpiesm_rca4_rcp85.rds")
+    ACG_rcp45 <- readRDS("Rdata/MEDFATE/annual_indicators/ACG_mpiesm_rca4_rcp45.rds")
+    ACG_rcp85 <- readRDS("Rdata/MEDFATE/annual_indicators/ACG_mpiesm_rca4_rcp85.rds")
     
-    NOG_rcp45 <- readRDS("Rdata/annual_indicators/NOG_mpiesm_rca4_rcp45.rds")
-    NOG_rcp85 <- readRDS("Rdata/annual_indicators/NOG_mpiesm_rca4_rcp85.rds")
+    NOG_rcp45 <- readRDS("Rdata/MEDFATE/annual_indicators/NOG_mpiesm_rca4_rcp45.rds")
+    NOG_rcp85 <- readRDS("Rdata/MEDFATE/annual_indicators/NOG_mpiesm_rca4_rcp85.rds")
   }
   
   
@@ -116,9 +116,9 @@ load_species_abundance_table <- function(test = FALSE) {
     for(climate_model in c("mpiesm_rca4")) {
       for(climate_scen in c("rcp45", "rcp85")) {
         if(test) {
-          bind_file <- paste0("Rdata/Test_species_abundance/Test_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
+          bind_file <- paste0("Rdata/MEDFATE/Test_species_abundance/Test_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
         } else {
-          bind_file <- paste0("Rdata/species_abundance/", management_scen, "_", climate_model,"_", climate_scen, ".rds")
+          bind_file <- paste0("Rdata/MEDFATE/species_abundance/", management_scen, "_", climate_model,"_", climate_scen, ".rds")
         }
         if(file.exists(bind_file)) {
           df <- bind_rows(df, readRDS(file = bind_file)) 
