@@ -206,9 +206,9 @@ bind_scenario_province_results <- function(iprov, climate_model, climate_scen, m
   
   
   if(test) {
-    saveRDS(scen_list, file = paste0("Rdata/Test_binded/Test_", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds"))
+    saveRDS(scen_list, file = paste0("Rdata/MEDFATE/Test_binded/Test_", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds"))
   } else {
-    saveRDS(scen_list, file = paste0("Rdata/binded/", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds"))
+    saveRDS(scen_list, file = paste0("Rdata/MEDFATE/binded/", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds"))
   }
   cli::cli_progress_done()
 }
@@ -244,7 +244,7 @@ test <- FALSE
 # bind_scenario_province_results(1, climate_model, "rcp85", "RSB", test = test)
 # bind_scenario_province_results(2, climate_model, "rcp85", "RSB", test = test)
 # bind_scenario_province_results(3, climate_model, "rcp85", "RSB", test = test)
-# bind_scenario_province_results(4, climate_model, "rcp85", "RSB", test = test)
+bind_scenario_province_results(4, climate_model, "rcp85", "RSB", test = test)
 
 # (4) ASEA
 # bind_scenario_province_results(1, climate_model, "rcp45", "ASEA", test = test)
