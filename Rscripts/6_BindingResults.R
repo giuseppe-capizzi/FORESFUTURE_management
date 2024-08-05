@@ -1,4 +1,6 @@
 library(medfate)
+library(tidyr)
+library(dplyr)
 source("Rscripts/A2_utils.R")
 
 bind_scenario_volume_table <- function(provinceName, climate_model, climate_scen, management_scen, test = FALSE) {
@@ -235,14 +237,14 @@ test <- FALSE
 # bind_scenario_province_results(4, climate_model, "rcp85", "AMF", test = test)
 
 # (3) RSB
-bind_scenario_province_results(1, climate_model, "rcp45", "RSB", test = test)
-bind_scenario_province_results(2, climate_model, "rcp45", "RSB", test = test)
-bind_scenario_province_results(3, climate_model, "rcp45", "RSB", test = test)
-bind_scenario_province_results(4, climate_model, "rcp45", "RSB", test = test)
-bind_scenario_province_results(1, climate_model, "rcp85", "RSB", test = test)
-bind_scenario_province_results(2, climate_model, "rcp85", "RSB", test = test)
-bind_scenario_province_results(3, climate_model, "rcp85", "RSB", test = test)
-bind_scenario_province_results(4, climate_model, "rcp85", "RSB", test = test)
+# bind_scenario_province_results(1, climate_model, "rcp45", "RSB", test = test)
+# bind_scenario_province_results(2, climate_model, "rcp45", "RSB", test = test)
+# bind_scenario_province_results(3, climate_model, "rcp45", "RSB", test = test)
+# bind_scenario_province_results(4, climate_model, "rcp45", "RSB", test = test)
+# bind_scenario_province_results(1, climate_model, "rcp85", "RSB", test = test)
+# bind_scenario_province_results(2, climate_model, "rcp85", "RSB", test = test)
+# bind_scenario_province_results(3, climate_model, "rcp85", "RSB", test = test)
+# bind_scenario_province_results(4, climate_model, "rcp85", "RSB", test = test)
 
 # (4) ASEA
 # bind_scenario_province_results(1, climate_model, "rcp45", "ASEA", test = test)
