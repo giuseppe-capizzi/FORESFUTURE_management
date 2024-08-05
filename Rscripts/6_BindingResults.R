@@ -1,4 +1,3 @@
-library(tidyverse)
 library(medfate)
 source("Rscripts/A2_utils.R")
 
@@ -6,11 +5,11 @@ bind_scenario_volume_table <- function(provinceName, climate_model, climate_scen
   td <- data.frame()
   
   if(test) {
-    res_01_10 <- readRDS(paste0("Rdata/Test_historic/test_", provinceName,"_2001_2010.rds"))
-    res_11_20 <- readRDS(paste0("Rdata/Test_historic/test_", provinceName,"_2011_2020.rds"))
+    res_01_10 <- readRDS(paste0("Rdata/MEDFATE/Test_historic/test_", provinceName,"_2001_2010.rds"))
+    res_11_20 <- readRDS(paste0("Rdata/MEDFATE/Test_historic/test_", provinceName,"_2011_2020.rds"))
   } else {
-    res_01_10 <- readRDS(paste0("Rdata/historic/", provinceName,"_2001_2010.rds"))
-    res_11_20 <- readRDS(paste0("Rdata/historic/", provinceName,"_2011_2020.rds"))
+    res_01_10 <- readRDS(paste0("Rdata/MEDFATE/historic/", provinceName,"_2001_2010.rds"))
+    res_11_20 <- readRDS(paste0("Rdata/MEDFATE/historic/", provinceName,"_2011_2020.rds"))
   } 
   
   td_01_10 <- res_01_10$result_volumes
@@ -21,9 +20,9 @@ bind_scenario_volume_table <- function(provinceName, climate_model, climate_scen
   yearsFin <- seq(2030, 2100, by=10)
   for(iy in 1:length(yearsIni)) {
     if(test) {
-      res_file <- paste0("Rdata/Test_", management_scen, "/test_", management_scen, "_", provinceName,"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
+      res_file <- paste0("Rdata/MEDFATE/Test_", management_scen, "/test_", management_scen, "_", provinceName,"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
     } else {
-      res_file <- paste0("Rdata/", management_scen, "/", management_scen, "_", provinceName,"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
+      res_file <- paste0("Rdata/MEDFATE/", management_scen, "/", management_scen, "_", provinceName,"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
     }
     if(file.exists(res_file)) {
       res <- readRDS(res_file)
@@ -48,11 +47,11 @@ bind_scenario_structural_table <- function(structural_table, provinceName, clima
   td <- data.frame()
   
   if(test) {
-    res_01_10 <- readRDS(paste0("Rdata/Test_historic/test_", provinceName,"_2001_2010.rds"))
-    res_11_20 <- readRDS(paste0("Rdata/Test_historic/test_", provinceName,"_2011_2020.rds"))
+    res_01_10 <- readRDS(paste0("Rdata/MEDFATE/Test_historic/test_", provinceName,"_2001_2010.rds"))
+    res_11_20 <- readRDS(paste0("Rdata/MEDFATE/Test_historic/test_", provinceName,"_2011_2020.rds"))
   } else {
-    res_01_10 <- readRDS(paste0("Rdata/historic/", provinceName,"_2001_2010.rds"))
-    res_11_20 <- readRDS(paste0("Rdata/historic/", provinceName,"_2011_2020.rds"))
+    res_01_10 <- readRDS(paste0("Rdata/MEDFATE/historic/", provinceName,"_2001_2010.rds"))
+    res_11_20 <- readRDS(paste0("Rdata/MEDFATE/historic/", provinceName,"_2011_2020.rds"))
   }
   td_01_10 <- bind_rows(res_01_10$result_sf[[structural_table]]) |>
     select(-c("Z50", "Z95"))
@@ -67,9 +66,9 @@ bind_scenario_structural_table <- function(structural_table, provinceName, clima
   yearsFin <- seq(2030, 2100, by=10)
   for(iy in 1:length(yearsIni)) {
     if(test) {
-      res_file <- paste0("Rdata/Test_", management_scen, "/test_", management_scen, "_", provinceName,"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
+      res_file <- paste0("Rdata/MEDFATE/Test_", management_scen, "/test_", management_scen, "_", provinceName,"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
     } else {
-      res_file <- paste0("Rdata/", management_scen, "/", management_scen, "_", provinceName,"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
+      res_file <- paste0("Rdata/MEDFATE/", management_scen, "/", management_scen, "_", provinceName,"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
     }
     if(file.exists(res_file)) {
       res <- readRDS(res_file)
@@ -106,11 +105,11 @@ bind_scenario_summary_table <- function(provinceName, climate_model, climate_sce
     return(sf)
   }
   if(test) {
-    res_01_10 <- readRDS(paste0("Rdata/Test_historic/test_", provinceName,"_2001_2010.rds"))
-    res_11_20 <- readRDS(paste0("Rdata/Test_historic/test_", provinceName,"_2011_2020.rds"))
+    res_01_10 <- readRDS(paste0("Rdata/MEDFATE/Test_historic/test_", provinceName,"_2001_2010.rds"))
+    res_11_20 <- readRDS(paste0("Rdata/MEDFATE/Test_historic/test_", provinceName,"_2011_2020.rds"))
   } else {
-    res_01_10 <- readRDS(paste0("Rdata/historic/", provinceName,"_2001_2010.rds"))
-    res_11_20 <- readRDS(paste0("Rdata/historic/", provinceName,"_2011_2020.rds"))
+    res_01_10 <- readRDS(paste0("Rdata/MEDFATE/historic/", provinceName,"_2001_2010.rds"))
+    res_11_20 <- readRDS(paste0("Rdata/MEDFATE/historic/", provinceName,"_2011_2020.rds"))
   }
   res_01_10$result_sf <- reshape_summary(res_01_10$result_sf)
   td_01_10 <- bind_rows(res_01_10$result_sf$summary) 
@@ -122,9 +121,9 @@ bind_scenario_summary_table <- function(provinceName, climate_model, climate_sce
   yearsFin <- seq(2030, 2100, by=10)
   for(iy in 1:length(yearsIni)) {
     if(test) {
-      res_file <- paste0("Rdata/Test_", management_scen, "/test_", management_scen, "_", provinceName,"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
+      res_file <- paste0("Rdata/MEDFATE/Test_", management_scen, "/test_", management_scen, "_", provinceName,"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
     } else {
-      res_file <- paste0("Rdata/", management_scen, "/", management_scen, "_", provinceName,"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
+      res_file <- paste0("Rdata/MEDFATE/", management_scen, "/", management_scen, "_", provinceName,"_", climate_model,"_",climate_scen,"_", yearsIni[iy],"_", yearsFin[iy],".rds")
     }
     if(file.exists(res_file)) {
       res <- readRDS(res_file)
@@ -236,14 +235,14 @@ test <- FALSE
 # bind_scenario_province_results(4, climate_model, "rcp85", "AMF", test = test)
 
 # (3) RSB
-# bind_scenario_province_results(1, climate_model, "rcp45", "RSB", test = test)
-# bind_scenario_province_results(2, climate_model, "rcp45", "RSB", test = test)
-# bind_scenario_province_results(3, climate_model, "rcp45", "RSB", test = test)
-# bind_scenario_province_results(4, climate_model, "rcp45", "RSB", test = test)
-# bind_scenario_province_results(1, climate_model, "rcp85", "RSB", test = test)
-# bind_scenario_province_results(2, climate_model, "rcp85", "RSB", test = test)
-# bind_scenario_province_results(3, climate_model, "rcp85", "RSB", test = test)
-# bind_scenario_province_results(4, climate_model, "rcp85", "RSB", test = test)
+bind_scenario_province_results(1, climate_model, "rcp45", "RSB", test = test)
+bind_scenario_province_results(2, climate_model, "rcp45", "RSB", test = test)
+bind_scenario_province_results(3, climate_model, "rcp45", "RSB", test = test)
+bind_scenario_province_results(4, climate_model, "rcp45", "RSB", test = test)
+bind_scenario_province_results(1, climate_model, "rcp85", "RSB", test = test)
+bind_scenario_province_results(2, climate_model, "rcp85", "RSB", test = test)
+bind_scenario_province_results(3, climate_model, "rcp85", "RSB", test = test)
+bind_scenario_province_results(4, climate_model, "rcp85", "RSB", test = test)
 
 # (4) ASEA
 # bind_scenario_province_results(1, climate_model, "rcp45", "ASEA", test = test)
