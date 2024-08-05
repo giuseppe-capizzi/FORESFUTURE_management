@@ -345,7 +345,7 @@ scenario_annual_province_indicators <- function(iprov, climate_model, climate_sc
     dplyr::full_join(biom_dead, by=c("Climate", "Management", "Province", "id", "Year")) 
   if(!is.null(summary_table)) {
     annual_vol_biom <- annual_vol_biom |>
-      dplyr::left_join(summary_table, by=c("Climate", "Management", "Province", "id", "Year"))
+      dplyr::full_join(summary_table, by=c("Climate", "Management", "Province", "id", "Year"))
   }
   annual_vol_biom <- annual_vol_biom |>
     tidyr::replace_na(list(CutAll = 0, CutAdultFirewood = 0, CutSaplingFirewood = 0, CutStructure = 0,
