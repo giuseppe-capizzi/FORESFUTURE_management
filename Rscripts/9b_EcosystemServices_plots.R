@@ -1,7 +1,8 @@
 library(ggplot2)
 library(cowplot)
 library(sf)
-library(tidyverse)
+library(dplyr)
+library(tidyr)
 library(tidyterra)
 
 
