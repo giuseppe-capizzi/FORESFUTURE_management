@@ -2,10 +2,8 @@
 .Rhistory
 .RData
 .Ruserdata
-Rdata/*
-Plots/*
-Report/*.html
-Report/*.pdf
-Report/*.docx
-Data/Comarques/*
-res_opt*
+data/*
+plots/*
+reports
+data-raw*
+res*
