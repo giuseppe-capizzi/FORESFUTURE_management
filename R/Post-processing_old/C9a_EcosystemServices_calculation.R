@@ -1,4 +1,3 @@
-rm(list=ls())
 library(tidyverse)
 library(tidyterra)
 library(medfate)
@@ -36,9 +35,9 @@ ES1_function_period <- function(ALL, model) {
     complete(id, Year, fill = list(CutStructure = 0, CutAdultFirewood =0, CutSaplingFirewood = 0))
     
   ES1_20 <- ALL_COMPLETE |>
-    mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2050,2080,2100), labels = c("2001-2020", "2021-2040", "2031-2050", "2061-2080", "2081-2100"))),
+    mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c("2001-2020", "2021-2040", "2041-2060", "2061-2080", "2081-2100"))),
            MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), 
-                                                 labels = c(2010, 2030, 2040, 2070, 2090))))) |>
+                                                 labels = c(2010, 2030, 2050, 2070, 2090))))) |>
     group_by(Climate, Management, Province, id, Period, MidYear) |>
     summarise(ES1_CutStructure = mean(CutStructure, na.rm=TRUE),
               ES1_CutAdultFirewood = mean(CutAdultFirewood, na.rm=TRUE),
@@ -121,8 +120,7 @@ ES2_function_period <- function(ALL, model) {
              P2 = `2040` - `2020`,
              P3 = `2060` - `2040`,
              P4 = `2080` - `2060`,
-             P5 = `2100` - `2080`,
-             P6 = `2050` - `2030`)
+             P5 = `2100` - `2080`)
   }
   diff_10 <- function(x) {
     x |>
@@ -140,14 +138,14 @@ ES2_function_period <- function(ALL, model) {
   
   BATC_20 <-ALL1 |>
     ungroup() |>
-    filter(Year %in% c(seq(2000,2100, by=20), 2030, 2050)) |>
+    filter(Year %in% seq(2000,2100, by=20)) |>
     select(Climate, Management, Province, id, Year, AdultTreeBiomass) |>
     group_by(Climate, Management, Province) |>
     complete(id, Year, fill = list(AdultTreeBiomass = 0))|>
     pivot_wider(values_from = AdultTreeBiomass, names_from = Year) |>
     diff_20() |>
-    select(Climate, Management, Province, id, "P1", "P2", "P3", "P4", "P5", "P6") |>
-    pivot_longer(cols = 5:10, names_to = "Period", values_to = "AdultTreeBiomassChange") |>
+    select(Climate, Management, Province, id, "P1", "P2", "P3", "P4", "P5") |>
+    pivot_longer(cols = 5:9, names_to = "Period", values_to = "AdultTreeBiomassChange") |>
     mutate(AdultTreeBiomassChange = AdultTreeBiomassChange/20) |>
     ungroup()
   
@@ -166,17 +164,17 @@ ES2_function_period <- function(ALL, model) {
   
   BSTC_20<-ALL1 |>
     ungroup() |>
-    filter(Year %in% c(seq(2000,2100, by=20), 2030, 2050)) |>
+    filter(Year %in% seq(2000,2100, by=20)) |>
     select(Climate, Management, Province, id, Year, SaplingTreeBiomass) |>
     group_by(Climate, Management, Province) |>
     complete(id, Year, fill = list(SaplingTreeBiomass = 0))|>
     pivot_wider(values_from = SaplingTreeBiomass, names_from = Year) |>
     diff_20() |>
-    select(Climate, Management, Province, id, "P1", "P2", "P3", "P4", "P5", "P6") |>
-    pivot_longer(cols = 5:10, names_to = "Period", values_to = "SaplingTreeBiomassChange") |>
+    select(Climate, Management, Province, id, "P1", "P2", "P3", "P4", "P5") |>
+    pivot_longer(cols = 5:9, names_to = "Period", values_to = "SaplingTreeBiomassChange") |>
     mutate(SaplingTreeBiomassChange = SaplingTreeBiomassChange/20) |>
     ungroup()
-  
+
   BSTC_10<-ALL1 |>
     ungroup() |>
     filter(Year %in% seq(2000,2100, by=10)) |>
@@ -192,14 +190,14 @@ ES2_function_period <- function(ALL, model) {
   
   BSC_20 <-ALL1 |>
     ungroup() |>
-    filter(Year %in% c(seq(2000,2100, by=20), 2030, 2050)) |>
+    filter(Year %in% seq(2000,2100, by=20)) |>
     select(Climate, Management, Province, id, Year, ShrubBiomass) |>
     group_by(Climate, Management, Province) |>
     complete(id, Year, fill = list(ShrubBiomass = 0))|>
     pivot_wider(values_from = ShrubBiomass, names_from = Year) |>
     diff_20() |>
-    select(Climate, Management, Province, id, P1, P2, P3, P4, P5, P6) |>
-    pivot_longer(cols = 5:10, names_to = "Period", values_to = "ShrubBiomassChange")|>
+    select(Climate, Management, Province, id, P1, P2, P3, P4, P5) |>
+    pivot_longer(cols = 5:9, names_to = "Period", values_to = "ShrubBiomassChange")|>
     mutate(ShrubBiomassChange = ShrubBiomassChange/20) |>
     ungroup()
   
@@ -216,7 +214,7 @@ ES2_function_period <- function(ALL, model) {
     pivot_longer(cols = 5:14, names_to = "Period", values_to = "ShrubBiomassChange")|>
     mutate(ShrubBiomassChange = ShrubBiomassChange/20) |>
     ungroup()
-  # browser()
+
   CutBiomass_20 <- ALL1 |>
     ungroup() |>
     filter(Year!=2000) |>
@@ -225,20 +223,17 @@ ES2_function_period <- function(ALL, model) {
     group_by(Climate, Management, Province) |>
     complete(id, Year, fill = list(CutBiomassAdultTree = 0, CutBiomassSaplingTree = 0, CutBiomassShrub = 0,
                                    CutBiomassStructure = 0, CutBiomassAdultFirewood = 0))|>
-    mutate(Period = case_when((Year>=2000 & Year<=2020) ~ "P1",
-                              # (Year>=2020 & Year<=2040) ~ "P2",
-                              # (Year>=2040 & Year<=2060) ~ "P3",
-                              (Year>=2060 & Year<=2080) ~ "P4",
-                              (Year>=2080 & Year<=2100) ~ "P5",
-                              (Year>=2030 & Year<=2050) ~ "P6")) |>
+    mutate(Period = as.character(cut(Year, 
+                                     breaks = seq(2000,2100, by=20), 
+                                     labels = c("P1", "P2", "P3", "P4", "P5")))) |>
     group_by(Climate, Management, Province, id, Period) |>
     summarise(CutBiomassAdultTree = mean(CutBiomassAdultTree, na.rm=TRUE),
               CutBiomassSaplingTree = mean(CutBiomassSaplingTree, na.rm=TRUE),
               CutBiomassShrub = mean(CutBiomassShrub, na.rm=TRUE),
               CutBiomassStructure = mean(CutBiomassStructure, na.rm=TRUE),
               CutBiomassAdultFirewood = mean(CutBiomassAdultFirewood, na.rm=TRUE),
-              .groups = "drop")
-  
+              .groups = "drop") 
+
   CutBiomass_10 <- ALL1 |>
     ungroup() |>
     filter(Year!=2000) |>
@@ -257,13 +252,13 @@ ES2_function_period <- function(ALL, model) {
               CutBiomassStructure = mean(CutBiomassStructure, na.rm=TRUE),
               CutBiomassAdultFirewood = mean(CutBiomassAdultFirewood, na.rm=TRUE),
               .groups = "drop") 
-  # browser()
+  
   ES2_20 <- CutBiomass_20 |>
     left_join(BATC_20, by=c("Climate", "Management", "Province", "id", "Period")) |>
     left_join(BSTC_20, by=c("Climate", "Management", "Province", "id", "Period")) |>
     left_join(BSC_20, by=c("Climate", "Management", "Province", "id", "Period")) |>
-    tidyr::replace_na(list(AdultTreeBiomassChange = 0, CutBiomassAdultTree = 0, CutBiomassStructure = 0, CutBiomassAdultFirewood = 0,
-                           SaplingTreeBiomassChange = 0, CutBiomassSaplingTree = 0,
+    tidyr::replace_na(list(AdultTreeBiomassChange = 0, CutBiomassAdultTree = 0, CutBiomassStructure = 0, CutBiomassAdultFirewood = 0, 
+                           SaplingTreeBiomassChange = 0, CutBiomassSaplingTree = 0, 
                            ShrubBiomassChange = 0, CutBiomassShrub = 0)) |>
     mutate(ES2_AdultTreeBiomassChange = AdultTreeBiomassChange,
            ES2_CutBiomassStructure = CutBiomassStructure,
@@ -274,13 +269,12 @@ ES2_function_period <- function(ALL, model) {
            ES2_ShrubBiomassSequestr = ShrubBiomassChange,
            ES2_LiveBiomassSequestr = ES2_AdultTreeBiomassSequestr+ES2_SaplingTreeBiomassSequestr+ES2_ShrubBiomassSequestr) |>
     select(-c(6:13))
-  
+
   ES2_20$Period[ES2_20$Period=="P1"] <- "2001-2020"
   ES2_20$Period[ES2_20$Period=="P2"] <- "2021-2040"
   ES2_20$Period[ES2_20$Period=="P3"] <- "2041-2060"
   ES2_20$Period[ES2_20$Period=="P4"] <- "2061-2080"
   ES2_20$Period[ES2_20$Period=="P5"] <- "2081-2100"
-  ES2_20$Period[ES2_20$Period=="P6"] <- "2031-2050"
   
   ES2_20 <- ES2_20 |> 
     dplyr::mutate(Climate = toupper(Climate))|>
@@ -395,8 +389,8 @@ ES3_function_period <- function(ALL, model) {
   ES3_20 <- ALL1 |>
     filter(Year!=2000) |>
     select(Climate, Management, Province, id, Year, LAI_max, BlueWater, Precipitation) |>
-    mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2050,2080,2100), labels = c("2001-2020", "2021-2040", "2031-2050", "2061-2080", "2081-2100"))),
-           MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2050,2080,2100), labels = c(2010, 2030, 2040, 2070, 2090))))) |>
+    mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c("2001-2020", "2021-2040", "2041-2060", "2061-2080", "2081-2100"))),
+           MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c(2010, 2030, 2050, 2070, 2090))))) |>
     group_by(Climate, Management, Province, id, Period, MidYear) |>
     summarise(ES3_LAI = mean(LAI_max, na.rm=TRUE),
               ES3_BlueWater = mean(BlueWater, na.rm=TRUE),
@@ -459,8 +453,8 @@ ES4_function_period <- function(ALL, model, ALL_MF = NULL) {
       dplyr::mutate(Climate = toupper(Climate))
     
     ES4_20 <- ALL_SEL |>
-      mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2050,2080,2100), labels = c("2001-2020", "2021-2040", "2031-2050", "2061-2080", "2081-2100"))),
-             MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2050,2080,2100), labels = c(2010, 2030, 2040, 2070, 2090))))) |>
+      mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c("2001-2020", "2021-2040", "2041-2060", "2061-2080", "2081-2100"))),
+             MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c(2010, 2030, 2050, 2070, 2090))))) |>
       group_by(Climate, Management, Province, id, Period, MidYear) |>
       summarise(ES4_RainfallErosivity = mean(RainfallErosivity, na.rm = TRUE),  
                 C = mean(C, na.rm=TRUE), 
@@ -474,7 +468,6 @@ ES4_function_period <- function(ALL, model, ALL_MF = NULL) {
       dplyr::mutate(Climate = toupper(Climate))
     
   } else {
-    # browser()
     longitude_df2 <- longitude_df |>
       mutate(idparcela = as.character(as.numeric(substr(id, 1,6))))
     ALL_SEL <- ALL1 |>
@@ -487,10 +480,10 @@ ES4_function_period <- function(ALL, model, ALL_MF = NULL) {
       relocate(Period, .before = "Year")|>
       rename(idparcela = id) |>
       left_join(longitude_df2, by="idparcela")
-    # browser()
+    
     ALL_SEL_20 <- ALL_SEL |>
-      mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2050,2080,2100), labels = c("2001-2020", "2021-2040", "2031-2050", "2061-2080", "2081-2100"))),
-             MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2050,2080,2100), labels = c(2010, 2030, 2040, 2070, 2090))))) |>
+      mutate(Period = as.character(cut(Year, breaks = seq(2000,2100, by = 20), 
+                                       labels = paste0(seq(2001,2081, by=20), "-",seq(2020,2100, by=20))))) |>
       relocate(Period, .before = "Year") |>
       group_by(Climate, Management, Province, id, Period) |>
       summarise(Year = mean(Year, na.rm=TRUE),
@@ -509,8 +502,8 @@ ES4_function_period <- function(ALL, model, ALL_MF = NULL) {
     ALL_SEL_MF_20 <- ALL_MF |>
       filter(Year!=2000) |>
       select(Climate, Management, Province, id, Year, Pdaymax) |>
-      mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2050,2080,2100), labels = c("2001-2020", "2021-2040", "2031-2050", "2061-2080", "2081-2100"))),
-             MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2050,2080,2100), labels = c(2010, 2030, 2040, 2070, 2090))))) |>
+      mutate(Period = as.character(cut(Year, breaks = seq(2000,2100, by = 20), 
+                                     labels = paste0(seq(2001,2081, by=20), "-",seq(2020,2100, by=20))))) |>
       group_by(Climate, Management, Province, id, Period) |>
       summarise(Pdaymax = mean(Pdaymax, na.rm = TRUE), .groups = "drop")
     
@@ -536,13 +529,8 @@ ES4_function_period <- function(ALL, model, ALL_MF = NULL) {
       left_join(ALL_SEL_MF_20, by=c("Climate", "Management", "Province", "id", "Period"))|>
       mutate(RainfallErosivity = b0*Precipitation*sqrt(Pdaymax)*(a+b1*longitude),
              C = PARground/100) |>
-      mutate(MidYear = case_when(Period == "2001-2020" ~ 2010,
-                                 Period == "2021-2040" ~ 2030,
-                                 Period == "2031-2050" ~ 2040,
-                                 Period == "2061-2080" ~ 2070,
-                                 Period == "2081-2100" ~ 2090,
-                                 ))|>
-      rename(ES4_RainfallErosivity = RainfallErosivity) |>
+      rename(ES4_RainfallErosivity = RainfallErosivity,
+             MidYear = Year) |>
       left_join(sf::st_drop_geometry(K_LS), by="id") |>
       mutate(ES4_StructuralImpact = Kst*LS*ES4_RainfallErosivity,
              ES4_ErosionMitigation = ES4_StructuralImpact*(1-C)) |>
@@ -579,73 +567,51 @@ ES5_function_state <- function(ALL, model) {
     ALL1$Year[ALL1$Year=="2091-2100"] = "2100"
     ALL1$Year <- as.numeric(ALL1$Year)
   } 
-  recr_fun<- function(maxDBH, cvDBH, LAIt, shrubCover, treeRichness) {
+  recr_fun<- function(maxDBH, cvDBH, LAI, maxShrubCover, treeRichness, shrubRichness) {
     n <- length(maxDBH)
     # Individual functions
-    tree_size_f <- function(maxDBH) {
-      val_maxdbh <- pmin(1, pmax(0, (maxDBH - 30)/(80 - 30)))
-      return(val_maxdbh)
-    }
-    thickness_cover_f <- function(LAIt) {
-      val_lait <- pmin(1, pmax(0, LAIt/4))
-      return(val_lait)
-    }
-    treerichness_f <- function(treeRichness) {
-      val_treerich <- pmin(1, pmax(0, treeRichness/6))
-      return(val_treerich)
-    }
-    tree_size_var_f <- function(cvDBH) {
-      val_cvdbh1 <- pmin(1, pmax(0.5, 0.5 + 0.5*cvDBH))
-      val_cvdbh2 <- pmin(1, pmax(0.6, 1 - 0.4*(cvDBH-1)/(1.5 -1)))
-      val_cvdbh <- val_cvdbh1
-      val_cvdbh[which(cvDBH>1)] <- val_cvdbh2[which(cvDBH>1)]
-      return(val_cvdbh)
-    }
-    ground_vegetation_f <- function(shrubCover) {
-      val_totcov1 <- pmin(1, pmax(0.8, 0.8 + 0.2*(shrubCover/30)))
-      val_totcov2 <- pmin(1, pmax(0, 1 - (shrubCover-30)/(90 - 30)))
-      val_totcov <- val_totcov1
-      val_totcov[which(shrubCover>30)] <- val_totcov2[which(shrubCover>30)]
-      return(val_totcov)
-    }
-    
-    val_maxdbh <- tree_size_f(maxDBH)
-    val_cvdbh <- tree_size_var_f(cvDBH)
-    val_lai <- thickness_cover_f(LAIt)
-    val_treerich <- treerichness_f(treeRichness)
-    val_totcov <- ground_vegetation_f(shrubCover)
-    
-    # Initial weights
-    w_maxdbh <- rep(1/1.8, n)
-    w_cvdbh <- rep(1/5, n)
-    w_lai <- rep(1/4, n)
-    w_totcov <- rep(1/5.2,n)
-    w_treerich <- rep(1/1.6,n)
+    val_maxdbh <- 1/(1 + exp((5/25)*(50 - maxDBH)))
+    val_lai <- 1/(1 + exp((60/25)*(2 - LAI)))
+    val_treerich <- 1/(1 + exp((40/25)*(4 - treeRichness)))
+    val_shrubrich <- 1/(1 + exp((40/25)*(4 - shrubRichness)))
+    val_maxcov <- dnorm(maxShrubCover, 50, 20)/dnorm(50,50,20)
+    val_cvdbh <-  1/(1 + exp((200/25)*(0.5 - cvDBH)))
 
+    # Initial weights
+    w_maxdbh <- rep(0.2, n)
+    w_cvdbh <- rep(0.1, n)
+    w_lai <- rep(0.3, n)
+    w_maxcov <- rep(0.1,n)
+    w_treerich <- rep(0.2,n)
+    w_shrubrich <- rep(0.1,n)
+    
     # Avoid missing
     w_maxdbh[is.na(maxDBH)] <- 0
     w_cvdbh[is.na(cvDBH)] <- 0
-    w_lai[is.na(LAIt)] <- 0
-    w_totcov[is.na(shrubCover)] <- 0
+    w_lai[is.na(LAI)] <- 0
+    w_maxcov[is.na(maxShrubCover)] <- 0
     w_treerich[is.na(treeRichness)] <- 0
+    w_shrubrich[is.na(shrubRichness)] <- 0
     val_maxdbh[is.na(maxDBH)] <- 0
     val_cvdbh[is.na(cvDBH)] <- 0
-    val_lai[is.na(LAIt)] <- 0
-    val_totcov[is.na(shrubCover)] <- 0
+    val_lai[is.na(LAI)] <- 0
+    val_maxcov[is.na(maxShrubCover)] <- 0
     val_treerich[is.na(treeRichness)] <- 0
-
-    val_sum <- w_maxdbh*val_maxdbh + w_cvdbh*val_cvdbh +w_lai*val_lai + w_totcov*val_totcov + w_treerich*val_treerich
-    w_sum <- w_maxdbh + w_cvdbh +w_lai + w_totcov + w_treerich
+    val_shrubrich[is.na(shrubRichness)] <- 0
+    
+    val_sum <- w_maxdbh*val_maxdbh + w_cvdbh*val_cvdbh +w_lai*val_lai + w_maxcov*val_maxcov + w_treerich*val_treerich + w_shrubrich*val_shrubrich
+    w_sum <- w_maxdbh + w_cvdbh +w_lai + w_maxcov + w_treerich + w_shrubrich
     return(val_sum/w_sum)
   }
   ES5 <- ALL1 |>
     ungroup() |>
     filter(Year %in% c(seq(2000,2100, by =10))) |>
-    select(Climate, Management, Province, id, Year, cvDBH, maxDBH, LAI_max, ShrubCover, TreeRichness)|>
+    select(Climate, Management, Province, id, Year, cvDBH, maxDBH, MaxShrubCover, LAI_max, TreeRichness, ShrubRichness)|>
     group_by(Climate, Management, Province) |>
-    complete(id, Year, fill = list(cvDBH = NA, maxDBH = 0, LAI_max = 0, TreeRichness = 0)) |>
+    complete(id, Year, fill = list(cvDBH = NA, maxDBH = 0, MaxShrubCover = 0,
+                                   LAI_max = 0, TreeRichness = 0, ShrubRichness = 0)) |>
     ungroup() |>
-    mutate(ES5_RecreationalValue = recr_fun(maxDBH, cvDBH, LAI_max, ShrubCover, TreeRichness))|>
+    mutate(ES5_RecreationalValue = recr_fun(maxDBH, cvDBH, LAI_max, MaxShrubCover, TreeRichness, ShrubRichness))|>
     select(Climate, Management, Province, id, Year, ES5_RecreationalValue)|>
     mutate(Model = model)  |>
     relocate(Model, .after = Year) |>
@@ -692,8 +658,8 @@ ES6_function_period <- function(ALL, model) {
     select(Climate, Management, Province, id, Year, SFP, CFP) |>
     group_by(Climate, Management, Province) |>
     complete(id, Year, fill = list(SFP = 0, CFP = 0))|>
-    mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2050,2080,2100), labels = c("2001-2020", "2021-2040", "2031-2050", "2061-2080", "2081-2100"))),
-           MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2050,2080,2100), labels = c(2010, 2030, 2040, 2070, 2090))))) |>
+    mutate(Period = as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c("2001-2020", "2021-2040", "2041-2060", "2061-2080", "2081-2100"))),
+           MidYear = as.numeric(as.character(cut(Year, breaks = c(2000,2020,2040,2060,2080,2100), labels = c(2010, 2030, 2050, 2070, 2090))))) |>
     group_by(Climate, Management, Province, id, Period, MidYear) |>
     summarise(ES6_SurfaceFirePotential = mean(SFP, na.rm=TRUE),
               ES6_CrownFirePotential = mean(CFP, na.rm=TRUE),
@@ -710,7 +676,6 @@ ES6_function_period <- function(ALL, model) {
 generate_ES_table <- function(type = "period", test = FALSE, model = "FORDYN") {
   ES_function<-function(type = "state", ALL, model, ALL_MF = NULL) {
     if(type=="period") {
-      # browser()
       ES1 <- ES1_function_period(ALL, model)
       ES2 <- ES2_function_period(ALL, model)
       ES <- ES1 |>
@@ -772,25 +737,25 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "FORDYN") {
       # NOG_rcp85 <- ES_function(type, readRDS("Rdata/MEDFATE/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp85.rds"), model)
     } else {
       cli::cli_progress_step("BAU/RCP45")
-      BAU_rcp45 <- ES_function(type, readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/BAU_mpiesm_rca4_rcp45.rds"), model)
+      BAU_rcp45 <- ES_function(type, readRDS("Rdata/MEDFATE_new/annual_indicators/BAU_mpiesm_rca4_rcp45.rds"), model)
       cli::cli_progress_step("BAU/RCP85")
-      BAU_rcp85 <- ES_function(type, readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/BAU_mpiesm_rca4_rcp85.rds"), model)
+      BAU_rcp85 <- ES_function(type, readRDS("Rdata/MEDFATE_new/annual_indicators/BAU_mpiesm_rca4_rcp85.rds"), model)
       cli::cli_progress_step("AMF/RCP45")
-      AMF_rcp45 <- ES_function(type, readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/AMF_mpiesm_rca4_rcp45.rds"), model)
+      AMF_rcp45 <- ES_function(type, readRDS("Rdata/MEDFATE_new/annual_indicators/AMF_mpiesm_rca4_rcp45.rds"), model)
       cli::cli_progress_step("AMF/RCP85")
-      AMF_rcp85 <- ES_function(type, readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/AMF_mpiesm_rca4_rcp85.rds"), model)
+      AMF_rcp85 <- ES_function(type, readRDS("Rdata/MEDFATE_new/annual_indicators/AMF_mpiesm_rca4_rcp85.rds"), model)
       cli::cli_progress_step("RSB/RCP45")
-      RSB_rcp45 <- ES_function(type, readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/RSB_mpiesm_rca4_rcp45.rds"), model)
+      RSB_rcp45 <- ES_function(type, readRDS("Rdata/MEDFATE_new/annual_indicators/RSB_mpiesm_rca4_rcp45.rds"), model)
       cli::cli_progress_step("RSB/RCP85")
-      RSB_rcp85 <- ES_function(type, readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/RSB_mpiesm_rca4_rcp85.rds"), model)
+      RSB_rcp85 <- ES_function(type, readRDS("Rdata/MEDFATE_new/annual_indicators/RSB_mpiesm_rca4_rcp85.rds"), model)
       cli::cli_progress_step("ASEA/RCP45")
-      ASEA_rcp45 <- ES_function(type, readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/ASEA_mpiesm_rca4_rcp45.rds"), model)
+      ASEA_rcp45 <- ES_function(type, readRDS("Rdata/MEDFATE_new/annual_indicators/ASEA_mpiesm_rca4_rcp45.rds"), model)
       cli::cli_progress_step("ASEA/RCP85")
-      ASEA_rcp85 <- ES_function(type, readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/ASEA_mpiesm_rca4_rcp85.rds"), model)
+      ASEA_rcp85 <- ES_function(type, readRDS("Rdata/MEDFATE_new/annual_indicators/ASEA_mpiesm_rca4_rcp85.rds"), model)
       cli::cli_progress_step("ACG/RCP45")
-      ACG_rcp45 <- ES_function(type, readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/ACG_mpiesm_rca4_rcp45.rds"), model)
+      ACG_rcp45 <- ES_function(type, readRDS("Rdata/MEDFATE_new/annual_indicators/ACG_mpiesm_rca4_rcp45.rds"), model)
       cli::cli_progress_step("ACG/RCP85")
-      ACG_rcp85 <- ES_function(type, readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/ACG_mpiesm_rca4_rcp85.rds"), model)
+      ACG_rcp85 <- ES_function(type, readRDS("Rdata/MEDFATE_new/annual_indicators/ACG_mpiesm_rca4_rcp85.rds"), model)
       # cli::cli_progress_step("NOG/RCP45")
       # NOG_rcp45 <- ES_function(type, readRDS("Rdata/MEDFATE/annual_indicators/NOG_mpiesm_rca4_rcp45.rds"), model)
       # cli::cli_progress_step("NOG/RCP85")
@@ -798,9 +763,9 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "FORDYN") {
     }
   } else {
     cli::cli_progress_step("Read BAU/RCP45/MEDFATE")
-    BAU_rcp45_MF <- readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/BAU_mpiesm_rca4_rcp45.rds")
+    BAU_rcp45_MF <- readRDS("Rdata/MEDFATE_new/annual_indicators/BAU_mpiesm_rca4_rcp45.rds")
     cli::cli_progress_step("Read BAU/RCP85/MEDFATE")
-    BAU_rcp85_MF <- readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/BAU_mpiesm_rca4_rcp85.rds")
+    BAU_rcp85_MF <- readRDS("Rdata/MEDFATE_new/annual_indicators/BAU_mpiesm_rca4_rcp85.rds")
     
     cli::cli_progress_step("BAU/RCP45")
     BAU_rcp45 <- ES_function(type, readRDS("Rdata/FORMES/annual_indicators_1206/BAU_mpiesm_rca4_rcp45.rds"), model, BAU_rcp45_MF)
@@ -841,18 +806,18 @@ generate_ES_table <- function(type = "period", test = FALSE, model = "FORDYN") {
 
 
 # ES calculation ----------------------------------------------------------
-# ES_period_FORDYN_test <- generate_ES_table("period", TRUE, model = "FORDYN")
-# ES_period_FORDYN_test <- ES_period_FORDYN_test |>
+# ES_period_MEDFATE_test <- generate_ES_table("period", TRUE, model = "FORDYN")
+# ES_period_MEDFATE_test <- ES_period_MEDFATE_test |>
 #   left_join(nfiplot[,c("id")], by="id") |>
 #   sf::st_as_sf()
-# saveRDS(ES_period_FORDYN_test, "Rdata/ES_period_FORDYN_test.rds")
+# saveRDS(ES_period_MEDFATE_test, "Rdata/ES_period_MEDFATE_test.rds")
 # 
-# ES_state_FORDYN_test <- generate_ES_table("state", TRUE, model = "FORDYN")
-# ES_state_FORDYN_test <- ES_state_FORDYN_test |>
+# ES_state_MEDFATE_test <- generate_ES_table("state", TRUE, model = "FORDYN")
+# ES_state_MEDFATE_test <- ES_state_MEDFATE_test |>
 #   left_join(nfiplot[,c("id")], by="id") |>
 #   sf::st_as_sf()
-# saveRDS(ES_state_FORDYN_test, "Rdata/ES_state_FORDYN_test.rds")
-
+# saveRDS(ES_state_MEDFATE_test, "Rdata/ES_state_MEDFATE_test.rds")
+# 
 ES_period_MEDFATE <- generate_ES_table("period",FALSE, model = "FORDYN")
 ES_period_MEDFATE <- ES_period_MEDFATE |>
   left_join(nfiplot[,c("id")], by="id") |>
@@ -872,16 +837,13 @@ nfiplot_formes <- nfiplot |>
 ES_period_FORMES <- ES_period_FORMES |>
   left_join(nfiplot_formes[,c("id")], by="id") |>
   sf::st_as_sf()
-# saveRDS(ES_period_FORMES, "Rdata/ES_Miquel/ES_period_FORMES.rds")
-saveRDS(ES_period_FORMES, "Rdata/ES/ES_period_FORMES_0209.rds")
-#
-ES_state_FORMES <- generate_ES_table("state",FALSE, model = "FORMES")
-nfiplot_formes <- nfiplot |>
-  mutate(id = as.character(as.numeric(IDPARCELA)))
-ES_state_FORMES <- ES_state_FORMES |>
-  left_join(nfiplot_formes[,c("id")], by="id") |>
-  sf::st_as_sf()
-saveRDS(ES_state_FORMES, "Rdata/ES_Miquel/ES_state_FORMES.rds")
+# saveRDS(ES_period_FORMES, "Rdata/ES/ES_period_FORMES_1206.rds")
+saveRDS(ES_period_FORMES, "Rdata/ES/ES_period_FORMES_1607.rds")
 
-
-
+# ES_state_FORMES <- generate_ES_table("state",FALSE, model = "FORMES")
+# nfiplot_formes <- nfiplot |>
+#   mutate(id = as.character(as.numeric(IDPARCELA)))
+# ES_state_FORMES <- ES_state_FORMES |>
+#   left_join(nfiplot_formes[,c("id")], by="id") |>
+#   sf::st_as_sf()
+# saveRDS(ES_state_FORMES, "Rdata/ES/ES_state_FORMES_1206.rds")
