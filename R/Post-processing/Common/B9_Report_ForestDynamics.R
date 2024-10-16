@@ -18,7 +18,7 @@ load_volume_table_FORMES <- function(test = FALSE) {
           if(test) {
             bind_file <- paste0("Rdata/Test_binded/Test_", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
           } else {
-            bind_file <- paste0("Rdata/binded/", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
+            bind_file <- paste0("Rdata/FORMES/binded/", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
           }
           if(file.exists(bind_file)) {
             scen_list <- readRDS(file = bind_file)
@@ -78,23 +78,23 @@ load_result_table_FORMES <- function(test = FALSE) {
     NOG_rcp45 <- readRDS("Rdata/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp45.rds")
     NOG_rcp85 <- readRDS("Rdata/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp85.rds")
   } else {
-    BAU_rcp45 <- readRDS("Rdata/annual_indicators/BAU_mpiesm_rca4_rcp45.rds")
-    BAU_rcp85 <- readRDS("Rdata/annual_indicators/BAU_mpiesm_rca4_rcp85.rds")
+    BAU_rcp45 <- readRDS("Rdata/FORMES/annual_indicators_1206/BAU_mpiesm_rca4_rcp45.rds")
+    BAU_rcp85 <- readRDS("Rdata/FORMES/annual_indicators_1206/BAU_mpiesm_rca4_rcp85.rds")
     
-    AMF_rcp45 <- readRDS("Rdata/annual_indicators/AMF_mpiesm_rca4_rcp45.rds")
-    AMF_rcp85 <- readRDS("Rdata/annual_indicators/AMF_mpiesm_rca4_rcp85.rds")
+    AMF_rcp45 <- readRDS("Rdata/FORMES/annual_indicators_1206/AMF_mpiesm_rca4_rcp45.rds")
+    AMF_rcp85 <- readRDS("Rdata/FORMES/annual_indicators_1206/AMF_mpiesm_rca4_rcp85.rds")
     
-    RSB_rcp45 <- readRDS("Rdata/annual_indicators/RSB_mpiesm_rca4_rcp45.rds")
-    RSB_rcp85 <- readRDS("Rdata/annual_indicators/RSB_mpiesm_rca4_rcp85.rds")
+    RSB_rcp45 <- readRDS("Rdata/FORMES/annual_indicators_1206/RSB_mpiesm_rca4_rcp45.rds")
+    RSB_rcp85 <- readRDS("Rdata/FORMES/annual_indicators_1206/RSB_mpiesm_rca4_rcp85.rds")
     
-    ASEA_rcp45 <- readRDS("Rdata/annual_indicators/ASEA_mpiesm_rca4_rcp45.rds")
-    ASEA_rcp85 <- readRDS("Rdata/annual_indicators/ASEA_mpiesm_rca4_rcp85.rds")
+    ASEA_rcp45 <- readRDS("Rdata/FORMES/annual_indicators_1206/ASEA_mpiesm_rca4_rcp45.rds")
+    ASEA_rcp85 <- readRDS("Rdata/FORMES/annual_indicators_1206/ASEA_mpiesm_rca4_rcp85.rds")
     
-    ACG_rcp45 <- readRDS("Rdata/annual_indicators/ACG_mpiesm_rca4_rcp45.rds")
-    ACG_rcp85 <- readRDS("Rdata/annual_indicators/ACG_mpiesm_rca4_rcp85.rds")
+    ACG_rcp45 <- readRDS("Rdata/FORMES/annual_indicators_1206/ACG_mpiesm_rca4_rcp45.rds")
+    ACG_rcp85 <- readRDS("Rdata/FORMES/annual_indicators_1206/ACG_mpiesm_rca4_rcp85.rds")
     
-    NOG_rcp45 <- readRDS("Rdata/annual_indicators/NOG_mpiesm_rca4_rcp45.rds")
-    NOG_rcp85 <- readRDS("Rdata/annual_indicators/NOG_mpiesm_rca4_rcp85.rds")
+    # NOG_rcp45 <- readRDS("Rdata/FORMES/annual_indicators_1206/NOG_mpiesm_rca4_rcp45.rds")
+    # NOG_rcp85 <- readRDS("Rdata/FORMES/annual_indicators_1206/NOG_mpiesm_rca4_rcp85.rds")
   }
   
   
@@ -103,8 +103,8 @@ load_result_table_FORMES <- function(test = FALSE) {
                    AMF_rcp45, AMF_rcp85,
                    RSB_rcp45, RSB_rcp85,
                    ASEA_rcp45, ASEA_rcp85,
-                   ACG_rcp45, ACG_rcp85
-                   ,NOG_rcp45, NOG_rcp85) |>
+                   ACG_rcp45, ACG_rcp85 #,NOG_rcp45, NOG_rcp85
+                   ) |>
     dplyr::left_join(sf::st_drop_geometry(initial)[,c("id", "represented_area"), drop = FALSE], by = "id") |>
     dplyr::mutate(AllVolumeExt = AllVolume*represented_area,
                   VolumeStructureExt = VolumeStructure*represented_area,
@@ -127,7 +127,7 @@ load_volume_table_medfate <- function(test = FALSE) {
           if(test) {
             # bind_file <- paste0("Rdata/Test_binded/Test_", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
           } else {
-            bind_file <- paste0("Rdata/MEDFATE/binded/", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
+            bind_file <- paste0("Rdata/FORESTFUTURE/MEDFATE/binded/", provinceName, "_", management_scen, "_", climate_model,"_", climate_scen, ".rds")
           }
           if(file.exists(bind_file)) {
             scen_list <- readRDS(file = bind_file)
@@ -186,23 +186,23 @@ load_result_table_medfate <- function(test = FALSE) {
     # NOG_rcp45 <- readRDS("Rdata/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp45.rds")
     # NOG_rcp85 <- readRDS("Rdata/Test_annual_indicators/Test_NOG_mpiesm_rca4_rcp85.rds")
   } else {
-    BAU_rcp45 <- readRDS("Rdata/MEDFATE/annual_indicators/BAU_mpiesm_rca4_rcp45.rds")
-    BAU_rcp85 <- readRDS("Rdata/MEDFATE/annual_indicators/BAU_mpiesm_rca4_rcp85.rds")
+    BAU_rcp45 <- readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/BAU_mpiesm_rca4_rcp45.rds")
+    BAU_rcp85 <- readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/BAU_mpiesm_rca4_rcp85.rds")
     
-    AMF_rcp45 <- readRDS("Rdata/MEDFATE/annual_indicators/AMF_mpiesm_rca4_rcp45.rds")
-    AMF_rcp85 <- readRDS("Rdata/MEDFATE/annual_indicators/AMF_mpiesm_rca4_rcp85.rds")
+    AMF_rcp45 <- readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/AMF_mpiesm_rca4_rcp45.rds")
+    AMF_rcp85 <- readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/AMF_mpiesm_rca4_rcp85.rds")
     
-    RSB_rcp45 <- readRDS("Rdata/MEDFATE/annual_indicators/RSB_mpiesm_rca4_rcp45.rds")
-    RSB_rcp85 <- readRDS("Rdata/MEDFATE/annual_indicators/RSB_mpiesm_rca4_rcp85.rds")
+    RSB_rcp45 <- readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/RSB_mpiesm_rca4_rcp45.rds")
+    RSB_rcp85 <- readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/RSB_mpiesm_rca4_rcp85.rds")
     
-    ASEA_rcp45 <- readRDS("Rdata/MEDFATE/annual_indicators/ASEA_mpiesm_rca4_rcp45.rds")
-    ASEA_rcp85 <- readRDS("Rdata/MEDFATE/annual_indicators/ASEA_mpiesm_rca4_rcp85.rds")
+    ASEA_rcp45 <- readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/ASEA_mpiesm_rca4_rcp45.rds")
+    ASEA_rcp85 <- readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/ASEA_mpiesm_rca4_rcp85.rds")
     
-    ACG_rcp45 <- readRDS("Rdata/MEDFATE/annual_indicators/ACG_mpiesm_rca4_rcp45.rds")
-    ACG_rcp85 <- readRDS("Rdata/MEDFATE/annual_indicators/ACG_mpiesm_rca4_rcp85.rds")
+    ACG_rcp45 <- readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/ACG_mpiesm_rca4_rcp45.rds")
+    ACG_rcp85 <- readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/ACG_mpiesm_rca4_rcp85.rds")
     
-    # NOG_rcp45 <- readRDS("Rdata/MEDFATE/annual_indicators/NOG_mpiesm_rca4_rcp45.rds")
-    # NOG_rcp85 <- readRDS("Rdata/MEDFATE/annual_indicators/NOG_mpiesm_rca4_rcp85.rds")
+    # NOG_rcp45 <- readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/NOG_mpiesm_rca4_rcp45.rds")
+    # NOG_rcp85 <- readRDS("Rdata/FORESTFUTURE/MEDFATE/annual_indicators/NOG_mpiesm_rca4_rcp85.rds")
   }
   
   
@@ -503,7 +503,7 @@ target_provinces <- c("Barcelona", "Girona", "Lleida", "Tarragona")
 aggregateProvinces <- T
 se <- T
 
-save_dir <- "Plots/comparison_models_2/"
+save_dir <- "Plots/comparison_models_1610/"
 
 ##### calculate area and add variables per ha/y to VOL ##### 
 nfiplot = readRDS("Rdata/nfiplot.rds")
