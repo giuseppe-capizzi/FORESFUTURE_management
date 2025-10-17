@@ -5,7 +5,7 @@
 RData/*
 Tables/*
 data/*
-plots/*
+Plots/*
 reports
 data-raw*
 res*

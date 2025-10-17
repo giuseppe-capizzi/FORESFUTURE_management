@@ -93,22 +93,27 @@ means_ALL <- bind_rows(means_45, means_85)
 
 # Temperature
 plot_temp<- ggplot(means_ALL)+
-  geom_point(aes(x = decade, y = Mean_temp, col = clim_scn), size = 3)+
+  geom_point(aes(x = decade, y = Mean_temp, col = clim_scn), size = 4)+
   geom_ribbon(aes(x = decade, ymin = Mean_temp - ES_se_temp*1.96, ymax = Mean_temp + ES_se_temp*1.96, fill = clim_scn, group = clim_scn), alpha = 0.3)+
-  geom_line(aes(x = decade, y = Mean_temp, group = clim_scn, col = clim_scn), linewidth=1.5) + 
+  geom_line(aes(x = decade, y = Mean_temp, group = clim_scn, col = clim_scn), linewidth=2) + 
   scale_fill_brewer("Escenari climatic",palette = "Set2")+
   scale_color_brewer("Escenari climatic", palette = "Set2")+
   theme_bw() +
   ylim(13,18.5) + 
-  ylab("Temperatura Mitjana (°C)") + xlab("Dècada") + 
-  labs(title = "") + 
+  ylab("°C") + xlab("Dècada") + 
+  labs(title = "Temperatura mitjana") + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size=12),
         axis.title.y = element_text(size = 14),
         axis.title.x = element_text(size = 14),
         axis.text.y = element_text(size=12),
         legend.text = element_text(size=16),
         legend.title = element_text(size=20),
-        legend.key.size = unit(0.6, 'cm'))
+        legend.key.size = unit(0.6, 'cm'),
+        legend.position = "none",
+        plot.title = element_text(
+          hjust = 0.5,                       # centers title (0 = left, 0.5 = center, 1 = right)
+          size = 18,                         # increases font size
+        ))
 
 plot_temp
 
@@ -117,22 +122,27 @@ ggsave2("Plots/climatic_series/Temperature.png",plot_temp, width = 12, height = 
   
 # Precipitation
 plot_prec <- ggplot(means_ALL)+
-  geom_point(aes(x = decade, y = Mean_prec, col = clim_scn), size = 3)+
+  geom_point(aes(x = decade, y = Mean_prec, col = clim_scn), size = 4)+
   geom_ribbon(aes(x = decade, ymin = Mean_prec - ES_se_prec*1.96, ymax = Mean_prec + ES_se_prec*1.96, fill = clim_scn, group = clim_scn), alpha = 0.3)+
-  geom_line(aes(x = decade, y = Mean_prec, group = clim_scn, col = clim_scn), linewidth=1.5) + 
+  geom_line(aes(x = decade, y = Mean_prec, group = clim_scn, col = clim_scn), linewidth=2) + 
   scale_fill_brewer("Escenari climatic",palette = "Set2")+
   scale_color_brewer("Escenari climatic", palette = "Set2")+
   theme_bw() +
   ylim(600,825) +
-  ylab("Precipitació anual (mm/any)") + xlab("Dècada") + 
-  labs(title = "") + 
+  ylab("mm/any") + xlab("Dècada") + 
+  labs(title = "Precipitació anual") + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size=12),
         axis.title.y = element_text(size = 14),
         axis.title.x = element_text(size = 14),
         axis.text.y = element_text(size=12),
         legend.text = element_text(size=16),
         legend.title = element_text(size=20),
-        legend.key.size = unit(0.6, 'cm'))
+        legend.key.size = unit(0.6, 'cm'),
+        plot.title = element_text(
+          hjust = 0.5,                       # centers title (0 = left, 0.5 = center, 1 = right)
+          size = 18,                         # increases font size
+        ))
+
 plot_prec
 
 ggsave2("Plots/climatic_series/Precipitation.png",plot_prec, width = 12, height = 8, bg = "white")
